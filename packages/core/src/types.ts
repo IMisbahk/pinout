@@ -60,5 +60,3 @@ export interface RequestOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
 }
-
-export type GpioValue = boolean;
