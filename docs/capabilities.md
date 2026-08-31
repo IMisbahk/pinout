@@ -72,6 +72,14 @@ ADC sample on GPIO 32–39. Output `value` is 0–4095.
 
 Subscribe or unsubscribe to `gpio.changed` events for a pin.
 
+### `gpio.servo`
+
+Drive a hobby servo: `{ pin, angle }` with angle 0–180°. Uses 50 Hz LEDC (1–2 ms pulse). Distinct from the `pinout/servo` module, which has no pin — it *is* the servo.
+
+### `gpio.motor`
+
+Drive a DC motor: `{ pwmPin, speed, dirPin? }`. Speed is 0–1 without `dirPin`, or −1 to 1 with a direction pin. Distinct from `pinout/dc-motor`.
+
 ## I2C (ESP32 bridge)
 
 Default pins: SDA 21, SCL 22, 100 kHz. Payloads are capped at 32 bytes by the 512-byte protocol line.

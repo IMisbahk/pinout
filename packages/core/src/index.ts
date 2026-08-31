@@ -25,6 +25,8 @@ export {
   i2cWriteCapability,
   spiBeginCapability,
   spiTransferCapability,
+  gpioServoCapability,
+  gpioMotorCapability,
   sysHelloCapability,
   sysInfoCapability,
   sysPingCapability,

@@ -220,6 +220,18 @@ Full-duplex, 1–32 bytes, SPI mode 0. The simulator echoes `data`.
 
 Result: `{ "chipSelect": 5, "data": [18, 52] }`
 
+### `gpio.servo`
+
+Payload: `{ "pin": 13, "angle": 90 }`
+
+50 Hz hobby-servo PWM. Angle is 0–180.
+
+### `gpio.motor`
+
+Payload: `{ "pwmPin": 25, "speed": 0.4, "dirPin": 26 }`
+
+`dirPin` is optional. Reverse (`speed` < 0) requires it.
+
 ## Error codes
 
 | Code | Meaning |

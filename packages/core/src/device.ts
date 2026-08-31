@@ -14,6 +14,8 @@ import {
   assertGpioPin,
   assertGpioValue,
   assertI2cAddress,
+  assertMotorSpeed,
+  assertServoAngle,
   resolveEsp32BoardPin,
 } from './drivers/esp32/pins.js';
 import type { Session } from './session.js';
@@ -305,6 +307,23 @@ function validateAction(
         assertEsp32BusPin(chipSelect, 'SPI chip-select');
         next.chipSelect = chipSelect;
       }
+      return next;
+    }
+    case 'gpio.servo': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32PwmPin(pin);
+      return { pin, angle: assertServoAngle(payload.angle) };
+    }
+    case 'gpio.motor': {
+      const pwmPin = assertGpioPin(payload.pwmPin);
+      assertEsp32PwmPin(pwmPin);
+      const next: Record<string, unknown> = { pwmPin };
+      if (payload.dirPin !== undefined) {
+        const dirPin = assertGpioPin(payload.dirPin);
+        assertEsp32WritePin(dirPin);
+        next.dirPin = dirPin;
+      }
+      next.speed = assertMotorSpeed(payload.speed, payload.dirPin !== undefined);
       return next;
     }
     default:

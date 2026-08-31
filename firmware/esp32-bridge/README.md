@@ -11,6 +11,8 @@ It does not implement a full board support package. It accepts structured comman
 - `gpio.pwm`, `gpio.analogRead`, `gpio.watch`, `gpio.unwatch` (`gpio.changed` events)
 - `i2c.begin`, `i2c.write`, `i2c.read`, `i2c.scan` (default SDA 21 / SCL 22)
 - `spi.begin`, `spi.transfer` (default SCK 18 / MISO 19 / MOSI 23 / CS 5)
+- `gpio.servo` (50 Hz hobby servo on a GPIO)
+- `gpio.motor` (PWM + optional direction pin)
 
 See [docs/protocol.md](../../docs/protocol.md) for the message format.
 

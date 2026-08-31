@@ -380,6 +380,62 @@ export const spiTransferCapability: CapabilityDescriptor = {
   },
 };
 
+export const gpioServoCapability: CapabilityDescriptor = {
+  name: 'gpio.servo',
+  description: 'Drive a hobby servo on an ESP32 GPIO using 50 Hz PWM (1–2 ms pulse).',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['pin', 'angle'],
+    properties: {
+      pin: gpioPinSchema,
+      angle: { type: 'number', description: 'Target angle in degrees (0–180).' },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['pin', 'angle'],
+    properties: { pin: gpioPinSchema, angle: { type: 'number' } },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Moves a servo horn on this pin. Stay within mechanical limits.',
+  },
+};
+
+export const gpioMotorCapability: CapabilityDescriptor = {
+  name: 'gpio.motor',
+  description: 'Drive a DC motor via PWM, with an optional direction pin for reverse.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['pwmPin', 'speed'],
+    properties: {
+      pwmPin: gpioPinSchema,
+      dirPin: gpioPinSchema,
+      speed: {
+        type: 'number',
+        description: 'Normalized speed. Without dirPin, 0–1; with dirPin, −1 to 1.',
+      },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['pwmPin', 'speed'],
+    properties: {
+      pwmPin: gpioPinSchema,
+      dirPin: gpioPinSchema,
+      speed: { type: 'number' },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Drives a motor driver. Set speed to 0 to stop. Reverse requires dirPin.',
+  },
+};
+
 export const sysHelloCapability: CapabilityDescriptor = {
   name: 'sys.hello',
   description: 'Handshake with the device and return firmware identity plus supported actions.',
@@ -443,6 +499,8 @@ const catalog: Record<string, CapabilityDescriptor> = {
   [i2cScanCapability.name]: i2cScanCapability,
   [spiBeginCapability.name]: spiBeginCapability,
   [spiTransferCapability.name]: spiTransferCapability,
+  [gpioServoCapability.name]: gpioServoCapability,
+  [gpioMotorCapability.name]: gpioMotorCapability,
 };
 
 for (const capability of [

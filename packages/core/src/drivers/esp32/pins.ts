@@ -158,6 +158,30 @@ export function assertBusLength(value: unknown): number {
   return value;
 }
 
+export function assertServoAngle(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 180) {
+    throw new ValidationError(
+      `Servo angle must be a number from 0 to 180, received ${String(value)}.`,
+    );
+  }
+  return value;
+}
+
+export function assertMotorSpeed(value: unknown, allowReverse: boolean): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new ValidationError(`Motor speed must be a finite number, received ${String(value)}.`);
+  }
+  const min = allowReverse ? -1 : 0;
+  if (value < min || value > 1) {
+    throw new ValidationError(
+      allowReverse
+        ? 'Motor speed must be between -1 and 1 when a direction pin is set.'
+        : 'Motor speed must be between 0 and 1 unless a direction pin is provided.',
+    );
+  }
+  return value;
+}
+
 export function resolveEsp32BoardPin(name: string): number {
   const normalized = name.trim().toLowerCase();
   if (normalized === 'led') {

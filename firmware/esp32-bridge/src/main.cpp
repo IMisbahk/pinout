@@ -129,6 +129,8 @@ void fillIdentity(JsonObject payload) {
   capabilities.add("i2c.scan");
   capabilities.add("spi.begin");
   capabilities.add("spi.transfer");
+  capabilities.add("gpio.servo");
+  capabilities.add("gpio.motor");
 }
 
 void sendReady() {
@@ -556,6 +558,79 @@ void handleSpiTransfer(const char* id, const JsonVariantConst& payload) {
   sendSuccess(id, result);
 }
 
+void handleGpioServo(const char* id, const JsonVariantConst& payload) {
+  if (!payload.is<JsonObjectConst>() || !payload["pin"].is<int>() ||
+      !(payload["angle"].is<int>() || payload["angle"].is<float>())) {
+    sendError(id, "INVALID_PAYLOAD", "gpio.servo requires pin and angle.");
+    return;
+  }
+  const int pin = payload["pin"].as<int>();
+  const float angle = payload["angle"].as<float>();
+  if (!isWritablePin(pin)) {
+    sendError(id, "INVALID_PIN", "Pin is not a valid ESP32 output GPIO.");
+    return;
+  }
+  if (angle < 0 || angle > 180) {
+    sendError(id, "INVALID_PAYLOAD", "Servo angle must be between 0 and 180.");
+    return;
+  }
+  const int channel = 8 + (pin % 8);
+  ledcSetup(channel, 50, 16);
+  ledcAttachPin(pin, channel);
+  const uint32_t pulseUs = 1000 + static_cast<uint32_t>((angle / 180.0f) * 1000.0f);
+  ledcWrite(channel, pulseUs * 65535UL / 20000UL);
+  JsonDocument result;
+  result["pin"] = pin;
+  result["angle"] = angle;
+  sendSuccess(id, result);
+}
+
+void handleGpioMotor(const char* id, const JsonVariantConst& payload) {
+  if (!payload.is<JsonObjectConst>() || !payload["pwmPin"].is<int>() ||
+      !(payload["speed"].is<int>() || payload["speed"].is<float>())) {
+    sendError(id, "INVALID_PAYLOAD", "gpio.motor requires pwmPin and speed.");
+    return;
+  }
+  const int pwmPin = payload["pwmPin"].as<int>();
+  const float speed = payload["speed"].as<float>();
+  if (!isWritablePin(pwmPin)) {
+    sendError(id, "INVALID_PIN", "PWM pin is not a valid ESP32 output GPIO.");
+    return;
+  }
+  int dirPin = -1;
+  if (payload["dirPin"].is<int>()) {
+    dirPin = payload["dirPin"].as<int>();
+    if (!isWritablePin(dirPin)) {
+      sendError(id, "INVALID_PIN", "Direction pin is not a valid ESP32 output GPIO.");
+      return;
+    }
+  }
+  if (dirPin < 0 && (speed < 0 || speed > 1)) {
+    sendError(id, "INVALID_PAYLOAD", "Motor speed must be between 0 and 1 unless a direction pin is provided.");
+    return;
+  }
+  if (dirPin >= 0 && (speed < -1 || speed > 1)) {
+    sendError(id, "INVALID_PAYLOAD", "Motor speed must be between -1 and 1 when a direction pin is set.");
+    return;
+  }
+  const int channel = pwmPin % 8;
+  const float duty = speed < 0 ? -speed : speed;
+  ledcSetup(channel, 1000, 8);
+  ledcAttachPin(pwmPin, channel);
+  ledcWrite(channel, static_cast<uint32_t>(duty * 255));
+  if (dirPin >= 0) {
+    pinMode(dirPin, OUTPUT);
+    digitalWrite(dirPin, speed >= 0 ? HIGH : LOW);
+  }
+  JsonDocument result;
+  result["pwmPin"] = pwmPin;
+  result["speed"] = speed;
+  if (dirPin >= 0) {
+    result["dirPin"] = dirPin;
+  }
+  sendSuccess(id, result);
+}
+
 void pollWatches() {
   for (size_t i = 0; i < watchCount; i++) {
     if (!watches[i].active || watches[i].pin < 0) {
@@ -649,6 +724,14 @@ void handleRequest(JsonDocument& document) {
   }
   if (strcmp(action, "spi.transfer") == 0) {
     handleSpiTransfer(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.servo") == 0) {
+    handleGpioServo(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.motor") == 0) {
+    handleGpioMotor(id, payload);
     return;
   }
 
