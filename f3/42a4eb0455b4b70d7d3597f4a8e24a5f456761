@@ -1,0 +1,19 @@
+packages/core/tests/logger.test.ts
+  s_31bf6e29b1447f::t_5f259d0e9753ad 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f342a4eb0455b4b70d7d3597f4a8e24a5f456761",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
