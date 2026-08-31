@@ -6,24 +6,24 @@ Pinout is a hardware abstraction layer. Applications and agents call typed actio
 Application / CLI / MCP adapter
                 │
                 ▼
-         Pinout Device API
-         (invoke, gpio, capabilities)
+         PinoutRuntime (multi-device)
                 │
-                ▼
-              Session
-         (id matching, timeouts)
-                │
-                ▼
-            Protocol v1
-           (NDJSON codec)
-                │
-                ▼
-             Transport
-        (serial | simulated | loopback | tcp)
-                │
-                ▼
-        Device firmware / simulator
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+   Device    Device    Device
+  instance  instance  instance
+       │        │        │
+       ▼        ▼        ▼
+  policy + schema validation
+       │        │        │
+       ▼        ▼        ▼
+   backend  backend  backend
+ (protocol) (sim arm) (sim chamber)
 ```
+
+Single-device code paths still use `connect()` → `Device` → `Session` directly. The runtime wraps multiple devices behind one API.
+
+See [docs/modules.md](modules.md) and [docs/policies.md](policies.md).
 
 ## Packages
 
@@ -33,7 +33,7 @@ This repository is an npm workspace:
 | --- | --- |
 | `@pinout/core` | Abstractions, protocol, ESP32 pin rules, simulated device, Node serial transport. |
 | `@pinout/cli` | Command line that calls the SDK. No independent hardware logic. |
-| `@pinout/mcp` | Thin MCP stdio server: `connect()` + `invoke()`, tools from `toAgentTools()`. |
+| `@pinout/mcp` | Thin MCP stdio server: single-device or runtime-derived tools from all registered devices. |
 
 Firmware lives in `firmware/esp32-bridge`. It is not an npm package.
 

@@ -4,9 +4,19 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-### Added
+### Added (Sprint 2 — heterogeneous runtime)
 
-- Structured logger, env config (`PINOUT_PORT`, `PINOUT_BAUD`, `PINOUT_TIMEOUT`, `PINOUT_LOG_LEVEL`).
+- `PinoutRuntime` multi-device registry with unified events.
+- Module abstraction: ESP32 refactored as `pinout/esp32` module.
+- Simulated robot manipulator (`motion.*`, `gripper.*`, `pose.*`).
+- Simulated environmental chamber (`temperature.*`, `door.*`, `experiment.*`).
+- Generic policy engine (`POLICY_CONSTRAINT_VIOLATION`, `POLICY_PRECONDITION_FAILED`).
+- Dynamic MCP tools from runtime (`PINOUT_DEMO=heterogeneous`).
+- CLI `runtime devices` and `runtime invoke`.
+- `npm run demo:heterogeneous` canonical demo.
+- Documentation: [modules.md](docs/modules.md), [policies.md](docs/policies.md).
+
+### Added (Sprint 1 — v0 foundation)
 - Device event API (`on` / `off` / `once`) including `gpio.changed`.
 - GPIO family: mode, toggle, pulse, PWM, analogRead, watch/unwatch.
 - Loopback and TCP transports; CLI `doctor`, `invoke`, `pins`, `run`, `blink`.

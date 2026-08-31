@@ -106,7 +106,9 @@ npm run example:blink -- --mock
 npm run example:pwm -- --mock
 npm run example:analog -- --mock
 npm run example:watch -- --mock
-npm run mcp            # MCP stdio server (simulator; set PINOUT_PORT for hardware)
+npm run demo:heterogeneous     # ESP32 + robot arm + chamber demo
+npm run example:mcp-heterogeneous  # inspect runtime MCP tool list
+npm run mcp:heterogeneous    # MCP stdio server over full runtime
 ```
 
 ## Architecture
@@ -123,6 +125,8 @@ Transports are replaceable. Drivers own board-specific knowledge (ESP32 flash pi
 Documentation:
 
 - [docs/architecture.md](docs/architecture.md)
+- [docs/modules.md](docs/modules.md)
+- [docs/policies.md](docs/policies.md)
 - [docs/protocol.md](docs/protocol.md)
 - [docs/capabilities.md](docs/capabilities.md)
 - [docs/cli.md](docs/cli.md)
