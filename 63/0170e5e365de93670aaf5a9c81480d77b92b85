@@ -1,0 +1,56 @@
+packages/core/src/modules/registry.ts
+  s_94e0888c5cd5c5::t_d5f25f1bec0a6c 2,5-6,16-18
+docs/capabilities.md
+  s_94e0888c5cd5c5::t_20399c9c81c2c5 103-136
+packages/core/src/modules/stepper/capabilities.ts
+  s_94e0888c5cd5c5::t_ff16e0d6a65ab3 1-136
+packages/core/src/modules/servoModule.ts
+  s_94e0888c5cd5c5::t_658e0dc26b1ecb 1-20
+packages/generator/src/semantic/capabilityMapper.ts
+  s_94e0888c5cd5c5::t_37a0a4e7134b33 121,124-132
+  s_94e0888c5cd5c5::t_b9fcc39e4a710b 63-87
+packages/core/src/index.ts
+  s_94e0888c5cd5c5::t_d09dfa3f58d461 165-167,170-172
+packages/core/src/modules/servo/capabilities.ts
+  s_94e0888c5cd5c5::t_bcff4f4052734b 1-71
+packages/core/src/modules/dcMotorModule.ts
+  s_94e0888c5cd5c5::t_c6ae080895f3c3 1-24
+packages/core/src/modules/dcMotor/simulator.ts
+  s_94e0888c5cd5c5::t_473043e97733ac 1-80
+packages/core/src/modules/servo/simulator.ts
+  s_94e0888c5cd5c5::t_72f5656d6332d1 1-78
+packages/core/src/modules/dcMotor/capabilities.ts
+  s_94e0888c5cd5c5::t_6300eaccb1d3b2 1-84
+packages/core/src/modules/stepperModule.ts
+  s_94e0888c5cd5c5::t_01d99daf5eed2e 1-25
+docs/modules.md
+  s_94e0888c5cd5c5::t_08dc3995f518df 81-83
+  s_94e0888c5cd5c5::t_aa96e60c2be8c7 26,33-35
+docs/build-a-module.md
+  s_94e0888c5cd5c5::t_0c00d01e272951 190
+packages/core/tests/actuators.test.ts
+  s_94e0888c5cd5c5::t_3b1ea2fa83563e 1-94
+CHANGELOG.md
+  s_94e0888c5cd5c5::t_361513afe3d953 7-12
+packages/core/src/modules/stepper/simulator.ts
+  s_94e0888c5cd5c5::t_b0f40da9a3a088 1-92
+packages/core/src/capabilities.ts
+  s_94e0888c5cd5c5::t_4ea26a31ac3724 279-285
+  s_94e0888c5cd5c5::t_af83b2ab1ce776 4,6-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "630170e5e365de93670aaf5a9c81480d77b92b85",
+  "prompts": {},
+  "sessions": {
+    "s_94e0888c5cd5c5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f532e00b-3f00-48f5-ad5d-d3b4580b696e",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
