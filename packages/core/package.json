@@ -1,6 +1,6 @@
 {
   "name": "@pinout/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hardware abstraction core for Pinout — devices, capabilities, transports, and protocol.",
   "type": "module",
   "exports": {
