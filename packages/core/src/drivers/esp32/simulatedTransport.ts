@@ -79,8 +79,14 @@ class SimulatedEsp32Transport implements Transport {
     try {
       const result = handleBridgeAction(message.action, message.payload, this.state, {
         emitEvent: (event, payload) => this.emitEvent(event, payload),
+        schedule: (task, delayMs) => {
+          setTimeout(task, delayMs);
+        },
       });
       this.emitSuccess(message.id, result);
+      if (message.action === 'gpio.pulse') {
+        this.schedulePulseRevert(result);
+      }
     } catch (error) {
       if (error instanceof DeviceError) {
         this.emitError(message.id, error.code, error.message);
@@ -104,5 +110,26 @@ class SimulatedEsp32Transport implements Transport {
 
   private emitError(id: string, code: string, message: string): void {
     this.inbound.push(encodeLine(encodeFailure(id, code, message)));
+  }
+
+  private schedulePulseRevert(result: Record<string, unknown>): void {
+    const pin = result.pin;
+    const previousValue = result.previousValue;
+    const durationMs = result.durationMs;
+    if (
+      typeof pin !== 'number' ||
+      typeof previousValue !== 'boolean' ||
+      typeof durationMs !== 'number'
+    ) {
+      return;
+    }
+
+    setTimeout(() => {
+      const wasWatched = this.state.watched.has(pin);
+      this.state.levels.set(pin, previousValue);
+      if (wasWatched) {
+        this.emitEvent('gpio.changed', { pin, value: previousValue });
+      }
+    }, durationMs);
   }
 }

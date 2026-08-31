@@ -140,8 +140,8 @@ class Gpio {
     return result.value;
   }
 
-  async pulse(pin: number, durationMs: number): Promise<void> {
-    await this.device.invoke('gpio.pulse', { pin, durationMs });
+  async pulse(pin: number, durationMs: number, value = true): Promise<void> {
+    await this.device.invoke('gpio.pulse', { pin, durationMs, value });
   }
 
   async pwm(channel: number, pin: number, duty: number, frequency: number): Promise<void> {
@@ -213,16 +213,23 @@ function validateAction(
       if (action === 'gpio.toggle') {
         return { pin };
       }
-      return { pin, durationMs: assertPositiveInt(payload.durationMs, 'durationMs') };
+      return {
+        pin,
+        durationMs: assertPositiveInt(payload.durationMs, 'durationMs'),
+        value: payload.value === undefined ? true : assertGpioValue(payload.value),
+      };
     }
     case 'gpio.pwm': {
       const pin = assertGpioPin(payload.pin);
       assertEsp32PwmPin(pin);
       return {
-        channel: assertChannel(payload.channel),
+        channel: payload.channel === undefined ? pin % 8 : assertChannel(payload.channel),
         pin,
         duty: assertDuty(payload.duty),
-        frequency: assertPositiveInt(payload.frequency, 'frequency'),
+        frequency:
+          payload.frequency === undefined
+            ? 5000
+            : assertPositiveInt(payload.frequency, 'frequency'),
       };
     }
     case 'gpio.analogRead': {

@@ -52,13 +52,17 @@ export {
   handleBridgeAction,
   esp32BridgeInfo,
   createGpioState,
+  readPinLevel,
+  setPinLevel,
 } from './drivers/esp32/bridge.js';
 export {
+  assertEsp32AdcPin,
   assertEsp32AnalogPin,
   assertEsp32ModePin,
   assertEsp32PwmPin,
   assertEsp32ReadPin,
   assertEsp32WritePin,
+  assertGpioMode,
   assertGpioPin,
   assertGpioValue,
   esp32AdcPins,
