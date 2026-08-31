@@ -99,20 +99,26 @@ export const gpioToggleCapability: CapabilityDescriptor = {
 
 export const gpioPulseCapability: CapabilityDescriptor = {
   name: 'gpio.pulse',
-  description: 'Drive a pin high for a duration in milliseconds, then return it low.',
+  description: 'Drive a pin to a level for a duration in milliseconds.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
-    required: ['pin', 'durationMs'],
+    required: ['pin', 'value', 'durationMs'],
     properties: {
       pin: gpioPinSchema,
-      durationMs: { type: 'integer', minimum: 1, description: 'High duration in milliseconds.' },
+      value: { type: 'boolean', description: 'Level to drive during the pulse.' },
+      durationMs: { type: 'integer', minimum: 1, description: 'Duration in milliseconds.' },
     },
   },
   outputSchema: {
     type: 'object',
-    required: ['pin', 'durationMs'],
-    properties: { pin: gpioPinSchema, durationMs: { type: 'integer', minimum: 1 } },
+    required: ['pin', 'value', 'durationMs'],
+    properties: {
+      pin: gpioPinSchema,
+      value: { type: 'boolean' },
+      durationMs: { type: 'integer', minimum: 1 },
+      previousValue: { type: 'boolean' },
+    },
   },
   safety: {
     physicalOutput: true,
@@ -127,7 +133,7 @@ export const gpioPwmCapability: CapabilityDescriptor = {
   inputSchema: {
     type: 'object',
     additionalProperties: false,
-    required: ['channel', 'pin', 'duty', 'frequency'],
+    required: ['pin', 'duty'],
     properties: {
       channel: { type: 'integer', minimum: 0, maximum: 15 },
       pin: gpioPinSchema,
@@ -137,7 +143,7 @@ export const gpioPwmCapability: CapabilityDescriptor = {
   },
   outputSchema: {
     type: 'object',
-    required: ['channel', 'pin', 'duty', 'frequency'],
+    required: ['pin', 'duty'],
     properties: {
       channel: { type: 'integer' },
       pin: gpioPinSchema,
