@@ -1,0 +1,55 @@
+packages/core/src/drivers/esp32/pins.ts
+  s_94e0888c5cd5c5::t_f70de64b43c213 184
+  s_94e0888c5cd5c5::t_5b86db9b80275b 161-183
+packages/core/src/drivers/esp32/bridge.ts
+  s_94e0888c5cd5c5::t_9a97fdb4c5d31c 69-70
+  s_94e0888c5cd5c5::t_d3c6a7d44f35cd 16-17
+  s_94e0888c5cd5c5::t_bab7fa05e223e2 119-120
+  s_94e0888c5cd5c5::t_5d394c303f63d5 495-498,504-505,507-522,528-543
+  s_94e0888c5cd5c5::t_ee5eb323545ab0 167-170
+  s_94e0888c5cd5c5::t_90f494eb07a9a6 42-43
+  s_94e0888c5cd5c5::t_cc9bf6eb2c1c0e 499-503,506,523-527
+docs/capabilities.md
+  s_94e0888c5cd5c5::t_77d8b7ce3849d3 75-82
+packages/core/src/capabilities.ts
+  s_94e0888c5cd5c5::t_319a11ef3e76c2 383-438
+  s_94e0888c5cd5c5::t_8c9ea3ebea7cde 502-503
+packages/core/tests/buses.test.ts
+  s_94e0888c5cd5c5::t_daacd1ec9445cf 57-70,74-75
+  s_94e0888c5cd5c5::t_59580a49f40d4f 97-103
+  s_94e0888c5cd5c5::t_b50bf547c1f1fc 71-73
+  s_94e0888c5cd5c5::t_76152f72a5474b 76
+firmware/esp32-bridge/src/main.cpp
+  s_94e0888c5cd5c5::t_e7b2fd59388848 729-736
+  s_94e0888c5cd5c5::t_a61761d30d67f3 132-133
+  s_94e0888c5cd5c5::t_25e683273345df 561,564-588,591-633
+  s_94e0888c5cd5c5::t_d8743903c99b15 562-563
+  s_94e0888c5cd5c5::t_61a180dc184aee 589-590
+firmware/esp32-bridge/README.md
+  s_94e0888c5cd5c5::t_e1e348bcc2f644 14-15
+docs/protocol.md
+  s_94e0888c5cd5c5::t_77dda48279f78a 223-234
+packages/core/src/index.ts
+  s_94e0888c5cd5c5::t_194ac2127e9418 28-29
+packages/core/src/device.ts
+  s_94e0888c5cd5c5::t_447dc2fa842832 17-18
+  s_94e0888c5cd5c5::t_4b46dbbb259805 312-328
+CHANGELOG.md
+  s_94e0888c5cd5c5::t_c4326cb93bc84d 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a38f255249de5d796e261839fabcf61e069f659c",
+  "prompts": {},
+  "sessions": {
+    "s_94e0888c5cd5c5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f532e00b-3f00-48f5-ad5d-d3b4580b696e",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
