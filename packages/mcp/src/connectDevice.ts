@@ -15,7 +15,8 @@ export async function connectPinoutDevice(options: PinoutMcpConnectOptions = {})
   const mock = options.mock ?? process.env.PINOUT_MOCK === '1';
   const port = options.port ?? process.env.PINOUT_PORT;
   const baudRate = options.baudRate ?? readPositiveInt(process.env.PINOUT_BAUD, defaultBaudRate);
-  const timeoutMs = options.timeoutMs ?? readPositiveInt(process.env.PINOUT_TIMEOUT, defaultTimeoutMs);
+  const timeoutMs =
+    options.timeoutMs ?? readPositiveInt(process.env.PINOUT_TIMEOUT, defaultTimeoutMs);
 
   if (mock && port) {
     throw new Error('Use either mock mode or a serial port, not both.');
