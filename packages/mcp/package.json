@@ -12,8 +12,14 @@
   "scripts": {
     "build": "tsc -b"
   },
+  "license": "MIT",
+  "private": true,
   "engines": {
     "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imisbahk/pinout.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
