@@ -1,25 +1,24 @@
 # Pinout
 
-Pinout is building the software layer that makes physical hardware programmable through clean, composable interfaces — for people writing programs and for agents that need tools instead of datasheets.
+Pinout is the hardware intelligence layer for software and agents. It turns heterogeneous devices into a governed, inspectable control plane: capabilities have names, schemas, state, and safety annotations instead of asking every application to understand a vendor SDK or wiring diagram. Generated modules retain source evidence for review.
 
-Hardware today is still reached through vendor SDKs, GPIO libraries, serial protocols, and board-specific quirks. Pinout's job is to sit above that fragmentation:
+Pinout is an early, open-source platform—not a claim that a complete industrial fleet product or a catalog of shipped hardware already exists. This repository contains a working TypeScript SDK, CLI, MCP adapter, ESP32 serial bridge, multi-device runtime, simulators, external-module SDK, and documentation-to-module generator.
+
+## Why Pinout
 
 ```text
-AI / Application
-       │
-       ▼
-   Pinout SDK
-       │
-       ▼
-Device / Driver / Adapter
-       │
-       ▼
- Physical Hardware
+Agent / application
+        │ structured capability calls
+        ▼
+Pinout control plane
+  discovery · schemas · policy · state
+        │
+        ├── ESP32 over serial (real hardware path)
+        ├── module backends (extensible)
+        └── protocol-faithful simulators (development path)
 ```
 
-A device exposes **capabilities** (named actions with typed inputs, outputs, and safety notes). The first capability family is GPIO. The architecture is not GPIO-shaped: a later motor, sensor, or arm is another capability on a device, not a rewrite of the core.
-
-**This repository is early and experimental.** The useful surface area is a TypeScript SDK, CLI, MCP adapter, simulated ESP32, and firmware that can drive a pin on a real ESP32 over serial.
+The unit of integration is a semantic capability—`distance.read`, `motion.move_to`, `temperature.set`, or `gpio.write`—not a board-specific command. The same descriptors produce SDK calls, CLI invocations, and MCP tools. Policies run before a backend, and modules own device-specific knowledge.
 
 ## Quick start
 
@@ -30,21 +29,14 @@ git clone https://github.com/imisbahk/pinout.git
 cd pinout
 npm install
 npm test
-```
-
-That run uses a simulated ESP32. No board is required.
-
-Talk to the simulator through the CLI:
-
-```bash
 npm run pinout -- hello --mock
-npm run pinout -- doctor
 npm run pinout -- gpio write 2 high --mock
-npm run pinout -- gpio read 2 --mock
-npm run pinout -- blink --mock
+npm run demo:robotics
 ```
 
-Or from TypeScript:
+No board is needed: `--mock` and the robotics demo run locally. The robotics workbench is a deterministic simulator; its readings and policy denials are useful for integration development, not evidence of physical performance.
+
+Use the SDK directly:
 
 ```ts
 import { connect, simulatedEsp32 } from '@pinout/core';
@@ -54,136 +46,69 @@ await board.gpio.write(2, true);
 await board.close();
 ```
 
-Copy [.env.example](.env.example) to `.env` to set a default serial port and timeouts.
+## Real hardware path
 
-## ESP32 hardware demo
-
-1. Flash `firmware/esp32-bridge` to a classic ESP32 DevKit (WROOM / 30-pin). Instructions are in [firmware/esp32-bridge/README.md](firmware/esp32-bridge/README.md).
-2. Find the serial port:
+The first hardware target is a classic ESP32 DevKit (WROOM / 30-pin) running [`firmware/esp32-bridge`](firmware/esp32-bridge). Flash it, find the serial port, and run:
 
 ```bash
 npm run pinout -- ports
-```
-
-On macOS prefer `/dev/cu.*`. On Linux this is often `/dev/ttyUSB0`.
-
-3. Handshake, then blink the onboard LED (usually GPIO 2):
-
-```bash
 npm run pinout -- hello --port /dev/cu.usbserial-10
-npm run pinout -- gpio write 2 high --port /dev/cu.usbserial-10
-npm run pinout -- gpio write 2 low --port /dev/cu.usbserial-10
+npm run example:blink -- --port /dev/cu.usbserial-10
 ```
 
-The same path from the SDK:
+This path exercises the SDK, protocol framing, ready handshake, host-side validation, serial transport, and firmware. It does not make Pinout responsible for wiring, voltage, mechanics, emergency stops, or the behavior of an attached load. See [docs/production-architecture.md](docs/production-architecture.md) for the boundary between this reference path and a production deployment.
 
-```ts
-import { connect } from '@pinout/core';
-import { serialPort } from '@pinout/core/serial';
+## A developer-facing hardware control plane
 
-const board = await connect({
-  transport: serialPort({ path: '/dev/cu.usbserial-10' }),
-});
+- **Agent-native discovery:** capability descriptors become typed SDK methods and MCP tools through `toAgentTools()` / `runtimeToAgentTools()`.
+- **Semantic device model:** a multi-device runtime addresses motors, sensors, chambers, manipulators, and bases by stable instance ID.
+- **Multi-driver composition:** one governed device can route capabilities across several named backends while preserving driver-attributed events and state.
+- **Governed execution:** JSON Schema, numeric/state/workspace policies, timeouts, capability checks, and device validation happen before backend execution.
+- **Bidirectional contracts:** backend results are checked against declared output schemas before they reach SDK, CLI, or agent callers.
+- **Module ecosystem:** external modules use the public `defineModule()` API; the generator emits a candidate module that must be tested and reviewed before installation.
+- **Simulation with an honest boundary:** simulators share protocol and runtime interfaces, while labels, configuration, and docs identify simulated devices.
 
-await board.gpio.write(2, true);
-await board.close();
-```
+## Repository map
 
-`npm run example:blink -- --port /dev/cu.usbserial-10` runs [examples/blink.ts](examples/blink.ts).
+| Area | What it contains |
+| --- | --- |
+| `packages/core` | Runtime, capabilities, policy engine, transports, protocol, ESP32 driver, simulators |
+| `packages/cli` | `pinout` commands over the SDK |
+| `packages/mcp` | MCP stdio adapter; no separate hardware logic |
+| `packages/generator` | Vendor docs/SDK → candidate module pipeline |
+| `firmware/esp32-bridge` | Minimal protocol v1 ESP32 firmware |
+| `examples` | SDK, MCP, heterogeneous, and robotics narratives |
+| `docs` | Product, architecture, modules, safety, generator, and operations guidance |
 
-Opening the serial port usually resets the ESP32. The SDK waits for a `ready` event and ignores ROM boot logs.
-
-## Scripts
+## Useful commands
 
 ```bash
-npm test              # unit + simulator integration tests
-npm run test:coverage # coverage report for @pinout/core
+npm run build
 npm run lint
 npm run typecheck
-npm run build
-npm run pinout --      # CLI (builds first)
-npm run example:blink -- --mock
-npm run example:pwm -- --mock
-npm run example:analog -- --mock
-npm run example:watch -- --mock
-npm run demo:heterogeneous     # ESP32 + robot arm + chamber demo
-npm run demo:robotics          # full first-party robotics parts workbench
-npm run demo:generate          # generator plan for heatbox fixture
-npm run eval:generator         # deterministic generator fixture evaluation
+npm run format:check
+npm run demo:heterogeneous
+npm run demo:robotics
+npm run demo:composite
+npm run demo:generate
 npm run example:mcp-heterogeneous
-npm run mcp:heterogeneous    # MCP stdio server over full runtime
-```
-
-## External modules (Sprint 3)
-
-Third-party hardware drivers live outside `@pinout/core`:
-
-```bash
-cd examples/external-module/weird-sensor && npm install && npm run build
-npm run pinout -- module test ./examples/external-module/weird-sensor
-npm run pinout -- module install ./examples/external-module/weird-sensor
-npm run pinout -- device add sensor-01 --module weird-sensor/thermometer --simulated
-npm run pinout -- devices
-npm run pinout -- invoke sensor-01 temperature.read --payload '{}'
-```
-
-See [docs/build-a-module.md](docs/build-a-module.md) for the full developer guide.
-
-## Module generator (Sprint 4)
-
-Compile vendor documentation into a **candidate** module (never auto-installed):
-
-```bash
-npm run pinout -- generate ./fixtures/generator/heatbox-sdk --plan
-npm run pinout -- generate ./fixtures/generator/heatbox-sdk --output /tmp/heatbox-module --test
-npm run pinout -- module test /tmp/heatbox-module
-```
-
-Review `GENERATION_REPORT.md` before connecting to hardware. See [docs/generator.md](docs/generator.md).
-
-## Architecture
-
-| Piece | Responsibility |
-| --- | --- |
-| `@pinout/core` | Device, capabilities, protocol, transports, ESP32 pin rules, simulator |
-| `@pinout/cli` | `pinout` commands that call the SDK |
-| `@pinout/mcp` | MCP stdio server — tools from `toAgentTools()`, calls via `invoke()` |
-| `@pinout/generator` | Hardware docs/SDK → candidate external module compiler |
-| `firmware/esp32-bridge` | Minimal ESP32 firmware speaking protocol v1 over UART |
-
-Transports are replaceable. Drivers own board-specific knowledge (ESP32 flash pins, input-only GPIOs). The core does not catalog every device ever made.
-
-Documentation:
-
-- [docs/architecture.md](docs/architecture.md)
-- [docs/modules.md](docs/modules.md)
-- [docs/policies.md](docs/policies.md)
-- [docs/protocol.md](docs/protocol.md)
-- [docs/capabilities.md](docs/capabilities.md)
-- [docs/cli.md](docs/cli.md)
-- [docs/build-a-module.md](docs/build-a-module.md)
-- [docs/generator.md](docs/generator.md)
-- [docs/generator-safety.md](docs/generator-safety.md)
-- [docs/testing.md](docs/testing.md)
-- [CHANGELOG.md](CHANGELOG.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-
-## Agents
-
-Capabilities carry enough structure to become tools (`name`, `description`, input/output JSON Schema, safety annotations). `device.toAgentTools()` returns that shape.
-
-Run the MCP adapter over stdio:
-
-```bash
 PINOUT_MOCK=1 npm run mcp
 ```
 
-Configure your MCP client to launch `node packages/mcp/dist/index.js` (after `npm run build`) with `PINOUT_PORT` or `PINOUT_MOCK=1`. The SDK itself stays MCP-free; only `@pinout/mcp` depends on `@modelcontextprotocol/sdk`.
+## Read next
 
-## Safety
-
-Pinout validates inputs, connection state, timeouts, and known-bad ESP32 pins. It cannot see wiring, voltage, or what the pin is connected to. Physical safety stays with firmware, the mechanism, and the operator. See the safety section in [docs/architecture.md](docs/architecture.md).
+- [Company and product](docs/company.md)
+- [Product model](docs/product.md)
+- [Architecture](docs/architecture.md)
+- [Production architecture](docs/production-architecture.md)
+- [Safety and policies](docs/policies.md)
+- [Modules](docs/modules.md) and [build a module](docs/build-a-module.md)
+- [Generator](docs/generator.md) and [generator safety](docs/generator-safety.md)
+- [Demo narrative](docs/demo.md)
+- [Roadmap](ROADMAP.md)
+- [Security](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## Status
 
-Experimental. The protocol, package layout, and GPIO API will change. The current goal is a foundation that actually talks to hardware, not a complete robotics platform.
+Experimental and changing. Protocol, package layout, and APIs may evolve. The repository prioritizes a working, reviewable foundation over unverified claims about customers, benchmarks, certifications, production fleets, or shipped Pinout hardware.

@@ -38,6 +38,18 @@ describe('@pinout/mcp server', () => {
       expect(writeTool?.inputSchema).toMatchObject({
         required: ['pin', 'value'],
       });
+      expect(writeTool?.annotations).toMatchObject({
+        readOnlyHint: false,
+        destructiveHint: true,
+      });
+      expect(writeTool?.annotations?.idempotentHint).toBeUndefined();
+
+      const readTool = tools.find((tool) => tool.name === 'gpio.read');
+      expect(readTool?.annotations).toMatchObject({
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      });
     } finally {
       await client.close();
       await server.close();
@@ -115,10 +127,51 @@ describe('@pinout/mcp heterogeneous runtime', () => {
 
       const { tools } = await client.listTools();
       const names = tools.map((tool) => tool.name);
+      expect(names).toContain('pinout__list_devices');
+      expect(names).toContain('pinout__describe_device');
       expect(names).toContain('esp32_01__gpio_write');
       expect(names).toContain('arm_sim_01__motion_home');
       expect(names).toContain('chamber_sim_01__temperature_set');
       expect(new Set(names).size).toBe(names.length);
+    } finally {
+      await client.close();
+      await server.close();
+      await runtime.close();
+    }
+  });
+
+  it('exposes runtime discovery before an agent acts', async () => {
+    const runtime = await createHeterogeneousRuntime({ motionDelayMs: 0 });
+    const server = createRuntimeMcpServer(runtime);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'pinout-mcp-runtime-test', version: '0.0.0' });
+
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+
+      const listed = await client.callTool({ name: 'pinout__list_devices', arguments: {} });
+      expect(listed.isError).not.toBe(true);
+      expect(listed.structuredContent).toMatchObject({
+        devices: expect.arrayContaining([
+          expect.objectContaining({ id: 'esp32-01', simulated: true }),
+        ]),
+      });
+
+      const described = await client.callTool({
+        name: 'pinout__describe_device',
+        arguments: { deviceId: 'chamber-sim-01' },
+      });
+      expect(described.isError).not.toBe(true);
+      expect(described.structuredContent).toMatchObject({
+        identity: { id: 'chamber-sim-01' },
+        simulated: true,
+        activeTransportKind: 'simulated',
+        supportedTransportKinds: ['simulated'],
+        capabilities: expect.arrayContaining([
+          expect.objectContaining({ name: 'temperature.read' }),
+        ]),
+      });
     } finally {
       await client.close();
       await server.close();

@@ -10,6 +10,7 @@ import { mobileBaseModule } from '../modules/mobileBaseModule.js';
 import { robotArmModule } from '../modules/robotArmModule.js';
 import { servoModule } from '../modules/servoModule.js';
 import { stepperModule } from '../modules/stepperModule.js';
+import { powerSupplyModule, pumpModule, relayModule, valveModule } from './semanticModules.js';
 import type { PinoutModuleDefinition } from '../runtime/types.js';
 import { ModuleNotFoundError } from '../module/errors.js';
 import { loadInstalledModule, readModulesIndex } from '../home/moduleStore.js';
@@ -28,6 +29,10 @@ const builtinModules = new Map<string, PinoutModuleDefinition>([
   [limitSwitchModule.id, limitSwitchModule],
   [forceModule.id, forceModule],
   [mobileBaseModule.id, mobileBaseModule],
+  [relayModule.id, relayModule],
+  [valveModule.id, valveModule],
+  [pumpModule.id, pumpModule],
+  [powerSupplyModule.id, powerSupplyModule],
 ]);
 
 const runtimeModules = new Map<string, PinoutModuleDefinition>();

@@ -7,7 +7,7 @@ constexpr uint32_t baudRate = 115200;
 constexpr size_t lineMax = 512;
 constexpr int protocolVersion = 1;
 constexpr const char* firmwareName = "esp32-bridge";
-constexpr const char* firmwareVersion = "0.2.0";
+constexpr const char* firmwareVersion = "0.3.0";
 constexpr size_t maxBusPayloadBytes = 32;
 
 char lineBuffer[lineMax];
@@ -20,8 +20,16 @@ struct WatchState {
   bool active = false;
 };
 
+struct PulseState {
+  int pin = -1;
+  unsigned long until = 0;
+  bool previousValue = false;
+  bool active = false;
+};
+
 WatchState watches[8];
 size_t watchCount = 0;
+PulseState pulses[8];
 
 int i2cSda = 21;
 int i2cScl = 22;
@@ -34,6 +42,15 @@ int spiMosi = 23;
 int spiCs = 5;
 uint32_t spiFrequency = 1000000;
 bool spiStarted = false;
+bool activeOutputs[40] = {};
+
+void cancelPulseForPin(int pin) {
+  for (size_t i = 0; i < 8; i++) {
+    if (pulses[i].active && pulses[i].pin == pin) {
+      pulses[i].active = false;
+    }
+  }
+}
 
 bool isFlashPin(int pin) { return pin >= 6 && pin <= 11; }
 bool isInputOnlyPin(int pin) { return pin >= 34 && pin <= 39; }
@@ -116,6 +133,8 @@ void fillIdentity(JsonObject payload) {
   capabilities.add("sys.info");
   capabilities.add("gpio.mode");
   capabilities.add("gpio.write");
+  capabilities.add("gpio.batchWrite");
+  capabilities.add("gpio.stopAll");
   capabilities.add("gpio.read");
   capabilities.add("gpio.toggle");
   capabilities.add("gpio.pulse");
@@ -183,7 +202,9 @@ void handleGpioMode(const char* id, const JsonVariantConst& payload) {
     sendError(id, "INVALID_PIN", "Pin is not a valid ESP32 GPIO for this mode.");
     return;
   }
+  cancelPulseForPin(pin);
   applyPinMode(pin, mode);
+  activeOutputs[pin] = strcmp(mode, "output") == 0;
   JsonDocument result;
   result["pin"] = pin;
   result["mode"] = mode;
@@ -202,10 +223,69 @@ void handleGpioWrite(const char* id, const JsonVariantConst& payload) {
     return;
   }
   pinMode(pin, OUTPUT);
+  cancelPulseForPin(pin);
+  activeOutputs[pin] = true;
   digitalWrite(pin, value ? HIGH : LOW);
   JsonDocument result;
   result["pin"] = pin;
   result["value"] = value;
+  sendSuccess(id, result);
+}
+
+void handleGpioBatchWrite(const char* id, const JsonVariantConst& payload) {
+  if (!payload.is<JsonObjectConst>() || !payload["writes"].is<JsonArrayConst>()) {
+    sendError(id, "INVALID_PAYLOAD", "gpio.batchWrite requires a writes array.");
+    return;
+  }
+  JsonArrayConst writes = payload["writes"].as<JsonArrayConst>();
+  if (writes.size() < 1 || writes.size() > 16) {
+    sendError(id, "INVALID_PAYLOAD", "gpio.batchWrite requires 1–16 writes.");
+    return;
+  }
+  // Validate the complete batch before touching hardware.
+  for (JsonObjectConst write : writes) {
+    if (!write["pin"].is<int>() || !write["value"].is<bool>()) {
+      sendError(id, "INVALID_PAYLOAD", "Each batch write requires integer pin and boolean value.");
+      return;
+    }
+    if (!isWritablePin(write["pin"].as<int>())) {
+      sendError(id, "INVALID_PIN", "Batch contains a pin that cannot be driven.");
+      return;
+    }
+  }
+  JsonDocument result;
+  JsonArray applied = result["writes"].to<JsonArray>();
+  for (JsonObjectConst write : writes) {
+    const int pin = write["pin"].as<int>();
+    const bool value = write["value"].as<bool>();
+    cancelPulseForPin(pin);
+    pinMode(pin, OUTPUT);
+    activeOutputs[pin] = true;
+    digitalWrite(pin, value ? HIGH : LOW);
+    JsonObject item = applied.add<JsonObject>();
+    item["pin"] = pin;
+    item["value"] = value;
+  }
+  sendSuccess(id, result);
+}
+
+void handleGpioStopAll(const char* id) {
+  JsonDocument result;
+  JsonArray stopped = result["stoppedPins"].to<JsonArray>();
+  for (int pin = 0; pin <= 39; pin++) {
+    if (activeOutputs[pin]) {
+      digitalWrite(pin, LOW);
+      activeOutputs[pin] = false;
+      stopped.add(pin);
+    }
+  }
+  // Detach PWM channels so motors/servos cannot remain driven after the stop.
+  for (int channel = 0; channel < 16; channel++) {
+    ledcWrite(channel, 0);
+  }
+  for (size_t i = 0; i < 8; i++) {
+    pulses[i].active = false;
+  }
   sendSuccess(id, result);
 }
 
@@ -236,6 +316,8 @@ void handleGpioToggle(const char* id, const JsonVariantConst& payload) {
     return;
   }
   pinMode(pin, OUTPUT);
+  cancelPulseForPin(pin);
+  activeOutputs[pin] = true;
   const bool value = digitalRead(pin) != HIGH;
   digitalWrite(pin, value ? HIGH : LOW);
   JsonDocument result;
@@ -257,15 +339,41 @@ void handleGpioPulse(const char* id, const JsonVariantConst& payload) {
     sendError(id, "INVALID_PIN", "Pin is not a valid ESP32 output GPIO.");
     return;
   }
+  size_t slot = 8;
+  for (size_t i = 0; i < 8; i++) {
+    if (pulses[i].active && pulses[i].pin == pin) { slot = i; break; }
+    if (!pulses[i].active && slot == 8) slot = i;
+  }
+  if (slot == 8) {
+    sendError(id, "BUSY", "Pulse queue is full.");
+    return;
+  }
+  const bool previousValue = pulses[slot].active
+    ? pulses[slot].previousValue
+    : digitalRead(pin) == HIGH;
   pinMode(pin, OUTPUT);
+  activeOutputs[pin] = true;
   digitalWrite(pin, value ? HIGH : LOW);
-  delay(durationMs);
-  digitalWrite(pin, LOW);
+  pulses[slot].pin = pin;
+  pulses[slot].until = millis() + static_cast<unsigned long>(durationMs);
+  pulses[slot].previousValue = previousValue;
+  pulses[slot].active = true;
   JsonDocument result;
   result["pin"] = pin;
   result["value"] = value;
   result["durationMs"] = durationMs;
+  result["previousValue"] = previousValue;
   sendSuccess(id, result);
+}
+
+void pollPulses() {
+  const unsigned long now = millis();
+  for (size_t i = 0; i < 8; i++) {
+    if (pulses[i].active && static_cast<long>(now - pulses[i].until) >= 0) {
+      digitalWrite(pulses[i].pin, pulses[i].previousValue ? HIGH : LOW);
+      pulses[i].active = false;
+    }
+  }
 }
 
 void handleGpioPwm(const char* id, const JsonVariantConst& payload) {
@@ -283,6 +391,8 @@ void handleGpioPwm(const char* id, const JsonVariantConst& payload) {
     return;
   }
   ledcSetup(channel, frequency, 8);
+  cancelPulseForPin(pin);
+  activeOutputs[pin] = true;
   ledcAttachPin(pin, channel);
   ledcWrite(channel, static_cast<uint32_t>(duty * 255));
   JsonDocument result;
@@ -375,6 +485,8 @@ void handleI2cBegin(const char* id, const JsonVariantConst& payload) {
       i2cFrequency = static_cast<uint32_t>(frequency);
     }
   }
+  cancelPulseForPin(i2cSda);
+  cancelPulseForPin(i2cScl);
   i2cStarted = false;
   ensureI2c();
   JsonDocument result;
@@ -501,6 +613,9 @@ void handleSpiBegin(const char* id, const JsonVariantConst& payload) {
       spiFrequency = static_cast<uint32_t>(frequency);
     }
   }
+  cancelPulseForPin(spiSck);
+  cancelPulseForPin(spiMosi);
+  cancelPulseForPin(spiCs);
   spiStarted = false;
   ensureSpi();
   JsonDocument result;
@@ -575,7 +690,9 @@ void handleGpioServo(const char* id, const JsonVariantConst& payload) {
     return;
   }
   const int channel = 8 + (pin % 8);
+  cancelPulseForPin(pin);
   ledcSetup(channel, 50, 16);
+  activeOutputs[pin] = true;
   ledcAttachPin(pin, channel);
   const uint32_t pulseUs = 1000 + static_cast<uint32_t>((angle / 180.0f) * 1000.0f);
   ledcWrite(channel, pulseUs * 65535UL / 20000UL);
@@ -615,11 +732,17 @@ void handleGpioMotor(const char* id, const JsonVariantConst& payload) {
   }
   const int channel = pwmPin % 8;
   const float duty = speed < 0 ? -speed : speed;
+  cancelPulseForPin(pwmPin);
+  if (dirPin >= 0) {
+    cancelPulseForPin(dirPin);
+  }
   ledcSetup(channel, 1000, 8);
+  activeOutputs[pwmPin] = true;
   ledcAttachPin(pwmPin, channel);
   ledcWrite(channel, static_cast<uint32_t>(duty * 255));
   if (dirPin >= 0) {
     pinMode(dirPin, OUTPUT);
+    activeOutputs[dirPin] = true;
     digitalWrite(dirPin, speed >= 0 ? HIGH : LOW);
   }
   JsonDocument result;
@@ -672,6 +795,14 @@ void handleRequest(JsonDocument& document) {
   }
   if (strcmp(action, "gpio.write") == 0) {
     handleGpioWrite(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.batchWrite") == 0) {
+    handleGpioBatchWrite(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.stopAll") == 0) {
+    handleGpioStopAll(id);
     return;
   }
   if (strcmp(action, "gpio.read") == 0) {
@@ -774,6 +905,7 @@ void setup() {
 
 void loop() {
   pollWatches();
+  pollPulses();
   while (Serial.available() > 0) {
     const char next = static_cast<char>(Serial.read());
     if (next == '\n') {

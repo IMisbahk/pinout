@@ -42,7 +42,7 @@ export function isSimulatedBackend(
     return true;
   }
   if (backend?.type === 'protocol') {
-    return false;
+    return backend.transport?.type === 'simulated-esp32' || backend.transport?.type === 'loopback';
   }
   return moduleId !== 'pinout/esp32';
 }

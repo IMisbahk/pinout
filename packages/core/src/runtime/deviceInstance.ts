@@ -1,7 +1,7 @@
-import { UnsupportedCapabilityError } from '../errors.js';
+import { DisconnectedError, UnsupportedCapabilityError } from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
 import type { PolicyRule } from '../policy/types.js';
-import { validateInputSchema } from '../schema.js';
+import { validateInputSchema, validateOutputSchema } from '../schema.js';
 import type { CapabilityDescriptor } from '../types.js';
 import type {
   DeviceBackend,
@@ -19,6 +19,7 @@ export interface DeviceInstanceOptions {
   capabilities: CapabilityDescriptor[];
   policies: PolicyRule[];
   simulated: boolean;
+  activeTransportKind?: string;
   transportKinds: string[];
   getOperationalState: () => Record<string, unknown>;
   onRuntimeEvent?: RuntimeEventHandler;
@@ -28,13 +29,16 @@ export class DeviceInstance {
   readonly identity: DeviceIdentity;
   readonly capabilities: CapabilityDescriptor[];
   readonly simulated: boolean;
+  readonly activeTransportKind: string;
   readonly transportKinds: string[];
 
   private readonly backend: DeviceBackend;
   private readonly policies: PolicyRule[];
   private readonly getOperationalState: () => Record<string, unknown>;
-  private readonly onRuntimeEvent: RuntimeEventHandler | undefined;
+  private readonly runtimeEventHandlers = new Set<RuntimeEventHandler>();
   private health: DeviceHealth;
+  private activeInvocations = 0;
+  private closing = false;
   private unsubscribeBackend: (() => void) | undefined;
   private protocolUnsubscribers: Array<() => void> = [];
 
@@ -44,9 +48,12 @@ export class DeviceInstance {
     this.capabilities = options.capabilities;
     this.policies = options.policies;
     this.simulated = options.simulated;
+    this.activeTransportKind = options.activeTransportKind ?? options.backend.kind;
     this.transportKinds = options.transportKinds;
     this.getOperationalState = options.getOperationalState;
-    this.onRuntimeEvent = options.onRuntimeEvent;
+    if (options.onRuntimeEvent) {
+      this.runtimeEventHandlers.add(options.onRuntimeEvent);
+    }
     this.health = {
       lifecycle: 'ready',
       lastUpdated: Date.now(),
@@ -80,6 +87,11 @@ export class DeviceInstance {
     return { ...this.getOperationalState() };
   }
 
+  subscribeRuntimeEvents(handler: RuntimeEventHandler): () => void {
+    this.runtimeEventHandlers.add(handler);
+    return () => this.runtimeEventHandlers.delete(handler);
+  }
+
   capabilityNames(): string[] {
     return this.capabilities.map((capability) => capability.name);
   }
@@ -106,6 +118,9 @@ export class DeviceInstance {
     capability: string,
     input: Record<string, unknown> = {},
   ): Promise<Record<string, unknown>> {
+    if (this.closing || this.health.lifecycle === 'disconnected') {
+      throw new DisconnectedError(`Device '${this.id}' is closing or disconnected.`);
+    }
     if (!this.supports(capability)) {
       throw new UnsupportedCapabilityError(capability);
     }
@@ -120,25 +135,35 @@ export class DeviceInstance {
       operationalState: this.getOperationalState(),
     });
 
+    this.activeInvocations += 1;
     this.setLifecycle('busy');
     try {
       const result = await this.backend.invoke(capability, payload);
-      this.setLifecycle('ready');
-      return result;
-    } catch (error) {
-      this.setLifecycle('ready');
-      throw error;
+      return validateOutputSchema(descriptor.outputSchema, result);
+    } finally {
+      this.activeInvocations -= 1;
+      if (!this.closing) {
+        this.setLifecycle(this.activeInvocations > 0 ? 'busy' : 'ready');
+      }
     }
   }
 
   async close(): Promise<void> {
+    if (this.closing || this.health.lifecycle === 'disconnected') {
+      return;
+    }
+    this.closing = true;
     this.unsubscribeBackend?.();
     this.unsubscribeBackend = undefined;
     for (const unsub of this.protocolUnsubscribers.splice(0)) {
       unsub();
     }
-    this.setLifecycle('disconnected');
-    await this.backend.close();
+    this.runtimeEventHandlers.clear();
+    try {
+      await this.backend.close();
+    } finally {
+      this.setLifecycle('disconnected');
+    }
   }
 
   private emitRuntimeEvent(event: string, payload: Record<string, unknown>): void {
@@ -148,7 +173,9 @@ export class DeviceInstance {
       payload,
       timestamp: Date.now(),
     };
-    this.onRuntimeEvent?.(envelope);
+    for (const handler of this.runtimeEventHandlers) {
+      handler(envelope);
+    }
   }
 
   private setLifecycle(lifecycle: DeviceLifecycleStatus): void {

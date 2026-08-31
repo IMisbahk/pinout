@@ -10,6 +10,10 @@ import {
   runConfiguredDevicesCommand,
   runInvokeCommand,
   runRuntimeStartCommand,
+  runRuntimeInspection,
+  runRuntimeCapabilities,
+  runRuntimeTools,
+  runEmergencyStop,
 } from './pinoutHomeCommands.js';
 import { registerGenerateCommands } from './generateCommands.js';
 import {
@@ -132,6 +136,28 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
       ) => {
         await runInvokeCommand(program, deviceId, capability, options.payload, io, outputFor);
       },
+    );
+
+  runtime
+    .command('inspect [deviceId]')
+    .description('Inspect active runtime device identity, health, state, and capabilities.')
+    .action(async (deviceId?: string) => runRuntimeInspection(program, deviceId, io, outputFor));
+  runtime
+    .command('capabilities [deviceId]')
+    .description('List capabilities advertised by active runtime devices.')
+    .action(async (deviceId?: string) => runRuntimeCapabilities(program, deviceId, io, outputFor));
+  runtime
+    .command('tools [deviceId]')
+    .description('List agent-tool projections for active runtime devices.')
+    .action(async (deviceId?: string) => runRuntimeTools(program, deviceId, io, outputFor));
+  runtime
+    .command('emergency-stop [deviceId]')
+    .description(
+      'Best-effort stop using only advertised stop capabilities (not a certified E-stop).',
+    )
+    .option('--yes', 'confirm the physical-output action')
+    .action(async (deviceId: string | undefined, options: { yes?: boolean }) =>
+      runEmergencyStop(program, deviceId, options.yes === true, io, outputFor),
     );
 
   program

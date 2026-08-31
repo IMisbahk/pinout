@@ -1,6 +1,6 @@
 import { UnsupportedCapabilityError, ValidationError } from './errors.js';
 import { describeCapability, describeCapabilities, toAgentTools } from './capabilities.js';
-import { validateInputSchema } from './schema.js';
+import { validateInputSchema, validateOutputSchema } from './schema.js';
 import {
   assertBusBytes,
   assertBusLength,
@@ -69,7 +69,8 @@ export class Device {
     const descriptor = describeCapability(action);
     const checked = validateInputSchema(descriptor.inputSchema, payload);
     const normalized = validateAction(this.info.firmware, action, checked);
-    return this.session.request(action, normalized);
+    const result = await this.session.request(action, normalized);
+    return validateOutputSchema(descriptor.outputSchema, result);
   }
 
   toAgentTools(): AgentTool[] {
@@ -128,6 +129,21 @@ class Gpio {
 
   async write(pin: number, value: boolean): Promise<void> {
     await this.device.invoke('gpio.write', { pin, value });
+  }
+
+  async batchWrite(writes: Array<{ pin: number; value: boolean }>): Promise<void> {
+    await this.device.invoke('gpio.batchWrite', { writes });
+  }
+
+  async stopAll(): Promise<number[]> {
+    const result = await this.device.invoke('gpio.stopAll', {});
+    if (
+      !Array.isArray(result.stoppedPins) ||
+      !result.stoppedPins.every((pin) => typeof pin === 'number')
+    ) {
+      throw new ValidationError('gpio.stopAll returned invalid stoppedPins.');
+    }
+    return result.stoppedPins as number[];
   }
 
   async read(pin: number): Promise<boolean> {
@@ -205,6 +221,29 @@ function validateAction(
       assertEsp32WritePin(pin);
       return { pin, value: assertGpioValue(payload.value) };
     }
+    case 'gpio.batchWrite': {
+      if (
+        !Array.isArray(payload.writes) ||
+        payload.writes.length < 1 ||
+        payload.writes.length > 16
+      ) {
+        throw new ValidationError('writes must contain 1–16 entries.');
+      }
+      return {
+        writes: payload.writes.map((entry, index) => {
+          if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+            throw new ValidationError(`writes[${index}] must be an object.`);
+          }
+          const item = entry as Record<string, unknown>;
+          const pin = assertGpioPin(item.pin);
+          assertEsp32WritePin(pin);
+          return { pin, value: assertGpioValue(item.value) };
+        }),
+      };
+    }
+    case 'gpio.stopAll':
+      assertEmptyPayload(payload, action);
+      return {};
     case 'gpio.read':
     case 'gpio.watch':
     case 'gpio.unwatch': {

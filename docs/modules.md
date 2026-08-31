@@ -39,6 +39,47 @@ Device instance (esp32-01)
 | `pinout/limit-switch` | `sensor.limit_switch` | In-process simulator |
 | `pinout/force` | `sensor.force` | In-process simulator |
 | `pinout/mobile-base` | `robot.mobile_base` | In-process simulator |
+| `pinout/relay` | `actuator.relay` | In-process simulator |
+| `pinout/valve` | `actuator.valve` | In-process simulator |
+| `pinout/pump` | `actuator.pump` | In-process simulator |
+| `pinout/power-supply` | `supply.power` | In-process simulator |
+
+## Multi-driver devices
+
+`createCompositeDevice()` presents several independently managed backends as one policy-enforced device. Every public capability must have exactly one explicit route, duplicate capability names are rejected, and driver events carry the originating driver name.
+
+```ts
+import {
+  createCompositeDevice,
+  createSimulatedPumpBackend,
+  createSimulatedRelayBackend,
+  pumpModule,
+  relayModule,
+} from '@pinout/core';
+
+const rig = createCompositeDevice({
+  id: 'fluid-rig-01',
+  moduleId: 'example/fluid-rig',
+  deviceClass: 'system.fluid_rig',
+  drivers: {
+    pump: createSimulatedPumpBackend(),
+    contactor: createSimulatedRelayBackend(),
+  },
+  capabilities: [
+    ...pumpModule.capabilities,
+    relayModule.capabilities.find((capability) => capability.name === 'relay.set')!,
+  ],
+  routes: {
+    'pump.set': { driver: 'pump' },
+    'pump.stop': { driver: 'pump' },
+    'pump.read': { driver: 'pump' },
+    'status.read': { driver: 'pump' },
+    'relay.set': { driver: 'contactor' },
+  },
+});
+```
+
+Composition is capability routing, not a real-time transaction coordinator. Cross-driver atomicity, certified stops, and distributed rollback remain deployment concerns.
 
 ## External modules (Sprint 3)
 
@@ -93,6 +134,10 @@ Capabilities use dotted names grouped by physical semantics:
 - `limit.*` — end-stops / limit switches
 - `force.*` — load cells / force sensors
 - `drive.*` — mobile bases / differential drive
+- `relay.*` — electrical contacts
+- `valve.*` — proportional flow control
+- `pump.*` — pump speed and stop
+- `power.*` — programmable supply configuration and output enable
 - `temperature.*`, `door.*`, `experiment.*` — environmental chambers
 - `temperature.*`, `humidity.*` — sensors (external modules)
 - `status.*`, `sys.*` — diagnostics shared across classes

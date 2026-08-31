@@ -11,6 +11,7 @@ import {
   resolvePinoutHome,
   runModuleConformance,
   uninstallModule,
+  runtimeToAgentTools,
   type DeviceDefinition,
 } from '@pinout/core';
 import type { CliIo } from './runCli.js';
@@ -294,4 +295,174 @@ function resolveModuleId(input: string): string {
     return matches[0]!.id;
   }
   return `${input}/thermometer`;
+}
+
+type RuntimeSelection = Awaited<ReturnType<typeof createRuntimeFromConfig>>;
+
+async function openConfiguredRuntime(): Promise<RuntimeSelection> {
+  return createRuntimeFromConfig({
+    continueOnError: true,
+    includeDemoDefaults: readDevicesFile().devices.length === 0,
+  });
+}
+
+function selectRuntimeDevices(runtime: RuntimeSelection['runtime'], deviceId?: string) {
+  if (!deviceId) return runtime.devices().map((summary) => runtime.getDevice(summary.id));
+  return [runtime.getDevice(deviceId)];
+}
+
+export async function runRuntimeInspection(
+  program: Command,
+  deviceId: string | undefined,
+  io: CliIo,
+  outputFor: (program: Command, io: CliIo) => CliOutput,
+): Promise<void> {
+  const output = outputFor(program, io);
+  const { runtime, errors } = await openConfiguredRuntime();
+  try {
+    const devices = selectRuntimeDevices(runtime, deviceId).map((device) => ({
+      ...device.identity,
+      health: device.getHealth(),
+      simulated: device.simulated,
+      activeTransportKind: device.activeTransportKind,
+      supportedTransportKinds: device.transportKinds,
+      operationalState: device.getOperationalStateSnapshot(),
+      capabilities: device.capabilities,
+    }));
+    if (output.json)
+      output.log({
+        devices,
+        startupErrors: errors.map(({ deviceId: id, error }) => ({
+          deviceId: id,
+          error: String(error),
+        })),
+      });
+    else {
+      for (const device of devices) {
+        output.log(
+          `${device.id}  ${device.deviceClass}  ${device.health.lifecycle}  ${device.simulated ? 'simulated' : 'physical'}`,
+        );
+        output.log(`  module       ${device.moduleId}`);
+        output.log(`  transport    ${device.activeTransportKind}`);
+        output.log(`  supported    ${device.supportedTransportKinds.join(', ') || 'unknown'}`);
+        output.log(`  capabilities ${device.capabilities.length}`);
+      }
+      for (const failure of errors)
+        io.error(`Warning: failed to start '${failure.deviceId}': ${String(failure.error)}`);
+    }
+  } finally {
+    await runtime.close();
+  }
+}
+
+export async function runRuntimeCapabilities(
+  program: Command,
+  deviceId: string | undefined,
+  io: CliIo,
+  outputFor: (program: Command, io: CliIo) => CliOutput,
+): Promise<void> {
+  const output = outputFor(program, io);
+  const { runtime } = await openConfiguredRuntime();
+  try {
+    const devices = selectRuntimeDevices(runtime, deviceId).map((device) => ({
+      deviceId: device.id,
+      capabilities: device.capabilities,
+    }));
+    if (output.json) output.log({ devices });
+    else
+      for (const device of devices) {
+        output.log(device.deviceId);
+        for (const capability of device.capabilities)
+          output.log(
+            `  ${capability.name}  [${capability.safety.physicalOutput ? 'physical-output' : 'read-only'}]  ${capability.description}`,
+          );
+      }
+  } finally {
+    await runtime.close();
+  }
+}
+
+export async function runRuntimeTools(
+  program: Command,
+  deviceId: string | undefined,
+  io: CliIo,
+  outputFor: (program: Command, io: CliIo) => CliOutput,
+): Promise<void> {
+  const output = outputFor(program, io);
+  const { runtime } = await openConfiguredRuntime();
+  try {
+    const tools = runtimeToAgentTools(runtime).filter(
+      (tool) => !deviceId || tool.deviceId === deviceId,
+    );
+    output.log(
+      output.json
+        ? { tools }
+        : tools.map((tool) => `${tool.mcpName}  ${tool.description}`).join('\n'),
+    );
+  } finally {
+    await runtime.close();
+  }
+}
+
+const STOP_CAPABILITIES = [
+  'gpio.stopAll',
+  'motor.stop',
+  'motion.stop',
+  'drive.stop',
+  'stepper.stop',
+  'pump.stop',
+  'experiment.stop',
+];
+
+export async function runEmergencyStop(
+  program: Command,
+  deviceId: string | undefined,
+  confirmed: boolean,
+  io: CliIo,
+  outputFor: (program: Command, io: CliIo) => CliOutput,
+): Promise<void> {
+  if (!confirmed)
+    throw new Error(
+      'Refusing emergency stop without --yes. This is best-effort and is not a certified E-stop.',
+    );
+  const output = outputFor(program, io);
+  const { runtime } = await openConfiguredRuntime();
+  const results: Array<Record<string, unknown>> = [];
+  try {
+    for (const device of selectRuntimeDevices(runtime, deviceId)) {
+      const actions = STOP_CAPABILITIES.filter((capability) => device.supports(capability));
+      if (actions.length === 0) {
+        results.push({ deviceId: device.id, status: 'unsupported', actions: [] });
+        continue;
+      }
+      for (const action of actions) {
+        try {
+          results.push({
+            deviceId: device.id,
+            action,
+            status: 'stopped',
+            result: await device.invoke(action, {}),
+          });
+        } catch (error) {
+          results.push({ deviceId: device.id, action, status: 'failed', error: String(error) });
+        }
+      }
+    }
+    output.log(
+      output.json
+        ? { certified: false, bestEffort: true, results }
+        : results
+            .map(
+              (result) =>
+                `${result.deviceId}  ${result.action ?? '-'}  ${result.status}${result.error ? `  ${result.error}` : ''}`,
+            )
+            .join('\n'),
+    );
+    if (results.some((result) => result.status === 'failed'))
+      throw new Error(
+        'Emergency stop incomplete: one or more advertised stop capabilities failed.',
+      );
+  } finally {
+    await runtime.close();
+  }
 }

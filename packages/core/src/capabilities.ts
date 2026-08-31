@@ -43,6 +43,52 @@ export const gpioWriteCapability: CapabilityDescriptor = {
   },
 };
 
+export const gpioBatchWriteCapability: CapabilityDescriptor = {
+  name: 'gpio.batchWrite',
+  description: 'Atomically drive up to 16 GPIO pins high or low.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['writes'],
+    properties: {
+      writes: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 16,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['pin', 'value'],
+          properties: { pin: gpioPinSchema, value: { type: 'boolean' } },
+        },
+      },
+    },
+  },
+  outputSchema: { type: 'object', required: ['writes'], properties: { writes: { type: 'array' } } },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'All entries are validated before any pin changes.',
+  },
+};
+
+export const gpioStopAllCapability: CapabilityDescriptor = {
+  name: 'gpio.stopAll',
+  description: 'Drive tracked outputs low and clear PWM, servo, motor, and pulse state.',
+  inputSchema: { type: 'object', additionalProperties: false, properties: {} },
+  outputSchema: {
+    type: 'object',
+    required: ['stoppedPins'],
+    properties: { stoppedPins: { type: 'array', items: gpioPinSchema } },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: false,
+    notes:
+      'Best-effort software stop, not a certified safety function. It does not restore prior output state.',
+  },
+};
+
 export const gpioReadCapability: CapabilityDescriptor = {
   name: 'gpio.read',
   description: 'Read the current level of a GPIO pin.',
@@ -134,7 +180,8 @@ export const gpioPulseCapability: CapabilityDescriptor = {
   safety: {
     physicalOutput: true,
     reversible: true,
-    notes: 'Blocks the device for the pulse duration on hardware.',
+    notes:
+      'Schedules a non-blocking timed output and restores the previous level. gpio.stopAll cancels pending pulses and drives them low.',
   },
 };
 
@@ -492,6 +539,8 @@ const catalog: Record<string, CapabilityDescriptor> = {
   [sysInfoCapability.name]: sysInfoCapability,
   [gpioModeCapability.name]: gpioModeCapability,
   [gpioWriteCapability.name]: gpioWriteCapability,
+  [gpioBatchWriteCapability.name]: gpioBatchWriteCapability,
+  [gpioStopAllCapability.name]: gpioStopAllCapability,
   [gpioReadCapability.name]: gpioReadCapability,
   [gpioToggleCapability.name]: gpioToggleCapability,
   [gpioPulseCapability.name]: gpioPulseCapability,

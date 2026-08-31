@@ -35,6 +35,7 @@ class SimulatedRobotArmBackend implements DeviceBackend {
     homed: true,
   };
   private motionTimer: ReturnType<typeof setTimeout> | undefined;
+  private rejectMotion: ((reason: DeviceError) => void) | undefined;
   private listeners = new Set<(event: string, payload: Record<string, unknown>) => void>();
   private closed = false;
 
@@ -51,6 +52,8 @@ class SimulatedRobotArmBackend implements DeviceBackend {
       clearTimeout(this.motionTimer);
       this.motionTimer = undefined;
     }
+    this.rejectMotion?.(new DeviceError('DISCONNECTED', 'Robot arm closed during motion.'));
+    this.rejectMotion = undefined;
     this.listeners.clear();
   }
 
@@ -118,9 +121,11 @@ class SimulatedRobotArmBackend implements DeviceBackend {
     this.state.status = 'busy';
     this.emit('motion.started', { position: { ...this.state.position }, target });
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
+      this.rejectMotion = reject;
       this.motionTimer = setTimeout(() => {
         this.motionTimer = undefined;
+        this.rejectMotion = undefined;
         this.state.position = { ...target };
         this.state.status = 'ready';
         onComplete();
@@ -133,13 +138,16 @@ class SimulatedRobotArmBackend implements DeviceBackend {
   }
 
   private stopMotion(): Record<string, unknown> {
+    const rejectMotion = this.rejectMotion;
     if (this.motionTimer) {
       clearTimeout(this.motionTimer);
       this.motionTimer = undefined;
     }
+    this.rejectMotion = undefined;
     this.state.status = 'stopped';
     this.emit('motion.stopped', { position: { ...this.state.position } });
     this.state.status = 'ready';
+    rejectMotion?.(new DeviceError('MOTION_STOPPED', 'Robot arm motion was stopped.'));
     return { status: 'stopped' };
   }
 

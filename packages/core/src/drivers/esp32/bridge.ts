@@ -26,6 +26,8 @@ export const esp32BridgeCapabilities = [
   'sys.info',
   'gpio.mode',
   'gpio.write',
+  'gpio.batchWrite',
+  'gpio.stopAll',
   'gpio.read',
   'gpio.toggle',
   'gpio.pulse',
@@ -47,7 +49,7 @@ export const esp32BridgeActions = esp32BridgeCapabilities;
 
 export const esp32BridgeInfo: DeviceInfo = {
   firmware: 'esp32-bridge',
-  version: '0.2.0',
+  version: '0.3.0',
   protocol: protocolVersion,
   capabilities: [...esp32BridgeCapabilities],
 };
@@ -136,6 +138,10 @@ export function handleBridgeAction(
       return { uptimeMs: 0, freeHeap: 200_000 };
     case 'gpio.write':
       return gpioWrite(payload, state, context);
+    case 'gpio.batchWrite':
+      return gpioBatchWrite(payload, state, context);
+    case 'gpio.stopAll':
+      return gpioStopAll(state, context);
     case 'gpio.read':
       return gpioRead(payload, state);
     case 'gpio.mode':
@@ -196,6 +202,61 @@ function gpioWrite(
   setPinLevel(state, pin, value, context);
   state.modes.set(pin, 'output');
   return { pin, value };
+}
+
+function gpioBatchWrite(
+  payload: Record<string, unknown>,
+  state: GpioState,
+  context: BridgeContext,
+): Record<string, unknown> {
+  if (!Array.isArray(payload.writes) || payload.writes.length < 1 || payload.writes.length > 16) {
+    throw new DeviceError('INVALID_PAYLOAD', 'gpio.batchWrite requires 1–16 writes.');
+  }
+  const writes: Array<{ pin: number; value: boolean }> = [];
+  for (const entry of payload.writes) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new DeviceError('INVALID_PAYLOAD', 'Each batch write must include pin and value.');
+    }
+    const item = entry as Record<string, unknown>;
+    const pin = requirePin(item);
+    let value: boolean;
+    try {
+      value = assertGpioValue(item.value);
+      assertEsp32WritePin(pin);
+    } catch (error) {
+      throw asPayloadError(error);
+    }
+    writes.push({ pin, value });
+  }
+  // Validate every entry before changing any output (all-or-nothing semantics).
+  for (const write of writes) {
+    setPinLevel(state, write.pin, write.value, context);
+    state.modes.set(write.pin, 'output');
+  }
+  return { writes };
+}
+
+function gpioStopAll(state: GpioState, context: BridgeContext): Record<string, unknown> {
+  const candidates = new Set<number>([
+    ...[...state.modes.entries()].filter(([, mode]) => mode === 'output').map(([pin]) => pin),
+    ...[...state.pwmChannels.values()].map((channel) => channel.pin),
+    ...state.servos.keys(),
+    ...state.motors.keys(),
+  ]);
+  const stoppedPins = new Set(candidates);
+  for (const motor of state.motors.values()) {
+    if (motor.dirPin !== undefined) {
+      stoppedPins.add(motor.dirPin);
+      setPinLevel(state, motor.dirPin, false, context);
+    }
+  }
+  for (const pin of candidates) {
+    setPinLevel(state, pin, false, context);
+  }
+  state.pwmChannels.clear();
+  state.servos.clear();
+  state.motors.clear();
+  return { stoppedPins: [...stoppedPins].sort((a, b) => a - b) };
 }
 
 function gpioRead(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {

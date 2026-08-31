@@ -11,7 +11,7 @@ import {
   createHeterogeneousRuntime,
   type HeterogeneousRuntimeOptions,
 } from './createHeterogeneousRuntime.js';
-import { PinoutRuntime } from './runtime.js';
+import type { PinoutRuntime } from './runtime.js';
 
 export interface RoboticsWorkbenchOptions extends HeterogeneousRuntimeOptions {
   includeActuators?: boolean;

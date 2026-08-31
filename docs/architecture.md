@@ -74,6 +74,10 @@ See [docs/generator.md](generator.md) and [docs/generator-safety.md](generator-s
 
 **Driver knowledge** — ESP32 flash pins, input-only pins, UART0, GPIO 12 strap, and ADC pins live under `drivers/esp32`. Firmware repeats the same checks.
 
+**Composite backend** — routes one device's declared capabilities across multiple named drivers. Construction rejects missing routes, undeclared routes, duplicate capability names, missing drivers, and duplicate backend references. Events include their driver origin and operational state is aggregated by driver.
+
+Capability contracts are enforced in both directions: inputs are validated before policy/backend execution, and backend results are validated against the declared output schema before returning to SDK, CLI, or MCP callers.
+
 ## Connection flow
 
 1. Open the transport.

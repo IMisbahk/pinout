@@ -61,8 +61,10 @@ function toMcpTool(tool: AgentTool) {
     },
     annotations: {
       readOnlyHint: !tool.annotations.physicalOutput,
+      // Physical outputs always receive the conservative destructive hint.
+      // Reversible actions such as toggle are still neither harmless nor idempotent.
       destructiveHint: tool.annotations.physicalOutput,
-      idempotentHint: tool.annotations.reversible,
+      ...(tool.annotations.physicalOutput ? {} : { idempotentHint: true }),
       title: tool.name,
     },
   };

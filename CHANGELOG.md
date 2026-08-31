@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added (hardware intelligence platform)
+
+- Multi-driver composite devices with explicit capability routing, driver-attributed events, aggregated operational state, and fail-closed route validation.
+- First-party simulated semantic modules for relays, proportional valves, pumps, and programmable power supplies.
+- ESP32 bridge firmware 0.3.0 with validated `gpio.batchWrite`, best-effort `gpio.stopAll`, and non-blocking cancellable pulses.
+- Runtime MCP discovery tools for device inventory and capability/state inspection.
+- Operator CLI commands: `runtime inspect`, `runtime capabilities`, `runtime tools`, and confirmation-gated `runtime emergency-stop`.
+- Capability output-schema enforcement and concurrency-aware device lifecycle reporting.
+- Module entrypoint and registry-path containment checks, including symlink and tampered-index regression coverage.
+- Company, product, production-architecture, security, demo, and roadmap documents.
+
+### Changed
+
+- MCP marks every physical-output tool as destructive, never infers idempotency from reversibility, and fails closed on normalized tool-name collisions.
+- The robotics demo explicitly identifies every device as simulated and reports the discovered agent surface.
+
 ### Added (Sprint 5 — robotics parts)
 
 - First-party actuator modules: `pinout/dc-motor`, `pinout/servo`, `pinout/stepper`.
@@ -42,7 +58,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - MCP bootstrap via `PINOUT_CONFIG` without `@pinout/mcp` changes.
 - Documentation: [build-a-module.md](docs/build-a-module.md).
 
-### Changed
+### Changed (Sprint 3)
 
 - Single-device invoke renamed to `pinout exec <action>` (runtime uses `pinout invoke`).
 

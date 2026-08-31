@@ -29,9 +29,6 @@ export const distanceStatusReadCapability: CapabilityDescriptor = {
   safety: { physicalOutput: false, reversible: true },
 };
 
-export const distanceCapabilities = [
-  distanceReadCapability,
-  distanceStatusReadCapability,
-] as const;
+export const distanceCapabilities = [distanceReadCapability, distanceStatusReadCapability] as const;
 
 export const distanceCapabilityNames = distanceCapabilities.map((capability) => capability.name);

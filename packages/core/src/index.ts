@@ -11,10 +11,12 @@ export {
   describeCapability,
   firstPartyCapabilities,
   gpioAnalogReadCapability,
+  gpioBatchWriteCapability,
   gpioModeCapability,
   gpioPulseCapability,
   gpioPwmCapability,
   gpioReadCapability,
+  gpioStopAllCapability,
   gpioToggleCapability,
   gpioUnwatchCapability,
   gpioWatchCapability,
@@ -49,7 +51,7 @@ export {
   PolicyPreconditionFailed,
   PolicyActionDenied,
 } from './policy/errors.js';
-export { validateInputSchema } from './schema.js';
+export { validateInputSchema, validateOutputSchema } from './schema.js';
 export {
   decodeLine,
   encodeEvent,
@@ -156,6 +158,16 @@ export {
 } from './modules/registry.js';
 export { DeviceInstance } from './runtime/deviceInstance.js';
 export {
+  CompositeDeviceBackend,
+  createCompositeBackend,
+  createCompositeDevice,
+} from './runtime/composite.js';
+export type {
+  CompositeBackendOptions,
+  CompositeRoute,
+  CreateCompositeDeviceOptions,
+} from './runtime/composite.js';
+export {
   createHeterogeneousRuntime,
   defaultHeterogeneousDeviceIds,
 } from './runtime/createHeterogeneousRuntime.js';
@@ -164,6 +176,7 @@ export {
   defaultRoboticsDeviceIds,
 } from './runtime/createRoboticsWorkbench.js';
 export {
+  AgentToolNameCollisionError,
   runtimeToAgentTools,
   deviceToRuntimeAgentTools,
   buildMcpToolName,
@@ -186,6 +199,20 @@ export { encoderModule, encoderModuleId } from './modules/encoderModule.js';
 export { limitSwitchModule, limitSwitchModuleId } from './modules/limitSwitchModule.js';
 export { forceModule, forceModuleId } from './modules/forceModule.js';
 export { mobileBaseModule, mobileBaseModuleId } from './modules/mobileBaseModule.js';
+export {
+  relayModule,
+  valveModule,
+  pumpModule,
+  powerSupplyModule,
+  createSimulatedRelayBackend,
+  createSimulatedValveBackend,
+  createSimulatedPumpBackend,
+  createSimulatedPowerSupplyBackend,
+} from './modules/semanticModules.js';
+export { relayModuleId } from './modules/relayModule.js';
+export { valveModuleId } from './modules/valveModule.js';
+export { pumpModuleId } from './modules/pumpModule.js';
+export { powerSupplyModuleId } from './modules/powerSupplyModule.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
 export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';

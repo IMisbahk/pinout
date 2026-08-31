@@ -62,6 +62,42 @@ describe('esp32 bridge handler', () => {
     expect(handleBridgeAction('gpio.read', { pin: 2 }, state)).toEqual({ pin: 2, value: true });
   });
 
+  it('applies batch writes atomically and stops tracked outputs', () => {
+    const state = createGpioState();
+    expect(
+      handleBridgeAction(
+        'gpio.batchWrite',
+        {
+          writes: [
+            { pin: 2, value: true },
+            { pin: 4, value: false },
+          ],
+        },
+        state,
+      ),
+    ).toEqual({
+      writes: [
+        { pin: 2, value: true },
+        { pin: 4, value: false },
+      ],
+    });
+    expect(() =>
+      handleBridgeAction(
+        'gpio.batchWrite',
+        {
+          writes: [
+            { pin: 13, value: true },
+            { pin: 34, value: true },
+          ],
+        },
+        state,
+      ),
+    ).toThrow(/input-only/);
+    expect(readPinLevel(state, 13)).toBe(false);
+    expect(handleBridgeAction('gpio.stopAll', {}, state)).toEqual({ stoppedPins: [2, 4] });
+    expect(readPinLevel(state, 2)).toBe(false);
+  });
+
   it('reads unset pins as low', () => {
     expect(handleBridgeAction('gpio.read', { pin: 13 }, createGpioState())).toEqual({
       pin: 13,

@@ -48,6 +48,14 @@ Configure pin mode: `input`, `output`, `pullup`, or `pulldown`.
 
 Drive a GPIO pin high or low. Input: `{ pin, value }`. Output: `{ pin, value }`. Safety: physical output.
 
+### `gpio.batchWrite`
+
+Validate an entire set of 1–16 `{ pin, value }` writes before applying any of them. This prevents a validation failure from producing a partially applied batch; it is not a timing-synchronous hardware transaction.
+
+### `gpio.stopAll`
+
+Drive outputs tracked by the ESP32 bridge low, clear PWM/motor/servo state, and cancel pending pulses. This is a best-effort software stop—not a certified safety function.
+
 ### `gpio.read`
 
 Read pin level. Input: `{ pin }`. Output: `{ pin, value }`. Safety: read-only.
@@ -58,7 +66,7 @@ Flip the driven level of an output pin.
 
 ### `gpio.pulse`
 
-Drive high for `durationMs`, then return low.
+Drive a pin for `durationMs` without blocking command processing, then restore its previous level. `gpio.stopAll` cancels the restoration and leaves the pin low.
 
 ### `gpio.pwm`
 
@@ -221,11 +229,27 @@ Events: `stepper.moved`, `stepper.stopped`.
 
 Events: `drive.changed`.
 
+## Relay (`pinout/relay`)
+
+`relay.set { on }`, `relay.read`, and `status.read`. Emits `relay.changed`.
+
+## Proportional valve (`pinout/valve`)
+
+`valve.set { opening }`, `valve.read`, and `status.read`. Opening is policy-limited to 0–100 percent. Emits `valve.changed`.
+
+## Pump (`pinout/pump`)
+
+`pump.set { speed }`, `pump.stop`, `pump.read`, and `status.read`. Speed is policy-limited to 0–100 percent. Emits `pump.changed`.
+
+## Programmable power supply (`pinout/power-supply`)
+
+`power.set { voltage, currentLimit }`, `power.output { enabled }`, `power.read`, and `status.read`. The built-in simulator limits configuration to 0–60 V and 0–20 A; these are simulator policies, not ratings for arbitrary physical hardware. Emits `power.changed`.
+
 ## Agent tools
 
 `device.toAgentTools()` maps each advertised capability to an MCP-shaped tool descriptor for **single-device** connections.
 
-`PinoutRuntime` + `@pinout/mcp` derive tools dynamically from all registered devices (`esp32_01__gpio_write`, `arm_sim_01__motion_home`, etc.). See [modules.md](modules.md).
+`PinoutRuntime` + `@pinout/mcp` derive tools dynamically from all registered devices (`esp32_01__gpio_write`, `arm_sim_01__motion_home`, etc.). The runtime adapter also exposes read-only inventory and device-description tools. Physical-output tools are conservatively marked destructive, and normalized name collisions fail closed. See [modules.md](modules.md).
 
 ## Adding a capability
 

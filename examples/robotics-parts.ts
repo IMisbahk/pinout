@@ -7,14 +7,25 @@ import {
   PolicyConstraintViolation,
   createRoboticsWorkbench,
   defaultRoboticsDeviceIds,
+  runtimeToAgentTools,
 } from '@pinout/core';
 
 const ids = defaultRoboticsDeviceIds;
 
 const runtime = await createRoboticsWorkbench({ motionDelayMs: 1 });
 
-console.log('=== Robotics workbench devices ===');
+console.log('=== Pinout robotics workbench (SIMULATION) ===');
+console.log(
+  'All devices in this example use in-process simulated backends; no motors, robots, or sensors are connected.',
+);
+
+console.log('\n=== Robotics workbench devices ===');
 printDeviceTable();
+
+const agentTools = runtimeToAgentTools(runtime);
+console.log(
+  `\n=== Agent surface ===\n${agentTools.length} capability tools discovered from registered devices.`,
+);
 
 console.log('\n=== Actuators ===');
 await runtime.invoke(ids.motor, 'motor.set', { speed: 0.4 });

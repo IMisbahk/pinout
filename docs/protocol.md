@@ -130,7 +130,7 @@ Payload:
 { "pin": 2, "value": true, "durationMs": 100 }
 ```
 
-Drives the pin to `value` for `durationMs` milliseconds, then restores the previous level. On firmware the request blocks until the pulse completes; the simulator schedules the revert asynchronously.
+Drives the pin to `value` for `durationMs` milliseconds, then restores the previous level. Firmware and simulator schedule the revert without blocking command processing. `gpio.stopAll` cancels pending pulse restoration and leaves tracked outputs low. A later explicit output command on the same pin also cancels the restoration, so an expired pulse cannot overwrite newer operator intent.
 
 Result: `{ "pin": 2, "value": true, "durationMs": 100, "previousValue": false }`
 

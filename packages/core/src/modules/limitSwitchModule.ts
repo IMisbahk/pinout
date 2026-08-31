@@ -1,8 +1,5 @@
 import type { DeviceBackend, PinoutModuleDefinition } from '../runtime/types.js';
-import {
-  limitSwitchCapabilities,
-  limitSwitchCapabilityNames,
-} from './limitSwitch/capabilities.js';
+import { limitSwitchCapabilities, limitSwitchCapabilityNames } from './limitSwitch/capabilities.js';
 import { createSimulatedLimitSwitchBackend } from './limitSwitch/simulator.js';
 
 export const limitSwitchModuleId = 'pinout/limit-switch';

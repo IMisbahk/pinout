@@ -80,7 +80,7 @@ describe('ESP32 bus capabilities via Device', () => {
     try {
       expect(device.supports('i2c.write')).toBe(true);
       expect(device.supports('spi.transfer')).toBe(true);
-      expect(device.info.version).toBe('0.2.0');
+      expect(device.info.version).toBe('0.3.0');
 
       await device.invoke('i2c.write', { address: 0x48, data: [0x01, 0x02] });
       await expect(device.invoke('i2c.read', { address: 0x48, length: 2 })).resolves.toEqual({
