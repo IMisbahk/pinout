@@ -1,0 +1,50 @@
+packages/core/src/transports/tcpTransport.ts
+  s_8b389f08649e7f::t_f8fd2dd64d1c74 1-78
+packages/core/tests/loopbackTransport.test.ts
+  s_8b389f08649e7f::t_c3b63c62d9b947 1-39
+packages/core/src/transports/loopbackTransport.ts
+  s_8b389f08649e7f::t_fb7f4fb36f39ed 1-58
+CONTRIBUTING.md
+  s_d4f6620ddbae02::t_157c256a35755e 17-18,23,25,36-50,54,63
+  s_d4f6620ddbae02::t_260b8b65e0864d 64
+README.md
+  s_d4f6620ddbae02::t_8161528adb676d 20,22,55-56,97-98,102-104,113,118,122-125,130-138
+docs/capabilities.md
+  s_d4f6620ddbae02::t_42a5d0f939740b 1-6,8,11-14,16,18-19,54,56,58,60,62,64,66,68,70,72,74-76,78-82,84-87
+  s_d4f6620ddbae02::t_1a6491d06bb856 7,9-10,15,17,20-53,55,57,59,61,63,65,67,69,71,73,77,83
+CHANGELOG.md
+  s_d4f6620ddbae02::t_32180fbe25e7f0 1-31
+docs/testing.md
+  s_d4f6620ddbae02::t_5aeb7aee52f07e 1-58
+docs/cli.md
+  s_d4f6620ddbae02::t_ad65b07f96f217 1-2,4-8,10-12,15,18,20-22,35-37,41-45,47-49,51-52
+  s_d4f6620ddbae02::t_486a5c9669886b 3,9,13-14,16-17,19,23-34,38-40,46,50,53
+packages/core/src/index.ts
+  s_8b389f08649e7f::t_6cba60b58299f1 5
+docs/architecture.md
+  s_d4f6620ddbae02::t_d27fe8ef4fa942 6,30,36,42,103,113-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "516a902a38c97ef7f72e8e66f98cdb0ea8236504",
+  "prompts": {},
+  "sessions": {
+    "s_8b389f08649e7f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "550d2785-5e55-42cd-b77d-bc094e12873f",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_d4f6620ddbae02": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "153b33a7-0d64-429b-b6bf-6d3cdcae9f7b",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
