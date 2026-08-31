@@ -1,0 +1,22 @@
+packages/core/tests/session.test.ts
+  s_31bf6e29b1447f::t_9199c40e78aa6a 64-83
+  s_31bf6e29b1447f::t_13646368d9e7b2 2-9
+  s_31bf6e29b1447f::t_2b8ee09282173a 86-121
+  s_31bf6e29b1447f::t_77a56d37d03822 122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7821986f7f18cefda3896a78dec9687802074bba",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
