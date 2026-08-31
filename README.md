@@ -1,188 +1,816 @@
-# Pinout
+<div align="center">
 
-Pinout is building the software layer that makes physical hardware programmable through clean, composable interfaces — for people writing programs and for agents that need tools instead of datasheets.
+# pinout
 
-Hardware today is still reached through vendor SDKs, GPIO libraries, serial protocols, and board-specific quirks. Pinout's job is to sit above that fragmentation:
+### Building intelligence for the physical world.
+
+**A universal runtime for software, AI agents, and physical hardware.**
+
+[Documentation](./docs/architecture.md) · [Build a Module](./docs/build-a-module.md) · [Contributing](./CONTRIBUTING.md) · [Research](#research)
+
+<br />
+
+![Tests](https://img.shields.io/badge/tests-127%20passing-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
+![Hardware](https://img.shields.io/badge/hardware-ESP32%20%2B%20simulators-black)
+![MCP](https://img.shields.io/badge/MCP-compatible-purple)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
+
+</div>
+
+---
+
+AI can reason about software.
+
+Physical machines are still fragmented behind vendor SDKs, serial protocols, GPIO libraries, industrial buses, proprietary APIs, and hundreds of incompatible control surfaces.
+
+**Pinout is building the layer between intelligence and machines.**
 
 ```text
-AI / Application
-       │
-       ▼
-   Pinout SDK
-       │
-       ▼
-Device / Driver / Adapter
-       │
-       ▼
- Physical Hardware
+                         AI / Software
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │     Pinout      │
+                    │                 │
+                    │  capabilities   │
+                    │  state          │
+                    │  safety         │
+                    │  policies       │
+                    │  events         │
+                    │  execution      │
+                    └────────┬────────┘
+                             │
+             ┌───────────────┼───────────────┐
+             │               │               │
+             ▼               ▼               ▼
+          ESP32          Robot Arm       Lab Hardware
+           │                 │               │
+         Serial            SDK / ROS       TCP / SDK
+           │                 │               │
+             └───────────────┼───────────────┘
+                             │
+                             ▼
+                     Physical World
 ```
 
-A device exposes **capabilities** (named actions with typed inputs, outputs, and safety notes). The first capability family is GPIO. The architecture is not GPIO-shaped: a later motor, sensor, or arm is another capability on a device, not a rewrite of the core.
+Pinout gives hardware a common, machine-readable interface based around **capabilities**.
 
-**This repository is early and experimental.** The useful surface area is a TypeScript SDK, CLI, MCP adapter, simulated ESP32, and firmware that can drive a pin on a real ESP32 over serial.
+Instead of teaching an agent about GPIO registers, vendor APIs, packet formats, or SDK quirks, hardware exposes actions such as:
 
-## Quick start
+```text
+gpio.write
+motion.move_to
+gripper.close
+temperature.set
+experiment.start
+```
 
-Node 20+ is required.
+The underlying implementation can be completely different.
+
+The interface stays predictable.
+
+---
+
+## Why Pinout exists
+
+Modern AI systems already have increasingly standardized ways to interact with software.
+
+The physical world does not.
+
+A robot arm, environmental chamber, microcontroller, microscope, CNC machine, sensor array, and PLC may all expose completely different programming models.
+
+Pinout sits above that fragmentation.
+
+```text
+Vendor SDK      ─┐
+Serial           │
+TCP              │
+Modbus           ├────► Pinout Module ────► Pinout Runtime
+ROS              │
+GPIO             │
+Proprietary API ─┘
+```
+
+Applications and agents interact with **Pinout capabilities**, not the underlying transport.
+
+---
+
+# What exists today
+
+Pinout is early and experimental, but the architecture already supports heterogeneous hardware.
+
+### Runtime
+
+A single `PinoutRuntime` can operate multiple fundamentally different devices simultaneously.
+
+```text
+PinoutRuntime
+    │
+    ├── esp32-01
+    │     └── gpio.*
+    │
+    ├── arm-sim-01
+    │     ├── motion.*
+    │     ├── gripper.*
+    │     └── pose.*
+    │
+    └── chamber-sim-01
+          ├── temperature.*
+          ├── door.*
+          └── experiment.*
+```
+
+### Hardware
+
+- ESP32 over USB serial
+- simulated ESP32
+- simulated robot manipulator
+- simulated environmental chamber
+- external third-party modules
+
+### Interfaces
+
+- TypeScript SDK
+- CLI
+- MCP
+- TCP
+- Serial
+- loopback
+- simulation
+
+---
+
+# Capabilities
+
+Devices expose typed capabilities with JSON Schema inputs and outputs.
+
+Example:
+
+```ts
+{
+  id: "temperature.set",
+
+  inputSchema: {
+    type: "object",
+    properties: {
+      temperature: {
+        type: "number"
+      }
+    },
+    required: ["temperature"]
+  }
+}
+```
+
+An agent does not need to know how the physical machine implements `temperature.set`.
+
+It only needs to know:
+
+```text
+what the capability does
+what arguments it accepts
+what it returns
+what constraints apply
+```
+
+---
+
+# Safety is outside the model
+
+Pinout does **not** trust an AI model to enforce physical safety.
+
+Requests pass through deterministic validation and policy enforcement before reaching hardware.
+
+```text
+Agent
+  │
+  ▼
+Capability Request
+  │
+  ▼
+Schema Validation
+  │
+  ▼
+State Preconditions
+  │
+  ▼
+Policy Engine
+  │
+  ├──── DENIED
+  │
+  ▼
+Device Backend
+  │
+  ▼
+Hardware
+```
+
+Example:
+
+```text
+temperature.set(200)
+```
+
+can return:
+
+```text
+POLICY_CONSTRAINT_VIOLATION
+```
+
+before the device backend ever receives the command.
+
+Policies currently support:
+
+- numeric limits
+- physical workspace boundaries
+- device-state preconditions
+- module safety defaults
+- deployment-level restrictions
+- hardware-specific constraints
+
+Deployment policies may make limits **stricter**, but cannot silently widen module-level safety boundaries.
+
+---
+
+# Modules
+
+Hardware support is implemented through **Pinout Modules**.
+
+A module describes:
+
+```text
+device identity
+device class
+capabilities
+policies
+backend implementation
+simulation
+metadata
+```
+
+Example:
+
+```ts
+import {
+  defineModule,
+  action,
+  sensorRead,
+} from "@pinout/core";
+
+export default defineModule({
+  id: "acme/temperature-sensor",
+  version: "0.1.0",
+
+  device: {
+    class: "sensor.temperature",
+    vendor: "Acme",
+    model: "T100",
+  },
+
+  capabilities: [
+    sensorRead({
+      id: "temperature.read",
+      // ...
+    }),
+  ],
+
+  createBackend(config) {
+    return new AcmeBackend(config);
+  },
+});
+```
+
+Modules live outside Pinout Core.
+
+That means supporting new hardware does **not** require modifying the runtime itself.
+
+---
+
+# Build your own hardware module
+
+Create one:
 
 ```bash
-git clone https://github.com/imisbahk/pinout.git
+pinout module create my-device
+```
+
+Test it:
+
+```bash
+pinout module test ./my-device
+```
+
+Install it:
+
+```bash
+pinout module install ./my-device
+```
+
+Register hardware:
+
+```bash
+pinout device add sensor-01 \
+  --module my-device \
+  --simulated
+```
+
+Inspect devices:
+
+```bash
+pinout devices
+```
+
+Invoke a capability:
+
+```bash
+pinout invoke sensor-01 temperature.read \
+  --payload '{}'
+```
+
+Once registered, the same capabilities can automatically become available to MCP-compatible agents.
+
+No MCP-specific code is required inside the hardware module.
+
+See [`docs/build-a-module.md`](./docs/build-a-module.md).
+
+---
+
+# AI hardware module compiler
+
+Pinout can also begin translating existing hardware documentation into Pinout modules.
+
+```bash
+pinout generate ./vendor-sdk
+```
+
+The generator processes source material into an intermediate representation:
+
+```text
+Hardware Documentation
+        │
+        ▼
+Source Ingestion
+        │
+        ▼
+Interface Extraction
+        │
+        ▼
+Hardware IR
+        │
+        ├── capabilities
+        ├── interfaces
+        ├── state
+        ├── safety
+        ├── evidence
+        └── uncertainties
+        │
+        ▼
+Candidate Pinout Module
+```
+
+Generate a plan first:
+
+```bash
+pinout generate ./vendor-sdk --plan
+```
+
+Example:
+
+```text
+Device
+  Acme HeatBox 400
+
+Suggested class
+  lab.environmental_chamber
+
+Capabilities
+  HIGH    temperature.read
+  HIGH    temperature.set
+  HIGH    door.open
+  HIGH    door.close
+  MEDIUM  experiment.start
+
+Safety
+  HIGH    temperature range: 10–80°C
+
+Unknown
+  ? experiment.start timing semantics
+  ? connection timeout is undocumented
+```
+
+Then generate a candidate module:
+
+```bash
+pinout generate ./vendor-sdk \
+  --output ./generated/acme-heatbox
+```
+
+Generated modules contain:
+
+```text
+acme-heatbox/
+├── pinout.module.json
+├── package.json
+├── src/
+│   ├── index.ts
+│   ├── backend.ts
+│   └── generated.ts
+├── test/
+├── evidence/
+│   └── report.json
+├── GENERATION_REPORT.md
+└── README.md
+```
+
+Generated hardware integrations are always:
+
+```text
+GENERATED
+UNVERIFIED
+```
+
+They are **never automatically installed or connected to physical hardware**.
+
+---
+
+# Evidence over hallucination
+
+Physical hardware is not a place where guessing is acceptable.
+
+Every generated inference can carry:
+
+- source evidence
+- confidence
+- uncertainty
+- implementation status
+
+For example:
+
+```json
+{
+  "capability": "temperature.set",
+  "confidence": 0.98,
+  "evidence": [
+    "manual.md:124-131"
+  ]
+}
+```
+
+Documented safety boundaries may become hard policies.
+
+Inferred ones do not.
+
+If Pinout cannot establish something safely, it should say:
+
+```text
+UNKNOWN
+```
+
+instead of inventing an answer.
+
+---
+
+# MCP
+
+Pinout exposes registered hardware capabilities dynamically through MCP.
+
+```text
+Claude / Agent
+      │
+      ▼
+     MCP
+      │
+      ▼
+Pinout Runtime
+      │
+      ├── esp32-01
+      ├── arm-sim-01
+      └── chamber-sim-01
+```
+
+Tools are generated from runtime capabilities.
+
+Example:
+
+```text
+esp32_01__gpio_write
+arm_sim_01__motion_home
+chamber_sim_01__temperature_set
+```
+
+MCP remains an **adapter**.
+
+It is not Pinout's internal hardware model.
+
+---
+
+# Quick start
+
+Requires **Node.js 20+**.
+
+```bash
+git clone https://github.com/pinoutlabs/pinout.git
 cd pinout
+
 npm install
 npm test
 ```
 
-That run uses a simulated ESP32. No board is required.
+All development can run without physical hardware.
 
-Talk to the simulator through the CLI:
+---
 
-```bash
-npm run pinout -- hello --mock
-npm run pinout -- doctor
-npm run pinout -- gpio write 2 high --mock
-npm run pinout -- gpio read 2 --mock
-npm run pinout -- blink --mock
-```
-
-Or from TypeScript:
-
-```ts
-import { connect, simulatedEsp32 } from '@pinout/core';
-
-const board = await connect({ transport: simulatedEsp32() });
-await board.gpio.write(2, true);
-await board.close();
-```
-
-Copy [.env.example](.env.example) to `.env` to set a default serial port and timeouts.
-
-## ESP32 hardware demo
-
-1. Flash `firmware/esp32-bridge` to a classic ESP32 DevKit (WROOM / 30-pin). Instructions are in [firmware/esp32-bridge/README.md](firmware/esp32-bridge/README.md).
-2. Find the serial port:
+## Try the heterogeneous runtime
 
 ```bash
-npm run pinout -- ports
+npm run demo:heterogeneous
 ```
 
-On macOS prefer `/dev/cu.*`. On Linux this is often `/dev/ttyUSB0`.
+This launches multiple device classes through one runtime.
 
-3. Handshake, then blink the onboard LED (usually GPIO 2):
+```text
+✓ ESP32
+✓ Robot Arm
+✓ Environmental Chamber
+```
+
+The demo includes both successful physical operations and deterministic policy rejections.
+
+---
+
+## ESP32
+
+Connect an ESP32 over USB serial and flash:
+
+```text
+firmware/esp32-bridge
+```
+
+Then:
 
 ```bash
-npm run pinout -- hello --port /dev/cu.usbserial-10
-npm run pinout -- gpio write 2 high --port /dev/cu.usbserial-10
-npm run pinout -- gpio write 2 low --port /dev/cu.usbserial-10
+pinout hello --port /dev/cu.usbserial-XXX
 ```
 
-The same path from the SDK:
-
-```ts
-import { connect } from '@pinout/core';
-import { serialPort } from '@pinout/core/serial';
-
-const board = await connect({
-  transport: serialPort({ path: '/dev/cu.usbserial-10' }),
-});
-
-await board.gpio.write(2, true);
-await board.close();
-```
-
-`npm run example:blink -- --port /dev/cu.usbserial-10` runs [examples/blink.ts](examples/blink.ts).
-
-Opening the serial port usually resets the ESP32. The SDK waits for a `ready` event and ignores ROM boot logs.
-
-## Scripts
+Blink:
 
 ```bash
-npm test              # unit + simulator integration tests
-npm run test:coverage # coverage report for @pinout/core
-npm run lint
-npm run typecheck
-npm run build
-npm run pinout --      # CLI (builds first)
-npm run example:blink -- --mock
-npm run example:pwm -- --mock
-npm run example:analog -- --mock
-npm run example:watch -- --mock
-npm run demo:heterogeneous     # ESP32 + robot arm + chamber demo
-npm run demo:generate          # generator plan for heatbox fixture
-npm run eval:generator         # deterministic generator fixture evaluation
-npm run example:mcp-heterogeneous
-npm run mcp:heterogeneous    # MCP stdio server over full runtime
+pinout blink \
+  --port /dev/cu.usbserial-XXX \
+  --count 5
 ```
 
-## External modules (Sprint 3)
-
-Third-party hardware drivers live outside `@pinout/core`:
+GPIO:
 
 ```bash
-cd examples/external-module/weird-sensor && npm install && npm run build
-npm run pinout -- module test ./examples/external-module/weird-sensor
-npm run pinout -- module install ./examples/external-module/weird-sensor
-npm run pinout -- device add sensor-01 --module weird-sensor/thermometer --simulated
-npm run pinout -- devices
-npm run pinout -- invoke sensor-01 temperature.read --payload '{}'
+pinout gpio write 2 true \
+  --port /dev/cu.usbserial-XXX
 ```
 
-See [docs/build-a-module.md](docs/build-a-module.md) for the full developer guide.
+---
 
-## Module generator (Sprint 4)
+## No hardware?
 
-Compile vendor documentation into a **candidate** module (never auto-installed):
+Use the simulator.
 
 ```bash
-npm run pinout -- generate ./fixtures/generator/heatbox-sdk --plan
-npm run pinout -- generate ./fixtures/generator/heatbox-sdk --output /tmp/heatbox-module --test
-npm run pinout -- module test /tmp/heatbox-module
+pinout hello --mock
 ```
-
-Review `GENERATION_REPORT.md` before connecting to hardware. See [docs/generator.md](docs/generator.md).
-
-## Architecture
-
-| Piece | Responsibility |
-| --- | --- |
-| `@pinout/core` | Device, capabilities, protocol, transports, ESP32 pin rules, simulator |
-| `@pinout/cli` | `pinout` commands that call the SDK |
-| `@pinout/mcp` | MCP stdio server — tools from `toAgentTools()`, calls via `invoke()` |
-| `@pinout/generator` | Hardware docs/SDK → candidate external module compiler |
-| `firmware/esp32-bridge` | Minimal ESP32 firmware speaking protocol v1 over UART |
-
-Transports are replaceable. Drivers own board-specific knowledge (ESP32 flash pins, input-only GPIOs). The core does not catalog every device ever made.
-
-Documentation:
-
-- [docs/architecture.md](docs/architecture.md)
-- [docs/modules.md](docs/modules.md)
-- [docs/policies.md](docs/policies.md)
-- [docs/protocol.md](docs/protocol.md)
-- [docs/capabilities.md](docs/capabilities.md)
-- [docs/cli.md](docs/cli.md)
-- [docs/build-a-module.md](docs/build-a-module.md)
-- [docs/generator.md](docs/generator.md)
-- [docs/generator-safety.md](docs/generator-safety.md)
-- [docs/testing.md](docs/testing.md)
-- [CHANGELOG.md](CHANGELOG.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-
-## Agents
-
-Capabilities carry enough structure to become tools (`name`, `description`, input/output JSON Schema, safety annotations). `device.toAgentTools()` returns that shape.
-
-Run the MCP adapter over stdio:
 
 ```bash
-PINOUT_MOCK=1 npm run mcp
+pinout blink --mock --count 5
 ```
 
-Configure your MCP client to launch `node packages/mcp/dist/index.js` (after `npm run build`) with `PINOUT_PORT` or `PINOUT_MOCK=1`. The SDK itself stays MCP-free; only `@pinout/mcp` depends on `@modelcontextprotocol/sdk`.
+---
 
-## Safety
+# Architecture
 
-Pinout validates inputs, connection state, timeouts, and known-bad ESP32 pins. It cannot see wiring, voltage, or what the pin is connected to. Physical safety stays with firmware, the mechanism, and the operator. See the safety section in [docs/architecture.md](docs/architecture.md).
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    AI / APPLICATIONS                        │
+│                                                             │
+│          Agents · CLI · SDK · Automation · Research         │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       ADAPTERS                              │
+│                                                             │
+│                      MCP · APIs                             │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PINOUT RUNTIME                           │
+│                                                             │
+│   Device Registry       Capability Model      Event Bus     │
+│   State                 Policy Engine         Execution     │
+│   Health                Validation            Logging       │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      MODULE SDK                             │
+│                                                             │
+│   Device Metadata · Capabilities · Policies · Backend       │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       TRANSPORTS                            │
+│                                                             │
+│              Serial · TCP · SDK · Simulation               │
+└─────────────────────────────┬───────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PHYSICAL HARDWARE                        │
+│                                                             │
+│   Microcontrollers · Robots · Sensors · Lab Equipment       │
+│   Industrial Systems · Machines · Future Pinout Hardware    │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## Status
+More detail: [`docs/architecture.md`](./docs/architecture.md)
 
-Experimental. The protocol, package layout, and GPIO API will change. The current goal is a foundation that actually talks to hardware, not a complete robotics platform.
+---
+
+# Repository
+
+```text
+pinout/
+├── packages/
+│   ├── core/
+│   ├── cli/
+│   ├── mcp/
+│   └── generator/
+│
+├── firmware/
+│   └── esp32-bridge/
+│
+├── examples/
+│   └── external-module/
+│
+├── fixtures/
+├── docs/
+└── tests/
+```
+
+---
+
+# Design principles
+
+### Hardware is stateful
+
+Physical machines are not stateless REST endpoints.
+
+Pinout models:
+
+```text
+actions
+sensors
+events
+state
+health
+policies
+```
+
+as first-class concepts.
+
+### Models reason. Controllers execute.
+
+Pinout does not put an LLM inside a real-time motor-control loop.
+
+Models should make higher-level decisions such as:
+
+```text
+motion.move_to(...)
+```
+
+while deterministic controllers handle timing-critical execution.
+
+### Safety does not depend on prompting
+
+Safety constraints live below the intelligence layer.
+
+### Simulation and reality share an interface
+
+A simulated backend and a physical backend implement the same Pinout device contract.
+
+### Protocols are implementation details
+
+Serial, TCP, ROS, CAN, SDKs, and future transports should not leak into the semantic capability layer.
+
+### Unknown is better than wrong
+
+Especially when software can move something.
+
+---
+
+# Current status
+
+Pinout is **experimental research software**.
+
+Current milestones:
+
+```text
+[✓] Hardware capability abstraction
+[✓] ESP32 physical bridge
+[✓] Transport-independent protocol
+[✓] Heterogeneous device runtime
+[✓] Stateful physical devices
+[✓] Deterministic safety policies
+[✓] Dynamic MCP exposure
+[✓] External Module SDK
+[✓] Module conformance testing
+[✓] Persistent local device configuration
+[✓] AI hardware-module generator
+[ ] Large-scale real hardware validation
+[ ] Hardware module registry
+[ ] Verified module ecosystem
+[ ] Robotics research platform
+[ ] Pinout hardware
+```
+
+---
+
+# Where this is going
+
+Pinout begins as software infrastructure.
+
+The longer-term research direction is much larger:
+
+```text
+Hardware Interfaces
+        ↓
+Physical Runtime
+        ↓
+Agent ↔ Machine Infrastructure
+        ↓
+Simulation + Safety
+        ↓
+Physical Intelligence
+        ↓
+Robotics Research
+        ↓
+Intelligent Machines
+```
+
+The goal is not merely to make hardware easier to program.
+
+**The goal is to build the systems required for intelligence to operate in the physical world.**
+
+---
+
+# Research
+
+Areas we are interested in include:
+
+- agent-controlled physical systems
+- machine-readable hardware capabilities
+- physical-world safety and permission models
+- hardware interface generation
+- simulation and sim-to-real validation
+- embodied intelligence
+- world models
+- autonomous manipulation
+- robot learning
+- cross-embodiment systems
+
+Research notes and experiments will live alongside the software as Pinout develops.
+
+---
+
+# Contributing
+
+Pinout needs weird hardware.
+
+Especially hardware with:
+
+- terrible SDKs
+- strange serial protocols
+- old vendor libraries
+- incomplete documentation
+- proprietary control surfaces
+- unusual physical constraints
+
+If you have something painful to integrate, we want to hear about it.
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+---
+
+<div align="center">
+
+### Give us your worst hardware.
+
+We are trying to make the physical world programmable by intelligence.
+
+<br />
+
+**pinout**
+
+*Building intelligence for the physical world.*
+
+</div>
