@@ -1,6 +1,12 @@
 import { ByteQueue } from '../../transports/byteQueue.js';
 import { encodeLine } from '../../lineReader.js';
-import { encodeEvent, encodeFailure, encodeResponse, parseLine } from '../../protocol.js';
+import {
+  decodeLine,
+  encodeEvent,
+  encodeFailure,
+  encodeResponse,
+  maxProtocolLineBytes,
+} from '../../protocol.js';
 import type { Transport } from '../../types.js';
 import { DeviceError } from '../../errors.js';
 import { createGpioState, esp32BridgeInfo, handleBridgeAction } from './bridge.js';
@@ -45,15 +51,27 @@ class SimulatedEsp32Transport implements Transport {
   }
 
   private handleLine(line: string): void {
-    let message;
-    try {
-      message = parseLine(line);
-    } catch {
-      this.emitError('invalid', 'INVALID_JSON', 'Request is not valid Pinout protocol JSON.');
+    if (new TextEncoder().encode(line).length >= maxProtocolLineBytes) {
+      this.emitError('invalid', 'INVALID_MESSAGE', 'Request line is too long.');
       return;
     }
 
-    if (message === null || !('action' in message)) {
+    const decoded = decodeLine(line);
+    if (decoded.kind === 'ignore') {
+      return;
+    }
+    if (decoded.kind === 'invalidJson') {
+      this.emitError('invalid', 'INVALID_JSON', 'Request is not valid JSON.');
+      return;
+    }
+    if (decoded.kind === 'invalidMessage') {
+      this.emitError('invalid', 'INVALID_MESSAGE', decoded.message);
+      return;
+    }
+
+    const message = decoded.value;
+    if (!('action' in message)) {
+      this.emitError('invalid', 'INVALID_MESSAGE', 'Request must include string id and action.');
       return;
     }
 
@@ -67,8 +85,8 @@ class SimulatedEsp32Transport implements Transport {
       }
       this.emitError(
         message.id,
-        'INTERNAL',
-        error instanceof Error ? error.message : 'Internal simulator error.',
+        'INVALID_MESSAGE',
+        error instanceof Error ? error.message : 'Request could not be processed.',
       );
     }
   }

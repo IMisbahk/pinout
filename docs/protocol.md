@@ -107,12 +107,14 @@ On the simulator, unread pins are low. On hardware, the level is whatever `digit
 | Code | Meaning |
 | --- | --- |
 | `INVALID_JSON` | Line started with `{` but was not valid JSON. |
-| `INVALID_MESSAGE` | JSON parsed but is not a valid request. |
+| `INVALID_MESSAGE` | JSON parsed but is not a valid request (wrong version, missing fields, line too long). |
 | `UNKNOWN_ACTION` | Action is not implemented on this device. |
 | `INVALID_PIN` | Pin is out of range or forbidden on this device. |
 | `INVALID_PAYLOAD` | Action input failed validation. |
 
 Host-only errors (never sent by the device): `TIMEOUT`, `TRANSPORT_ERROR`, `PROTOCOL_ERROR`, `DISCONNECTED`, `UNSUPPORTED_CAPABILITY`, `VALIDATION_ERROR`.
+
+The simulator uses the same device error codes as firmware. There is no `INTERNAL` code.
 
 ## Extending the protocol
 

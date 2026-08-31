@@ -13,6 +13,7 @@ export {
   DeviceError,
 } from './errors.js';
 export {
+  decodeLine,
   encodeEvent,
   encodeFailure,
   encodeRequest,
