@@ -1,7 +1,9 @@
 import { PinoutError } from '../errors.js';
+import { mergeModulePolicies } from '../module/policies.js';
 import { getModule } from '../modules/registry.js';
 import { DeviceInstance } from './deviceInstance.js';
 import { ProtocolDeviceBackend } from './protocolBackend.js';
+import { createRuntimeFromConfig, type FromConfigOptions } from './fromConfig.js';
 import type {
   DeviceIdentity,
   DeviceSummary,
@@ -26,6 +28,11 @@ export class DeviceNotFoundError extends PinoutError {
 export class PinoutRuntime {
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
+
+  static async fromConfig(options: FromConfigOptions = {}): Promise<PinoutRuntime> {
+    const { runtime } = await createRuntimeFromConfig(options);
+    return runtime;
+  }
 
   on(handler: RuntimeEventHandler): () => void {
     this.handlers.add(handler);
@@ -119,7 +126,7 @@ export class PinoutRuntime {
       identity,
       backend,
       capabilities: module.capabilities,
-      policies: module.policies,
+      policies: mergeModulePolicies(module.policies, options.deploymentPolicies ?? []),
       simulated,
       transportKinds: module.supportedTransportKinds,
       getOperationalState: () => backend.getOperationalState?.() ?? {},

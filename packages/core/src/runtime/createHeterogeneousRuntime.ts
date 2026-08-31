@@ -4,6 +4,7 @@ import type { Transport } from '../types.js';
 import { chamberModuleId } from '../modules/chamberModule.js';
 import { createEsp32SimulatedTransport, esp32ModuleId } from '../modules/esp32Module.js';
 import { robotArmModuleId } from '../modules/robotArmModule.js';
+import { createRuntimeFromConfig } from './fromConfig.js';
 import { PinoutRuntime } from './runtime.js';
 
 export interface HeterogeneousRuntimeOptions {
@@ -20,6 +21,21 @@ export interface HeterogeneousRuntimeOptions {
 export async function createHeterogeneousRuntime(
   options: HeterogeneousRuntimeOptions = {},
 ): Promise<PinoutRuntime> {
+  const { existsSync } = await import('node:fs');
+  const { resolveDevicesConfigPath, resolvePinoutHome, PINOUT_CONFIG_ENV } =
+    await import('../home/paths.js');
+  const home = resolvePinoutHome();
+  const configPath = resolveDevicesConfigPath(home);
+  if (process.env[PINOUT_CONFIG_ENV] || existsSync(configPath)) {
+    const { runtime } = await createRuntimeFromConfig({
+      home,
+      devicesPath: process.env[PINOUT_CONFIG_ENV] ?? configPath,
+      continueOnError: false,
+      includeDemoDefaults: false,
+    });
+    return runtime;
+  }
+
   const runtime = new PinoutRuntime();
   const config = loadPinoutConfig();
 

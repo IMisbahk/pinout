@@ -80,6 +80,69 @@ export {
 } from './drivers/esp32/pins.js';
 export { esp32DevKitPinMap, resolveEsp32DevKitPin } from './drivers/esp32/boardMap.js';
 export { PinoutRuntime, DuplicateDeviceError, DeviceNotFoundError } from './runtime/runtime.js';
+export { createRuntimeFromConfig, type FromConfigOptions } from './runtime/fromConfig.js';
+export { PINOUT_VERSION } from './version.js';
+export {
+  defineModule,
+  type DefineModuleInput,
+  type ModuleDeviceMetadata,
+} from './module/defineModule.js';
+export { action, sensorRead, type ActionInput } from './module/action.js';
+export {
+  policiesFromDeclarative,
+  mergeModulePolicies,
+  type DeclarativePolicyMap,
+} from './module/policies.js';
+export {
+  runModuleConformance,
+  formatConformanceReport,
+  type ConformanceResult,
+} from './module/conformance.js';
+export {
+  MODULE_MANIFEST_FILENAME,
+  parseModuleManifest,
+  readModuleManifestFromFile,
+} from './module/manifest.js';
+export { loadModuleFromDirectory, type LoadedModule } from './module/loadModule.js';
+export {
+  ModuleNotFoundError,
+  ModuleAlreadyInstalledError,
+  ModuleInvalidError,
+  ModuleIncompatibleError,
+  ModuleLoadFailedError,
+  DeviceAlreadyExistsError,
+  DeviceConfigInvalidError,
+  DeviceBackendFailedError,
+} from './module/errors.js';
+export {
+  ensurePinoutHome,
+  installModuleFromPath,
+  uninstallModule,
+  inspectInstalledModule,
+  readModulesIndex,
+  type InstalledModuleRecord,
+} from './home/moduleStore.js';
+export {
+  readDevicesFile,
+  writeDevicesFile,
+  addDeviceDefinition,
+  removeDeviceDefinition,
+  inspectDeviceDefinition,
+  type DeviceDefinition,
+  type DevicesFile,
+} from './home/deviceStore.js';
+export {
+  resolvePinoutHome,
+  resolveDevicesConfigPath,
+  PINOUT_HOME_ENV,
+  PINOUT_CONFIG_ENV,
+} from './home/paths.js';
+export {
+  listAvailableModules,
+  ensureModuleLoaded,
+  loadAllInstalledModules,
+  resetRuntimeModulesForTests,
+} from './modules/registry.js';
 export { DeviceInstance } from './runtime/deviceInstance.js';
 export {
   createHeterogeneousRuntime,

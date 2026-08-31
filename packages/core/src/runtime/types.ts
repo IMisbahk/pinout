@@ -1,7 +1,7 @@
 import type { CapabilityDescriptor, Transport } from '../types.js';
 import type { PolicyRule } from '../policy/types.js';
 
-export type DeviceClass = 'microcontroller' | 'robot.manipulator' | 'lab.environmental_chamber';
+export type DeviceClass = string;
 
 export type DeviceLifecycleStatus =
   'connecting' | 'ready' | 'busy' | 'faulted' | 'stopped' | 'disconnected';
@@ -64,6 +64,7 @@ export interface RegisterModuleDeviceOptions {
   simulated?: boolean;
   transport?: Transport;
   backendOptions?: Record<string, unknown>;
+  deploymentPolicies?: PolicyRule[];
 }
 
 export interface DeviceSummary {
