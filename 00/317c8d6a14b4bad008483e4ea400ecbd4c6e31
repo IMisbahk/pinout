@@ -1,0 +1,48 @@
+vitest.config.ts
+  s_000a425205c0e6::t_ee456b2f8c26f3 6-8
+  s_000a425205c0e6::t_e0ba1df2f5a6db 1-5,9-19
+eslint.config.js
+  s_000a425205c0e6::t_181e7e11ab1690 1-25
+.prettierrc.json
+  s_000a425205c0e6::t_a69bd091a939fa 1-6
+package.json
+  s_000a425205c0e6::t_c790a5c0b667b0 17-18
+  s_000a425205c0e6::t_adcb58e7d690ea 1-16,19-34
+packages/cli/package.json
+  s_000a425205c0e6::t_992103830c3425 1-22
+packages/core/tsconfig.json
+  s_000a425205c0e6::t_f83aa2d9181826 1-9
+packages/core/package.json
+  s_000a425205c0e6::t_cc23c440fde86c 1-28
+tsconfig.base.json
+  s_000a425205c0e6::t_d6eea21883f322 1-19
+.gitignore
+  s_000a425205c0e6::t_bfef775bad356f 4
+  s_000a425205c0e6::t_3d6b09b4ac3371 1-3,5-14
+tsconfig.json
+  s_000a425205c0e6::t_b8a9da87d883ff 1-7
+.prettierignore
+  s_000a425205c0e6::t_2029f0cd6f05b7 1-6
+packages/cli/tsconfig.json
+  s_000a425205c0e6::t_d3a205d69d75de 1-10
+.nvmrc
+  s_000a425205c0e6::t_058e44dd81e86d 1
+package-lock.json
+  s_000a425205c0e6::t_049c3548bc4346 1-3831
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "00317c8d6a14b4bad008483e4ea400ecbd4c6e31",
+  "prompts": {},
+  "sessions": {
+    "s_000a425205c0e6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "4869d552-1e60-4987-9c89-ef85f6cda351",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
