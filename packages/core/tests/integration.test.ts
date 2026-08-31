@@ -3,6 +3,7 @@ import {
   connect,
   simulatedEsp32,
   TimeoutError,
+  TransportError,
   UnsupportedCapabilityError,
   ValidationError,
 } from '@pinout/core';
@@ -67,7 +68,65 @@ describe('sdk to simulated ESP32', () => {
       connect({ transport: new SilentTransport(), timeoutMs: 40 }),
     ).rejects.toBeInstanceOf(TimeoutError);
   });
+
+  it('propagates a transport readable failure to in-flight requests', async () => {
+    const transport = new FailOnDemandTransport();
+    const device = await connect({ transport });
+    try {
+      transport.holdWrites = true;
+      const write = device.gpio.write(2, true);
+      transport.fail(new TransportError('Serial port error: cable unplugged'));
+      await expect(write).rejects.toBeInstanceOf(TransportError);
+    } finally {
+      await device.close();
+    }
+  });
 });
+
+class FailOnDemandTransport implements Transport {
+  readonly kind = 'fail-on-demand';
+  holdWrites = false;
+  private readonly inner = simulatedEsp32();
+  private readonly inbound = new ByteQueue();
+  private pump: Promise<void> | undefined;
+
+  get readable(): AsyncIterable<Uint8Array> {
+    return this.inbound;
+  }
+
+  async open(): Promise<void> {
+    await this.inner.open();
+    this.pump = this.forward();
+  }
+
+  async write(data: Uint8Array): Promise<void> {
+    if (this.holdWrites) {
+      return;
+    }
+    await this.inner.write(data);
+  }
+
+  fail(error: Error): void {
+    this.inbound.fail(error);
+  }
+
+  async close(): Promise<void> {
+    await this.inner.close();
+    await this.pump?.catch(() => undefined);
+    this.inbound.close();
+  }
+
+  private async forward(): Promise<void> {
+    try {
+      for await (const chunk of this.inner.readable) {
+        this.inbound.push(chunk);
+      }
+      this.inbound.close();
+    } catch (error) {
+      this.inbound.fail(error instanceof Error ? error : new TransportError(String(error)));
+    }
+  }
+}
 
 class SilentTransport implements Transport {
   readonly kind = 'silent';

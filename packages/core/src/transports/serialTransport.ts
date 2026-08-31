@@ -54,8 +54,9 @@ class NodeSerialTransport implements Transport {
       this.inbound.push(new Uint8Array(chunk));
     });
     port.on('error', (error: Error) => {
-      this.inbound.close();
-      void error;
+      this.inbound.fail(
+        new TransportError(`Serial port error: ${error.message}`, { cause: error }),
+      );
     });
     port.on('close', () => {
       this.inbound.close();
