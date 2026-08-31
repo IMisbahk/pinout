@@ -6,7 +6,11 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
-- `@pinout/mcp` — thin stdio MCP server exposing `device.toAgentTools()` and routing calls through `device.invoke()`.
+- Structured logger, env config (`PINOUT_PORT`, `PINOUT_BAUD`, `PINOUT_TIMEOUT`, `PINOUT_LOG_LEVEL`).
+- Device event API (`on` / `off` / `once`) including `gpio.changed`.
+- GPIO family: mode, toggle, pulse, PWM, analogRead, watch/unwatch.
+- Loopback and TCP transports; CLI `doctor`, `invoke`, `pins`, `run`, `blink`.
+- ESP32 GPIO 12 strap pin refused in SDK and firmware.
 - Shared protocol codecs: `encodeResponse`, `encodeEvent`, `maxProtocolLineBytes`.
 - Documentation: capability catalog, CLI reference, testing guide.
 - `npm run test:coverage` with Vitest v8 coverage for `@pinout/core`.

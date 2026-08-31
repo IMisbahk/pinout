@@ -38,8 +38,10 @@ Talk to the simulator through the CLI:
 
 ```bash
 npm run pinout -- hello --mock
+npm run pinout -- doctor
 npm run pinout -- gpio write 2 high --mock
 npm run pinout -- gpio read 2 --mock
+npm run pinout -- blink --mock
 ```
 
 Or from TypeScript:
@@ -101,6 +103,9 @@ npm run typecheck
 npm run build
 npm run pinout --      # CLI (builds first)
 npm run example:blink -- --mock
+npm run example:pwm -- --mock
+npm run example:analog -- --mock
+npm run example:watch -- --mock
 npm run mcp            # MCP stdio server (simulator; set PINOUT_PORT for hardware)
 ```
 

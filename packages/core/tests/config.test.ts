@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  connect,
-  loadPinoutConfig,
-  TimeoutError,
-  ValidationError,
-} from '@pinout/core';
+import { connect, loadPinoutConfig, TimeoutError, ValidationError } from '@pinout/core';
 import { ByteQueue } from '../src/transports/byteQueue.js';
 import type { Transport } from '@pinout/core';
 

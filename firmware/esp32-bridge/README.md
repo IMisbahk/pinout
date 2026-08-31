@@ -6,9 +6,9 @@ It does not implement a full board support package. It accepts structured comman
 
 ## What it supports
 
-- `sys.hello`
-- `gpio.write`
-- `gpio.read`
+- `sys.hello`, `sys.ping`, `sys.info`
+- `gpio.mode`, `gpio.write`, `gpio.read`, `gpio.toggle`, `gpio.pulse`
+- `gpio.pwm`, `gpio.analogRead`, `gpio.watch`, `gpio.unwatch` (`gpio.changed` events)
 
 See [docs/protocol.md](../../docs/protocol.md) for the message format.
 

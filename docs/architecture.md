@@ -19,7 +19,7 @@ Application / CLI / MCP adapter
                 │
                 ▼
              Transport
-        (serial | simulated)
+        (serial | simulated | loopback | tcp)
                 │
                 ▼
         Device firmware / simulator
@@ -47,7 +47,7 @@ Firmware lives in `firmware/esp32-bridge`. It is not an npm package.
 
 **Capability** — a named action with description, JSON Schema input/output, and a safety annotation. `gpio.write` is a capability, not a special core type. A motor or camera later is another capability on some device.
 
-**Driver knowledge** — ESP32 flash pins, input-only pins, and UART0 pins live under `drivers/esp32`. Core GPIO types only require a non-negative integer pin and a boolean level. Firmware repeats the same checks so a buggy host cannot drive a forbidden pin.
+**Driver knowledge** — ESP32 flash pins, input-only pins, UART0, GPIO 12 strap, and ADC pins live under `drivers/esp32`. Firmware repeats the same checks.
 
 ## Connection flow
 
@@ -102,10 +102,14 @@ The SDK does not depend on MCP.
 
 `@pinout/mcp` wraps `connect()` + `invoke()` and exposes those descriptors over stdio. It does not reimplement GPIO or serial, and it does not expose raw shell commands.
 
+## Events
+
+Firmware and the simulator may emit `{ v, event, payload }` lines. `ready` is the handshake. Other events (`gpio.changed`) are dispatched to `device.on()` / `once()` / `off()`.
+
 ## Intentionally deferred
 
-- Additional transports (BLE, TCP, CAN)
-- PWM, I2C, SPI, sensors, motors, cameras
+- BLE and CAN transports
+- I2C, SPI, sensors, motors, cameras
 - Multi-device topology
 - Flashing firmware from the CLI
 - A published npm release
