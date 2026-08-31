@@ -1,0 +1,25 @@
+packages/mcp/src/createRuntimeServer.ts
+  s_36883e4c616fba::t_68d8150cd7ca2d 1-98
+packages/mcp/src/runStdio.ts
+  s_36883e4c616fba::t_c1e2f75c671dde 2,5,8-12,27-55
+packages/mcp/tests/mcp.test.ts
+  s_36883e4c616fba::t_3f6be50142214f 3,6
+  s_36883e4c616fba::t_fbaf02b5068f95 92-143
+  s_36883e4c616fba::t_a4adfda9a4e19d 144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "bc89cfee13babfdc97383455b036241e2b4e9a84",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
