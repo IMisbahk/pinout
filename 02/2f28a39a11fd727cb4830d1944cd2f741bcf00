@@ -1,0 +1,21 @@
+docs/protocol.md
+  s_0a925cf046f798::t_4a64293e38b88c 70,103-177
+firmware/esp32-bridge/src/main.cpp
+  s_0a925cf046f798::t_4a64293e38b88c 12-21,27,62-76,83-85,88-93,110-152,177-254,256-276,282-292,294-304,307,311-323,338-349,358-381,412,421
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "022f28a39a11fd727cb4830d1944cd2f741bcf00",
+  "prompts": {},
+  "sessions": {
+    "s_0a925cf046f798": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d5dcc4af-0193-4ca5-ba88-9a9f9ab83ae1",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
