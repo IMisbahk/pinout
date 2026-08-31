@@ -1,0 +1,41 @@
+packages/cli/src/runCli.ts
+  s_36883e4c616fba::t_e3d59da73cb5c8 8-13
+  s_36883e4c616fba::t_9ac8d39f22ca59 121,129
+  s_36883e4c616fba::t_644b1e1369a0eb 131
+  s_36883e4c616fba::t_2cb64a7e25a5df 172-173
+  s_36883e4c616fba::t_0394d29c534be2 6
+  s_36883e4c616fba::t_28dc026b2028ab 106-108,110-111,114-116
+  s_36883e4c616fba::t_6934b4fb6ec1a0 59-66,84-101
+  s_36883e4c616fba::t_c83853d25b79ce 102,109
+  s_36883e4c616fba::t_dab6da507a29b9 7,105
+packages/cli/src/moduleScaffold.ts
+  s_36883e4c616fba::t_0b41ebff09d361 1-171
+packages/cli/src/pinoutHomeCommands.ts
+  s_36883e4c616fba::t_dd6f1bdda010eb 59-63
+  s_36883e4c616fba::t_f38b6587d37d56 1-58,64-235,237-253,255-293
+  s_36883e4c616fba::t_bb1480d8b4bd30 236
+  s_36883e4c616fba::t_18ba1f7d1426d7 254
+  s_36883e4c616fba::t_d680180ebd1852 294-297
+packages/cli/tests/cli.test.ts
+  s_36883e4c616fba::t_3ccaea37257fd2 163
+packages/cli/tests/pinoutHome.test.ts
+  s_36883e4c616fba::t_d6b94db5fa3498 1-35,37-41,50-53,59,64-67
+  s_36883e4c616fba::t_7786712d7549a6 36,42-49,54-58,60-63
+  s_36883e4c616fba::t_c14002923bf91f 68-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "003fd7f43021a6d41e37390cd982891d4a962be8",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
