@@ -1,0 +1,71 @@
+packages/core/src/types.ts
+  s_000a425205c0e6::t_ee5dd0c30c241c 1-56
+packages/core/src/errors.ts
+  s_000a425205c0e6::t_7a8d4479908f9e 1-57
+packages/core/src/connect.ts
+  s_000a425205c0e6::t_640049a200e834 1-11
+packages/core/src/lineReader.ts
+  s_000a425205c0e6::t_beff19a0f576cd 1-8,17-26,29
+  s_000a425205c0e6::t_bdebe7b75df3df 9-16,27-28
+packages/core/tests/bridge.test.ts
+  s_000a425205c0e6::t_46c52e63a77943 1-6,8-62,69-70
+  s_000a425205c0e6::t_40c690a9dc162b 63-68
+  s_000a425205c0e6::t_d520ad96f63e9a 7
+packages/core/src/drivers/esp32/bridge.ts
+  s_000a425205c0e6::t_571cb4247765b7 1-3,5-39,41,50-82,87
+  s_000a425205c0e6::t_40c690a9dc162b 4,83-86
+  s_000a425205c0e6::t_290961a8d72e64 40,42-49
+packages/core/src/session.ts
+  s_000a425205c0e6::t_3ceef2ade015ff 107-110,112-115,117-120,128
+  s_000a425205c0e6::t_40c690a9dc162b 53-56,69-80
+  s_000a425205c0e6::t_96e4a1763e49fb 40,44-45
+  s_000a425205c0e6::t_4336e5f7a0ced7 1-39,41-43,46-52,57-68,81-106,111,116,121-127,129-195
+packages/core/src/drivers/esp32/pins.ts
+  s_000a425205c0e6::t_a5dcb36c1e4377 1
+  s_000a425205c0e6::t_10968c05dc73a3 2-57
+packages/core/src/transports/serialTransport.ts
+  s_000a425205c0e6::t_bc166524ba9339 1,5-66,73-100,106-123,127-145
+  s_000a425205c0e6::t_2c98b4da50581a 2-4
+  s_000a425205c0e6::t_40c690a9dc162b 67-72,101-105,124-126
+packages/core/tests/protocol.test.ts
+  s_000a425205c0e6::t_ac62a012cc654d 1-63
+packages/core/tests/integration.test.ts
+  s_000a425205c0e6::t_40c690a9dc162b 66-68
+  s_000a425205c0e6::t_30c827bdc31662 1-65,69-122
+packages/core/src/drivers/esp32/simulatedTransport.ts
+  s_000a425205c0e6::t_002c3e227bab8f 1-76,78-80,82-89
+  s_000a425205c0e6::t_40c690a9dc162b 77,81
+packages/core/src/serial.ts
+  s_000a425205c0e6::t_364a4a9663bf83 1-2
+packages/core/src/device.ts
+  s_000a425205c0e6::t_b69ca776d4e43b 2,9-27,32-86
+  s_000a425205c0e6::t_fe1bf776fa084b 1
+  s_000a425205c0e6::t_40c690a9dc162b 3-8,28-31
+packages/core/src/capabilities.ts
+  s_000a425205c0e6::t_40c690a9dc162b 62-63
+  s_000a425205c0e6::t_dfcb37f353125b 1-61,64-125
+packages/core/src/protocol.ts
+  s_000a425205c0e6::t_40c690a9dc162b 110-114
+  s_000a425205c0e6::t_1e34d91d4ccf34 1-109,115-154
+packages/core/src/index.ts
+  s_000a425205c0e6::t_f7ff0146ac5aec 16
+  s_000a425205c0e6::t_e4a96b461b4689 1-15,17-33
+packages/core/src/transports/byteQueue.ts
+  s_000a425205c0e6::t_23be03a0a48e49 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d07d209df7acbab5e4863babe7be813e527e0a8f",
+  "prompts": {},
+  "sessions": {
+    "s_000a425205c0e6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "4869d552-1e60-4987-9c89-ef85f6cda351",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
