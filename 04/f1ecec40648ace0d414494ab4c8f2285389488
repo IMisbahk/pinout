@@ -1,0 +1,36 @@
+packages/mcp/package.json
+  s_31bf6e29b1447f::t_bd5a5fffa50781 15-16,20-22
+  s_165a83285c1770::t_480a5cdc80c4b5 23
+packages/cli/package.json
+  s_31bf6e29b1447f::t_43e770e54a0497 26-27,31-33
+  s_165a83285c1770::t_f1508a04274423 34
+packages/core/package.json
+  s_31bf6e29b1447f::t_8494b7bd22d33a 22-23,27-29
+  s_165a83285c1770::t_512be52220b1f4 30
+package.json
+  s_31bf6e29b1447f::t_ce99cf744c5e1a 26-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "04f1ecec40648ace0d414494ab4c8f2285389488",
+  "prompts": {},
+  "sessions": {
+    "s_165a83285c1770": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ce339a6c-0cef-4cff-a8db-7cc21a7356fa",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
