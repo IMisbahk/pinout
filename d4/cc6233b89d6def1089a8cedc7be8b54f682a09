@@ -1,0 +1,37 @@
+packages/cli/tests/cli.test.ts
+  s_000a425205c0e6::t_9958fc687b84eb 1-51
+examples/blink.ts
+  s_000a425205c0e6::t_40c690a9dc162b 11
+  s_000a425205c0e6::t_1ed8af19228594 1-10,12-55
+firmware/esp32-bridge/src/main.cpp
+  s_000a425205c0e6::t_2f3d55f537a4be 1-49,51-63,65-69,71-121,123-191
+  s_000a425205c0e6::t_369a769560c667 50,64,70
+  s_000a425205c0e6::t_b27ca7230ee8a9 122
+firmware/esp32-bridge/platformio.ini
+  s_000a425205c0e6::t_3b8f1b397c69ba 1-9
+packages/cli/src/index.ts
+  s_000a425205c0e6::t_818fdc8945210a 1-5
+firmware/esp32-bridge/README.md
+  s_000a425205c0e6::t_7f3fe783394b4c 1-54
+packages/cli/src/runCli.ts
+  s_000a425205c0e6::t_47289f2af1cea1 29
+  s_000a425205c0e6::t_246ce96ba5e172 1-28,30-41,43-123,125-179,183-184
+  s_000a425205c0e6::t_40c690a9dc162b 42,180-182
+  s_000a425205c0e6::t_89bd1a0c446924 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d4cc6233b89d6def1089a8cedc7be8b54f682a09",
+  "prompts": {},
+  "sessions": {
+    "s_000a425205c0e6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "4869d552-1e60-4987-9c89-ef85f6cda351",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
