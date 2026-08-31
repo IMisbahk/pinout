@@ -1,0 +1,28 @@
+packages/core/src/runtime/agentTools.ts
+  s_36883e4c616fba::t_83b193c1c69442 1-52
+  s_36883e4c616fba::t_3aa0f6885dfb1e 53-55
+packages/core/src/runtime/createHeterogeneousRuntime.ts
+  s_36883e4c616fba::t_7cf94eca4116cf 1-68
+packages/core/src/index.ts
+  s_36883e4c616fba::t_8844eaa73002e4 98-99
+  s_36883e4c616fba::t_4f5e29cf19b978 117-126
+  s_36883e4c616fba::t_4cb85b14f9bda9 38-43
+  s_36883e4c616fba::t_d62c9494305f5b 82-97,100
+  s_36883e4c616fba::t_7e0de77beffb2d 101-104,127-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a349dd023c70dc7c88f38e82a5c9163a452c7b4d",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
