@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "weird-sensor/thermometer",
+  "version": "0.1.0",
+  "deviceClass": "sensor.temperature",
+  "entrypoint": "./dist/index.js",
+  "name": "Weird Network Sensor",
+  "description": "Reference external Pinout module — network temperature and humidity sensor.",
+  "vendor": "Weird Labs",
+  "model": "WS-100",
+  "pinout": {
+    "minimumVersion": "0.2.0"
+  }
+}
