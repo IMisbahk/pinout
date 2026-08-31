@@ -107,7 +107,11 @@ npm run example:pwm -- --mock
 npm run example:analog -- --mock
 npm run example:watch -- --mock
 npm run demo:heterogeneous     # ESP32 + robot arm + chamber demo
+npm run demo:generate          # generator plan for heatbox fixture
+npm run eval:generator         # deterministic generator fixture evaluation
 npm run example:mcp-heterogeneous
+npm run mcp:heterogeneous    # MCP stdio server over full runtime
+```
 
 ## External modules (Sprint 3)
 
@@ -123,9 +127,18 @@ npm run pinout -- invoke sensor-01 temperature.read --payload '{}'
 ```
 
 See [docs/build-a-module.md](docs/build-a-module.md) for the full developer guide.
-npm run example:mcp-heterogeneous  # inspect runtime MCP tool list
-npm run mcp:heterogeneous    # MCP stdio server over full runtime
+
+## Module generator (Sprint 4)
+
+Compile vendor documentation into a **candidate** module (never auto-installed):
+
+```bash
+npm run pinout -- generate ./fixtures/generator/heatbox-sdk --plan
+npm run pinout -- generate ./fixtures/generator/heatbox-sdk --output /tmp/heatbox-module --test
+npm run pinout -- module test /tmp/heatbox-module
 ```
+
+Review `GENERATION_REPORT.md` before connecting to hardware. See [docs/generator.md](docs/generator.md).
 
 ## Architecture
 
@@ -134,6 +147,7 @@ npm run mcp:heterogeneous    # MCP stdio server over full runtime
 | `@pinout/core` | Device, capabilities, protocol, transports, ESP32 pin rules, simulator |
 | `@pinout/cli` | `pinout` commands that call the SDK |
 | `@pinout/mcp` | MCP stdio server — tools from `toAgentTools()`, calls via `invoke()` |
+| `@pinout/generator` | Hardware docs/SDK → candidate external module compiler |
 | `firmware/esp32-bridge` | Minimal ESP32 firmware speaking protocol v1 over UART |
 
 Transports are replaceable. Drivers own board-specific knowledge (ESP32 flash pins, input-only GPIOs). The core does not catalog every device ever made.
@@ -146,6 +160,9 @@ Documentation:
 - [docs/protocol.md](docs/protocol.md)
 - [docs/capabilities.md](docs/capabilities.md)
 - [docs/cli.md](docs/cli.md)
+- [docs/build-a-module.md](docs/build-a-module.md)
+- [docs/generator.md](docs/generator.md)
+- [docs/generator-safety.md](docs/generator-safety.md)
 - [docs/testing.md](docs/testing.md)
 - [CHANGELOG.md](CHANGELOG.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)

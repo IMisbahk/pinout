@@ -165,6 +165,18 @@ See [examples/external-module/weird-sensor](../examples/external-module/weird-se
 
 This is the foundation for future **Pinout Verified** certification.
 
+## Generated modules (Sprint 4)
+
+Pinout can compile documentation/SDK material into candidate modules:
+
+```bash
+pinout generate ./vendor-sdk --plan
+pinout generate ./vendor-sdk --output ./generated/acme-device
+pinout module test ./generated/acme-device
+```
+
+Generated modules start at status **GENERATED / UNVERIFIED**. They use the same `defineModule` SDK as hand-written modules but require human review before installation. See [generator.md](generator.md) and [generator-safety.md](generator-safety.md).
+
 ## Local registry layout
 
 ```

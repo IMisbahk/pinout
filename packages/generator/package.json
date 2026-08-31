@@ -1,0 +1,23 @@
+{
+  "name": "@pinout/generator",
+  "version": "0.1.0",
+  "description": "Hardware documentation and SDK to candidate Pinout module compiler.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@pinout/core": "*"
+  }
+}

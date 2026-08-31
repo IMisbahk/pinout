@@ -29,7 +29,7 @@ Single-device code paths still use `connect()` → `Device` → `Session` direct
 
 **Local registry** — `~/.pinout/` stores installed modules and device config. Not a cloud service.
 
-See [docs/modules.md](modules.md), [docs/policies.md](policies.md), [docs/build-a-module.md](build-a-module.md).
+See [docs/modules.md](modules.md), [docs/policies.md](policies.md), [docs/build-a-module.md](build-a-module.md), [docs/generator.md](generator.md).
 
 ## Packages
 
@@ -40,8 +40,27 @@ This repository is an npm workspace:
 | `@pinout/core` | Abstractions, protocol, ESP32 pin rules, simulated device, Node serial transport. |
 | `@pinout/cli` | Command line that calls the SDK. No independent hardware logic. |
 | `@pinout/mcp` | Thin MCP stdio server: single-device or runtime-derived tools from all registered devices. |
+| `@pinout/generator` | Documentation/SDK → Hardware IR → candidate external module (no AI deps in core). |
 
 Firmware lives in `firmware/esp32-bridge`. It is not an npm package.
+
+## Generate pipeline (Sprint 4)
+
+```text
+Hardware docs / SDK
+        │
+        ▼
+   @pinout/generator
+   (ingest → IR → emit)
+        │
+        ▼
+  Candidate module (GENERATED / UNVERIFIED)
+        │
+        ▼
+  pinout module test → human review → install
+```
+
+See [docs/generator.md](generator.md) and [docs/generator-safety.md](generator-safety.md).
 
 ## Core concepts
 

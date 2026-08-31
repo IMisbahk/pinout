@@ -11,6 +11,7 @@ import {
   runInvokeCommand,
   runRuntimeStartCommand,
 } from './pinoutHomeCommands.js';
+import { registerGenerateCommands } from './generateCommands.js';
 import {
   addConnectionOptions,
   openDevice,
@@ -99,6 +100,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
 
   registerModuleCommands(program, outputFor, io);
   registerDeviceCommands(program, outputFor, io);
+  registerGenerateCommands(program, outputFor, io);
 
   const runtime = program.command('runtime').description('Multi-device Pinout runtime commands.');
 

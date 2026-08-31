@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added (Sprint 4 — module generator)
+
+- `@pinout/generator` package: documentation/SDK → Hardware Interface IR → candidate module.
+- Hardware Interface IR with evidence, confidence, uncertainties, and safety extraction.
+- Source ingestion for text, Markdown, source code, JSON/YAML, and directories.
+- Semantic capability mapper (`temperature.*`, `motion.*`, `gripper.*`, …).
+- LLM provider abstraction: deterministic `mock` (CI) and OpenAI-compatible `http`.
+- CLI: `pinout generate <source>` with `--plan`, `--output`, `--provider`, `--model`, `--test`.
+- Generated module layout: manifest, backend, simulator, tests, `GENERATION_REPORT.md`, provenance.
+- Fixture vendor SDKs and evaluation harness under `fixtures/generator/`.
+- Documentation: [generator.md](docs/generator.md), [generator-safety.md](docs/generator-safety.md).
+
 ### Added (Sprint 3 — module ecosystem)
 
 - Public Module SDK: `defineModule`, `action`, `sensorRead`, declarative policies.

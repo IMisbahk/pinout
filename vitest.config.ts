@@ -8,6 +8,9 @@ export default defineConfig({
     },
     alias: {
       '@pinout/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
+      '@pinout/generator': fileURLToPath(
+        new URL('./packages/generator/src/index.ts', import.meta.url),
+      ),
       '@pinout/core/serial': fileURLToPath(
         new URL('./packages/core/src/serial.ts', import.meta.url),
       ),
