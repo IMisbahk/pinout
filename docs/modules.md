@@ -23,13 +23,21 @@ Device instance (esp32-01)
   └── state: firmware identity + GPIO levels
 ```
 
-## Built-in modules (Sprint 2)
+## Built-in modules (Sprint 2+)
 
 | Module id | Device class | Backend |
 | --- | --- | --- |
 | `pinout/esp32` | `microcontroller` | Serial / simulated ESP32 (protocol v1) |
 | `pinout/robot-arm` | `robot.manipulator` | In-process simulator |
 | `pinout/environmental-chamber` | `lab.environmental_chamber` | In-process simulator |
+| `pinout/dc-motor` | `actuator.dc_motor` | In-process simulator |
+| `pinout/servo` | `actuator.servo` | In-process simulator |
+| `pinout/stepper` | `actuator.stepper` | In-process simulator |
+| `pinout/distance` | `sensor.distance` | In-process simulator |
+| `pinout/imu` | `sensor.imu` | In-process simulator |
+| `pinout/encoder` | `sensor.encoder` | In-process simulator |
+| `pinout/limit-switch` | `sensor.limit_switch` | In-process simulator |
+| `pinout/force` | `sensor.force` | In-process simulator |
 
 ## External modules (Sprint 3)
 
@@ -75,6 +83,14 @@ Capabilities use dotted names grouped by physical semantics:
 
 - `gpio.*` — digital I/O (microcontrollers)
 - `motion.*`, `gripper.*`, `pose.*` — manipulators
+- `motor.*` — DC motors
+- `servo.*` — hobby servos
+- `stepper.*` — stepper motors
+- `distance.*` — rangefinders
+- `imu.*` — inertial measurement units
+- `encoder.*` — quadrature encoders
+- `limit.*` — end-stops / limit switches
+- `force.*` — load cells / force sensors
 - `temperature.*`, `door.*`, `experiment.*` — environmental chambers
 - `temperature.*`, `humidity.*` — sensors (external modules)
 - `status.*`, `sys.*` — diagnostics shared across classes

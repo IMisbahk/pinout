@@ -72,6 +72,46 @@ ADC sample on GPIO 32–39. Output `value` is 0–4095.
 
 Subscribe or unsubscribe to `gpio.changed` events for a pin.
 
+### `gpio.servo`
+
+Drive a hobby servo: `{ pin, angle }` with angle 0–180°. Uses 50 Hz LEDC (1–2 ms pulse). Distinct from the `pinout/servo` module, which has no pin — it *is* the servo.
+
+### `gpio.motor`
+
+Drive a DC motor: `{ pwmPin, speed, dirPin? }`. Speed is 0–1 without `dirPin`, or −1 to 1 with a direction pin. Distinct from `pinout/dc-motor`.
+
+## I2C (ESP32 bridge)
+
+Default pins: SDA 21, SCL 22, 100 kHz. Payloads are capped at 32 bytes by the 512-byte protocol line.
+
+### `i2c.begin`
+
+Optional `{ sda, scl, frequency }`. Result echoes the active bus config.
+
+### `i2c.write`
+
+Input: `{ address, data }` where `address` is 0–127 and `data` is 1–32 bytes. Hardware returns `BUS_ERROR` on NACK.
+
+### `i2c.read`
+
+Input: `{ address, length }`. Output: `{ address, data }`.
+
+### `i2c.scan`
+
+Returns `{ addresses }` for devices that acknowledge (1–127). The simulator returns addresses that have been written.
+
+## SPI (ESP32 bridge)
+
+Default pins: SCK 18, MISO 19, MOSI 23, CS 5, 1 MHz, mode 0.
+
+### `spi.begin`
+
+Optional `{ sck, miso, mosi, chipSelect, frequency }`.
+
+### `spi.transfer`
+
+Input: `{ data, chipSelect? }`. Full-duplex; the simulator echoes `data`.
+
 ## Robot manipulator (`pinout/robot-arm`)
 
 Semantic motion and gripper capabilities for simulated and future real arms.
@@ -99,6 +139,76 @@ Events: `motion.started`, `motion.completed`, `motion.stopped`, `gripper.changed
 | `status.read` | `{}` | Full chamber state |
 
 Events: `temperature.changed`, `door.changed`, `experiment.started`, `experiment.stopped`.
+
+## DC motor (`pinout/dc-motor`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `motor.set` | `{ speed }` | Policy: speed −1 to 1 |
+| `motor.stop` | `{}` | Sets speed to 0 |
+| `motor.read` | `{}` | Commanded speed |
+| `status.read` | `{}` | `ready` / `running` / `stopped` / `faulted` |
+
+Events: `motor.changed`.
+
+## Hobby servo (`pinout/servo`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `servo.set_angle` | `{ angle }` | Policy: 0–180° |
+| `servo.read` | `{}` | Commanded angle |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `servo.changed`.
+
+## Stepper motor (`pinout/stepper`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `stepper.step` | `{ steps }` | Relative steps; policy ±100000 |
+| `stepper.goto` | `{ position }` | Absolute position; policy ±100000 |
+| `stepper.home` | `{}` | Move to step 0 |
+| `stepper.stop` | `{}` | Halt motion |
+| `stepper.read` | `{}` | Position + homed |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `stepper.moved`, `stepper.stopped`.
+
+## Distance sensor (`pinout/distance`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `distance.read` | `{}` | Range in meters |
+| `status.read` | `{}` | Operational snapshot |
+
+## IMU (`pinout/imu`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `imu.read` | `{}` | Accel (g) and gyro (rad/s) |
+| `status.read` | `{}` | Operational snapshot |
+
+## Encoder (`pinout/encoder`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `encoder.read` | `{}` | Tick count |
+| `encoder.reset` | `{}` | Zero ticks |
+| `status.read` | `{}` | Operational snapshot |
+
+## Limit switch (`pinout/limit-switch`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `limit.read` | `{}` | `{ triggered }` |
+| `status.read` | `{}` | Operational snapshot |
+
+## Force sensor (`pinout/force`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `force.read` | `{}` | Newtons |
+| `status.read` | `{}` | Operational snapshot |
 
 ## Agent tools
 

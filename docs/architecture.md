@@ -134,8 +134,7 @@ Firmware and the simulator may emit `{ v, event, payload }` lines. `ready` is th
 ## Intentionally deferred
 
 - BLE and CAN transports
-- I2C, SPI, sensors, motors, cameras
-- Multi-device topology
+- Cameras
 - Flashing firmware from the CLI
 - A published npm release
 - ESP32-S3 native USB and RGB LEDs

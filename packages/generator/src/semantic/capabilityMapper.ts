@@ -60,6 +60,71 @@ const VENDOR_PATTERNS: Array<{ pattern: RegExp; capabilityId: string; confidence
   { pattern: /\b(status|health|ping)\b/i, capabilityId: 'status.read', confidence: 0.75 },
   { pattern: /\bgpio[_-]?write\b/i, capabilityId: 'gpio.write', confidence: 0.95 },
   { pattern: /\bgpio[_-]?read\b/i, capabilityId: 'gpio.read', confidence: 0.95 },
+  {
+    pattern: /\b(set[_-]?speed|motor[_-]?set|set[_-]?motor)\b/i,
+    capabilityId: 'motor.set',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(motor[_-]?stop|stop[_-]?motor)\b/i,
+    capabilityId: 'motor.stop',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(set[_-]?angle|servo[_-]?write|write[_-]?angle)\b/i,
+    capabilityId: 'servo.set_angle',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(stepper[_-]?step|step\s*\(|relative[_-]?step)\b/i,
+    capabilityId: 'stepper.step',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(stepper[_-]?goto|goto[_-]?position|move[_-]?steps)\b/i,
+    capabilityId: 'stepper.goto',
+    confidence: 0.86,
+  },
+  {
+    pattern: /\b(i2c[_-]?write|wire[_-]?write)\b/i,
+    capabilityId: 'i2c.write',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(i2c[_-]?read|wire[_-]?read)\b/i,
+    capabilityId: 'i2c.read',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(spi[_-]?transfer|spi[_-]?write)\b/i,
+    capabilityId: 'spi.transfer',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?distance|get[_-]?distance|ultrasonic[_-]?read)\b/i,
+    capabilityId: 'distance.read',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(read[_-]?imu|get[_-]?accel|read[_-]?gyro)\b/i,
+    capabilityId: 'imu.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?encoder|encoder[_-]?count|get[_-]?ticks)\b/i,
+    capabilityId: 'encoder.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?limit|limit[_-]?switch|end[_-]?stop)\b/i,
+    capabilityId: 'limit.read',
+    confidence: 0.86,
+  },
+  {
+    pattern: /\b(read[_-]?force|load[_-]?cell|get[_-]?newtons)\b/i,
+    capabilityId: 'force.read',
+    confidence: 0.88,
+  },
 ];
 
 export function mapVendorSymbol(symbol: string): SemanticMapping | undefined {
@@ -93,8 +158,32 @@ export function inferDeviceClass(text: string): string | undefined {
   if (/environmental[_\s-]?chamber|heatbox|chamber/i.test(text)) {
     return 'lab.environmental_chamber';
   }
-  if (/robot|manipulator|actuator|arm/i.test(text)) {
+  if (/robot|manipulator|actuator|arm/i.test(text) && !/dc\s*motor|stepper|servo/i.test(text)) {
     return 'robot.manipulator';
+  }
+  if (/\bdc\s*motor\b|brushed\s*motor/i.test(text)) {
+    return 'actuator.dc_motor';
+  }
+  if (/\bstepper\b/i.test(text)) {
+    return 'actuator.stepper';
+  }
+  if (/\bservo\b/i.test(text)) {
+    return 'actuator.servo';
+  }
+  if (/rangefinder|ultrasonic|tof|time[_-]?of[_-]?flight|lidar/i.test(text)) {
+    return 'sensor.distance';
+  }
+  if (/\bimu\b|accelerometer|gyroscope/i.test(text)) {
+    return 'sensor.imu';
+  }
+  if (/\bencoder\b|quadrature/i.test(text)) {
+    return 'sensor.encoder';
+  }
+  if (/limit[_-\s]?switch|end[_-\s]?stop/i.test(text)) {
+    return 'sensor.limit_switch';
+  }
+  if (/load[_-\s]?cell|force[_-\s]?sensor/i.test(text)) {
+    return 'sensor.force';
   }
   if (/thermometer|temperature sensor|humidity sensor/i.test(text)) {
     return 'sensor.temperature';
