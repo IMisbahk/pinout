@@ -10,6 +10,14 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettier,
   {
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+      },
+    },
+  },
+  {
     files: ['packages/**/*.ts', 'examples/**/*.ts', 'eslint.config.js', 'vitest.config.ts'],
     rules: {
       '@typescript-eslint/no-unused-vars': [

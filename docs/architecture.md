@@ -3,44 +3,68 @@
 Pinout is a hardware abstraction layer. Applications and agents call typed actions. Drivers and firmware know how a particular board actually works.
 
 ```text
-Application / CLI / future MCP adapter
+Application / CLI / MCP adapter
                 │
                 ▼
-         Pinout Device API
-         (invoke, gpio, capabilities)
+         PinoutRuntime (multi-device)
                 │
-                ▼
-              Session
-         (id matching, timeouts)
-                │
-                ▼
-            Protocol v1
-           (NDJSON codec)
-                │
-                ▼
-             Transport
-        (serial | simulated)
-                │
-                ▼
-        Device firmware / simulator
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+   Device    Device    Device
+  instance  instance  instance
+       │        │        │
+       ▼        ▼        ▼
+  policy + schema validation
+       │        │        │
+       ▼        ▼        ▼
+   backend  backend  backend
+ (protocol) (sim arm) (sim chamber)
 ```
+
+Single-device code paths still use `connect()` → `Device` → `Session` directly. The runtime wraps multiple devices behind one API.
+
+**PinoutRuntime** — multi-device registry. Loads modules from built-ins + `~/.pinout/modules/`. Bootstraps devices from `devices.json` via `PinoutRuntime.fromConfig()`.
+
+**Module SDK** — `defineModule()` validates and exports a `PinoutModuleDefinition`. External packages never import internal paths.
+
+**Local registry** — `~/.pinout/` stores installed modules and device config. Not a cloud service.
+
+See [docs/modules.md](modules.md), [docs/policies.md](policies.md), [docs/build-a-module.md](build-a-module.md), [docs/generator.md](generator.md).
 
 ## Packages
 
-This repository is an npm workspace. Only packages with real code exist:
+This repository is an npm workspace:
 
 | Package | Role |
 | --- | --- |
 | `@pinout/core` | Abstractions, protocol, ESP32 pin rules, simulated device, Node serial transport. |
 | `@pinout/cli` | Command line that calls the SDK. No independent hardware logic. |
+| `@pinout/mcp` | Thin MCP stdio server: single-device or runtime-derived tools from all registered devices. |
+| `@pinout/generator` | Documentation/SDK → Hardware IR → candidate external module (no AI deps in core). |
 
 Firmware lives in `firmware/esp32-bridge`. It is not an npm package.
 
-Empty packages were not added for drivers, MCP, cameras, or robotics stacks. Those can become packages when they contain an implementation.
+## Generate pipeline (Sprint 4)
+
+```text
+Hardware docs / SDK
+        │
+        ▼
+   @pinout/generator
+   (ingest → IR → emit)
+        │
+        ▼
+  Candidate module (GENERATED / UNVERIFIED)
+        │
+        ▼
+  pinout module test → human review → install
+```
+
+See [docs/generator.md](generator.md) and [docs/generator-safety.md](generator-safety.md).
 
 ## Core concepts
 
-**Transport** — opens, writes bytes, yields bytes, closes. Serial and the ESP32 simulator both implement this. BLE, TCP, or USB could implement it later without changing `Device`.
+**Transport** — opens, writes bytes, yields bytes, closes. Serial and the ESP32 simulator both implement this. Additional transports can implement the same interface without changing `Device`.
 
 **Session** — line-framing, request ids, timeouts, `ready` handshake. Sessions speak Pinout protocol v1. They do not know what GPIO 2 means.
 
@@ -48,7 +72,7 @@ Empty packages were not added for drivers, MCP, cameras, or robotics stacks. Tho
 
 **Capability** — a named action with description, JSON Schema input/output, and a safety annotation. `gpio.write` is a capability, not a special core type. A motor or camera later is another capability on some device.
 
-**Driver knowledge** — ESP32 flash pins, input-only pins, and UART0 pins live under `drivers/esp32`. Core GPIO types only require a non-negative integer pin and a boolean level. Firmware repeats the same checks so a buggy host cannot drive a forbidden pin.
+**Driver knowledge** — ESP32 flash pins, input-only pins, UART0, GPIO 12 strap, and ADC pins live under `drivers/esp32`. Firmware repeats the same checks.
 
 ## Connection flow
 
@@ -101,14 +125,19 @@ The SDK does not depend on MCP.
 - `outputSchema`
 - `annotations` (safety)
 
-A future MCP server should wrap `connect()` + `invoke()` and expose those descriptors as tools. It should not reimplement GPIO or serial.
+`@pinout/mcp` wraps `connect()` + `invoke()` and exposes those descriptors over stdio. It does not reimplement GPIO or serial, and it does not expose raw shell commands.
+
+## Events
+
+Firmware and the simulator may emit `{ v, event, payload }` lines. `ready` is the handshake. Other events (`gpio.changed`) are dispatched to `device.on()` / `once()` / `off()`.
 
 ## Intentionally deferred
 
-- Additional transports (BLE, TCP, CAN)
-- PWM, I2C, SPI, sensors, motors, cameras
+- BLE and CAN transports
+- I2C, SPI, sensors, motors, cameras
 - Multi-device topology
 - Flashing firmware from the CLI
-- An MCP server process
 - A published npm release
 - ESP32-S3 native USB and RGB LEDs
+
+See [docs/capabilities.md](capabilities.md) for the current action catalog.

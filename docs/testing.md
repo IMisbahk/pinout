@@ -1,0 +1,92 @@
+# Testing
+
+Pinout uses [Vitest](https://vitest.dev/) for unit and integration tests. No physical hardware is required for CI — the simulated ESP32 transport implements the same protocol as firmware.
+
+## Running tests
+
+```bash
+npm test              # run all tests once
+npm run test:watch    # watch mode
+npm run test:coverage # coverage report (core package)
+```
+
+Quality gates used before merging:
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Test layout
+
+Tests live next to each package under `packages/<name>/tests/`:
+
+| Package | Focus |
+| --- | --- |
+| `@pinout/core` | Protocol, runtime, **module SDK**, policy, local registry |
+| `@pinout/cli` | Commander parsing, **module/device/generate commands** |
+| `@pinout/mcp` | MCP tool listing; **dynamic runtime tools** (no per-device code) |
+| `@pinout/generator` | Source ingestion, Hardware IR, candidate module emission |
+
+Core Sprint 3 test files:
+
+| File | Focus |
+| --- | --- |
+| `moduleEcosystem.test.ts` | defineModule, install/load, fromConfig, policy merge, conformance |
+| `pinoutHome.test.ts` | CLI module install, device add, invoke |
+
+| File | Focus |
+| --- | --- |
+| `policy.test.ts` | Numeric range, state preconditions, workspace bounds, rejection format |
+| `runtime.test.ts` | Registration, duplicate IDs, invoke routing, event multiplexing, policy denials |
+| `simulators.test.ts` | Robot arm movement/gripper/events; chamber temperature/door/experiment |
+
+### Generator (Sprint 4)
+
+```bash
+npm run eval:generator          # deterministic fixture evaluation (CI)
+npm run demo:generate             # plan output for heatbox fixture
+npm run eval:generator:live       # optional live HTTP provider (not in CI)
+```
+
+Fixture SDKs: `fixtures/generator/heatbox-sdk`, `actuator-sdk`, `ambiguous-sdk`.
+
+Golden IR expectations and metrics (precision/recall, false safety constraints) live in `packages/generator/tests/`.
+
+Prefer real protocol round-trips over mocking internal functions. Mock transports are fine when testing error propagation or MCP wiring.
+
+### Heterogeneous demo
+
+```bash
+npm run demo:heterogeneous   # ESP32 + robot arm + chamber simulators
+pinout module test ./examples/external-module/weird-sensor
+PINOUT_CONFIG=~/.pinout/devices.json npm run mcp
+```
+
+## Simulator vs hardware
+
+CI runs against `simulatedEsp32()` only. To verify on a board:
+
+1. Flash [firmware/esp32-bridge](../firmware/esp32-bridge/README.md).
+2. Run `npm run pinout -- hello --port <path>`.
+3. Run GPIO write/read against a safe pin (typically GPIO 2 on DevKit boards).
+
+Hardware tests are manual; do not gate CI on attached devices.
+
+## Firmware compile (optional)
+
+CI includes a PlatformIO compile job when the toolchain is available. Locally:
+
+```bash
+cd firmware/esp32-bridge
+pio run
+```
+
+If PlatformIO is not installed, skip this step — Node tests and the simulator remain sufficient for SDK changes. Install via [platformio.org](https://platformio.org/) or `pip install platformio`.
+
+## Coverage
+
+`npm run test:coverage` reports line/branch coverage for `packages/core/src`. Thresholds are configured in [vitest.config.ts](../vitest.config.ts). Coverage is a development aid, not a publish gate.

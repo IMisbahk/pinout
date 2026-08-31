@@ -47,6 +47,12 @@ export class DisconnectedError extends PinoutError {
   }
 }
 
+export class AbortedError extends PinoutError {
+  constructor(message = 'The request was aborted.') {
+    super('ABORTED', message);
+  }
+}
+
 export class DeviceError extends PinoutError {
   readonly details: unknown;
 

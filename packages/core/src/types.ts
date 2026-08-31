@@ -48,9 +48,15 @@ export interface Transport {
   readonly readable: AsyncIterable<Uint8Array>;
 }
 
+export type DeviceEventHandler = (payload: Record<string, unknown>) => void;
+
 export interface ConnectOptions {
   transport: Transport;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
-export type GpioValue = boolean;
+export interface RequestOptions {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}

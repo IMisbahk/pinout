@@ -1,6 +1,12 @@
 import { ByteQueue } from '../../transports/byteQueue.js';
 import { encodeLine } from '../../lineReader.js';
-import { parseLine, protocolVersion } from '../../protocol.js';
+import {
+  decodeLine,
+  encodeEvent,
+  encodeFailure,
+  encodeResponse,
+  maxProtocolLineBytes,
+} from '../../protocol.js';
 import type { Transport } from '../../types.js';
 import { DeviceError } from '../../errors.js';
 import { createGpioState, esp32BridgeInfo, handleBridgeAction } from './bridge.js';
@@ -30,6 +36,7 @@ class SimulatedEsp32Transport implements Transport {
   }
 
   async close(): Promise<void> {
+    this.state.watched.clear();
     this.inbound.close();
   }
 
@@ -45,21 +52,41 @@ class SimulatedEsp32Transport implements Transport {
   }
 
   private handleLine(line: string): void {
-    let message;
-    try {
-      message = parseLine(line);
-    } catch {
-      this.emitError('invalid', 'INVALID_JSON', 'Request is not valid Pinout protocol JSON.');
+    if (new TextEncoder().encode(line).length >= maxProtocolLineBytes) {
+      this.emitError('invalid', 'INVALID_MESSAGE', 'Request line is too long.');
       return;
     }
 
-    if (message === null || !('action' in message)) {
+    const decoded = decodeLine(line);
+    if (decoded.kind === 'ignore') {
+      return;
+    }
+    if (decoded.kind === 'invalidJson') {
+      this.emitError('invalid', 'INVALID_JSON', 'Request is not valid JSON.');
+      return;
+    }
+    if (decoded.kind === 'invalidMessage') {
+      this.emitError('invalid', 'INVALID_MESSAGE', decoded.message);
+      return;
+    }
+
+    const message = decoded.value;
+    if (!('action' in message)) {
+      this.emitError('invalid', 'INVALID_MESSAGE', 'Request must include string id and action.');
       return;
     }
 
     try {
-      const result = handleBridgeAction(message.action, message.payload, this.state);
+      const result = handleBridgeAction(message.action, message.payload, this.state, {
+        emitEvent: (event, payload) => this.emitEvent(event, payload),
+        schedule: (task, delayMs) => {
+          setTimeout(task, delayMs);
+        },
+      });
       this.emitSuccess(message.id, result);
+      if (message.action === 'gpio.pulse') {
+        this.schedulePulseRevert(result);
+      }
     } catch (error) {
       if (error instanceof DeviceError) {
         this.emitError(message.id, error.code, error.message);
@@ -67,23 +94,42 @@ class SimulatedEsp32Transport implements Transport {
       }
       this.emitError(
         message.id,
-        'INTERNAL',
-        error instanceof Error ? error.message : 'Internal simulator error.',
+        'INVALID_MESSAGE',
+        error instanceof Error ? error.message : 'Request could not be processed.',
       );
     }
   }
 
   private emitEvent(event: string, payload: Record<string, unknown>): void {
-    this.inbound.push(encodeLine(JSON.stringify({ v: protocolVersion, event, payload })));
+    this.inbound.push(encodeLine(encodeEvent(event, payload)));
   }
 
   private emitSuccess(id: string, result: Record<string, unknown>): void {
-    this.inbound.push(encodeLine(JSON.stringify({ v: protocolVersion, id, ok: true, result })));
+    this.inbound.push(encodeLine(encodeResponse(id, result)));
   }
 
   private emitError(id: string, code: string, message: string): void {
-    this.inbound.push(
-      encodeLine(JSON.stringify({ v: protocolVersion, id, ok: false, error: { code, message } })),
-    );
+    this.inbound.push(encodeLine(encodeFailure(id, code, message)));
+  }
+
+  private schedulePulseRevert(result: Record<string, unknown>): void {
+    const pin = result.pin;
+    const previousValue = result.previousValue;
+    const durationMs = result.durationMs;
+    if (
+      typeof pin !== 'number' ||
+      typeof previousValue !== 'boolean' ||
+      typeof durationMs !== 'number'
+    ) {
+      return;
+    }
+
+    setTimeout(() => {
+      const wasWatched = this.state.watched.has(pin);
+      this.state.levels.set(pin, previousValue);
+      if (wasWatched) {
+        this.emitEvent('gpio.changed', { pin, value: previousValue });
+      }
+    }, durationMs);
   }
 }
