@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { AbortedError, connect, simulatedEsp32, ValidationError } from '@pinout/core';
+import {
+  AbortedError,
+  connect,
+  DisconnectedError,
+  simulatedEsp32,
+  TimeoutError,
+  ValidationError,
+} from '@pinout/core';
 import { ByteQueue } from '../src/transports/byteQueue.js';
 import type { Transport } from '@pinout/core';
 
@@ -54,7 +61,64 @@ describe('session', () => {
       await device.close();
     }
   });
+
+  it('times out an in-flight request when the device stops responding', async () => {
+    const transport = new HoldWritesTransport();
+    const device = await connect({ transport, timeoutMs: 40 });
+    try {
+      transport.holdWrites = true;
+      await expect(device.gpio.write(2, true)).rejects.toBeInstanceOf(TimeoutError);
+    } finally {
+      await device.close();
+    }
+  });
+
+  it('rejects in-flight requests when the connection closes', async () => {
+    const transport = new HoldWritesTransport();
+    const device = await connect({ transport });
+    transport.holdWrites = true;
+    const pending = device.gpio.write(2, true);
+    await device.close();
+    await expect(pending).rejects.toBeInstanceOf(DisconnectedError);
+  });
 });
+
+class HoldWritesTransport implements Transport {
+  readonly kind = 'hold-writes';
+  holdWrites = false;
+  private readonly inner = simulatedEsp32();
+  private readonly inbound = new ByteQueue();
+  private pump: Promise<void> | undefined;
+
+  get readable(): AsyncIterable<Uint8Array> {
+    return this.inbound;
+  }
+
+  async open(): Promise<void> {
+    await this.inner.open();
+    this.pump = this.forward();
+  }
+
+  async write(data: Uint8Array): Promise<void> {
+    if (this.holdWrites) {
+      return;
+    }
+    await this.inner.write(data);
+  }
+
+  async close(): Promise<void> {
+    await this.inner.close();
+    await this.pump?.catch(() => undefined);
+    this.inbound.close();
+  }
+
+  private async forward(): Promise<void> {
+    for await (const chunk of this.inner.readable) {
+      this.inbound.push(chunk);
+    }
+    this.inbound.close();
+  }
+}
 
 class SlowReadyTransport implements Transport {
   readonly kind = 'slow-ready';
