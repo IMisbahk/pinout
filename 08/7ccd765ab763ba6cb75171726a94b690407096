@@ -1,0 +1,30 @@
+packages/core/src/transports/serialTransport.ts
+  s_31bf6e29b1447f::t_600825ead14f1d 57-59
+packages/core/src/transports/byteQueue.ts
+  s_31bf6e29b1447f::t_841e24867186cf 5,29-39,42-44,51-53,59-61
+packages/core/tests/byteQueue.test.ts
+  s_31bf6e29b1447f::t_3b760e7723e571 1-41
+packages/core/tests/integration.test.ts
+  s_31bf6e29b1447f::t_97ae29e0d40755 88,92-111
+  s_31bf6e29b1447f::t_621d3f5922c2c0 130
+  s_31bf6e29b1447f::t_d8e720250009ad 6
+  s_31bf6e29b1447f::t_0a56f790659ee8 76
+  s_31bf6e29b1447f::t_0193c3b91333fe 71-75,77-83
+  s_31bf6e29b1447f::t_bb0d8e193cf442 86-87,89-91,112-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "087ccd765ab763ba6cb75171726a94b690407096",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
