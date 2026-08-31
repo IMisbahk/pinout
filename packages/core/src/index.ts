@@ -35,6 +35,12 @@ export {
   DeviceError,
   AbortedError,
 } from './errors.js';
+export {
+  PolicyError,
+  PolicyConstraintViolation,
+  PolicyPreconditionFailed,
+  PolicyActionDenied,
+} from './policy/errors.js';
 export { validateInputSchema } from './schema.js';
 export {
   decodeLine,
@@ -73,6 +79,29 @@ export {
   resolveEsp32BoardPin,
 } from './drivers/esp32/pins.js';
 export { esp32DevKitPinMap, resolveEsp32DevKitPin } from './drivers/esp32/boardMap.js';
+export { PinoutRuntime, DuplicateDeviceError, DeviceNotFoundError } from './runtime/runtime.js';
+export { DeviceInstance } from './runtime/deviceInstance.js';
+export {
+  createHeterogeneousRuntime,
+  defaultHeterogeneousDeviceIds,
+} from './runtime/createHeterogeneousRuntime.js';
+export {
+  runtimeToAgentTools,
+  deviceToRuntimeAgentTools,
+  buildMcpToolName,
+  type RuntimeAgentTool,
+} from './runtime/agentTools.js';
+export { getModule, listModules, registerModule } from './modules/registry.js';
+export {
+  esp32Module,
+  esp32ModuleId,
+  createEsp32SimulatedTransport,
+} from './modules/esp32Module.js';
+export { robotArmModule, robotArmModuleId } from './modules/robotArmModule.js';
+export { chamberModule, chamberModuleId } from './modules/chamberModule.js';
+export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
+export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
+export { evaluatePolicies } from './policy/engine.js';
 
 export type {
   Transport,
@@ -85,5 +114,19 @@ export type {
   JsonSchema,
   RequestOptions,
 } from './types.js';
+export type {
+  DeviceClass,
+  DeviceIdentity,
+  DeviceHealth,
+  DeviceDescriptor,
+  DeviceSummary,
+  DeviceLifecycleStatus,
+  RuntimeEventEnvelope,
+  RuntimeEventHandler,
+  PinoutModuleDefinition,
+  RegisterModuleDeviceOptions,
+  DeviceBackend,
+} from './runtime/types.js';
+export type { PolicyRule, PolicyContext } from './policy/types.js';
 export type { LogContext, LogLevel, Logger } from './logger.js';
 export type { PinoutEnvConfig } from './config.js';
