@@ -1,0 +1,31 @@
+docs/protocol.md
+  s_31bf6e29b1447f::t_f84c7a3a92c80f 110,117
+  s_31bf6e29b1447f::t_96d08b0766ab0e 118
+packages/core/src/index.ts
+  s_31bf6e29b1447f::t_8c6b9d9d015bc6 16
+packages/core/src/drivers/esp32/simulatedTransport.ts
+  s_31bf6e29b1447f::t_c580e73693615f 3-9
+  s_31bf6e29b1447f::t_4c4aefbb026c75 54-68,72-74,88-89
+packages/core/tests/simulator.test.ts
+  s_31bf6e29b1447f::t_32f6794c8aba31 48-53
+  s_31bf6e29b1447f::t_ca45a1899f5ae0 2
+  s_31bf6e29b1447f::t_1c6723ab514ab1 1,3-47
+packages/core/src/protocol.ts
+  s_31bf6e29b1447f::t_e035235b4b95dc 85-103,106,113,117,122-125,130-135,140,145-151,157-163,174-177,180-186,190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "fc71b0522e3df985be722d73842c777c584986dd",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
