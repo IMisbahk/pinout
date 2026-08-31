@@ -23,7 +23,9 @@ Copy [.env.example](.env.example) when working with serial hardware.
 - `packages/mcp` — MCP stdio server (wraps `connect()` + `invoke()`)
 - `firmware/esp32-bridge` — ESP32 firmware
 - `docs/` — architecture, protocol, capabilities, CLI, testing
-- `examples/` — SDK usage
+- `examples/` — SDK usage and [external-module/weird-sensor](examples/external-module/weird-sensor) reference driver
+
+External hardware modules should live **outside** `packages/core`. Use `defineModule` from the public SDK and validate with `pinout module test`.
 
 ## Rules of thumb
 

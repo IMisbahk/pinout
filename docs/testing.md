@@ -26,11 +26,16 @@ Tests live next to each package under `packages/<name>/tests/`:
 
 | Package | Focus |
 | --- | --- |
-| `@pinout/core` | Protocol codecs, pin validation, session/timeouts, simulator integration, **policy engine**, **multi-device runtime**, robot arm and chamber simulators |
-| `@pinout/cli` | Commander parsing and command wiring |
-| `@pinout/mcp` | MCP tool listing and invocation via in-memory transport + mock device; **dynamic runtime tool generation** |
+| `@pinout/core` | Protocol, runtime, **module SDK**, policy, local registry |
+| `@pinout/cli` | Commander parsing, **module/device commands** |
+| `@pinout/mcp` | MCP tool listing; **dynamic runtime tools** (no per-device code) |
 
-Core Sprint 2 test files:
+Core Sprint 3 test files:
+
+| File | Focus |
+| --- | --- |
+| `moduleEcosystem.test.ts` | defineModule, install/load, fromConfig, policy merge, conformance |
+| `pinoutHome.test.ts` | CLI module install, device add, invoke |
 
 | File | Focus |
 | --- | --- |
@@ -44,7 +49,8 @@ Prefer real protocol round-trips over mocking internal functions. Mock transport
 
 ```bash
 npm run demo:heterogeneous   # ESP32 + robot arm + chamber simulators
-PINOUT_DEMO=heterogeneous npm run mcp   # MCP stdio with runtime-backed tools
+pinout module test ./examples/external-module/weird-sensor
+PINOUT_CONFIG=~/.pinout/devices.json npm run mcp
 ```
 
 ## Simulator vs hardware

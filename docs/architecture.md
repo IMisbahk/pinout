@@ -23,7 +23,13 @@ Application / CLI / MCP adapter
 
 Single-device code paths still use `connect()` → `Device` → `Session` directly. The runtime wraps multiple devices behind one API.
 
-See [docs/modules.md](modules.md) and [docs/policies.md](policies.md).
+**PinoutRuntime** — multi-device registry. Loads modules from built-ins + `~/.pinout/modules/`. Bootstraps devices from `devices.json` via `PinoutRuntime.fromConfig()`.
+
+**Module SDK** — `defineModule()` validates and exports a `PinoutModuleDefinition`. External packages never import internal paths.
+
+**Local registry** — `~/.pinout/` stores installed modules and device config. Not a cloud service.
+
+See [docs/modules.md](modules.md), [docs/policies.md](policies.md), [docs/build-a-module.md](build-a-module.md).
 
 ## Packages
 

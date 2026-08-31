@@ -30,7 +30,7 @@
     "example:agent-tools": "npm run build --silent && tsx examples/agent-tools.ts",
     "demo:heterogeneous": "npm run build --silent && tsx examples/heterogeneous.ts",
     "example:mcp-heterogeneous": "npm run build --silent && tsx examples/mcp-heterogeneous.ts",
-    "mcp": "npm run build --silent && PINOUT_MOCK=1 node packages/mcp/dist/index.js",
+    "mcp": "npm run build --silent && node scripts/mcp-bootstrap.js",
     "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js"
   },
   "engines": {

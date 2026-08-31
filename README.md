@@ -62,7 +62,7 @@ Copy [.env.example](.env.example) to `.env` to set a default serial port and tim
 2. Find the serial port:
 
 ```bash
-npm run pinout -- devices
+npm run pinout -- ports
 ```
 
 On macOS prefer `/dev/cu.*`. On Linux this is often `/dev/ttyUSB0`.
@@ -107,6 +107,22 @@ npm run example:pwm -- --mock
 npm run example:analog -- --mock
 npm run example:watch -- --mock
 npm run demo:heterogeneous     # ESP32 + robot arm + chamber demo
+npm run example:mcp-heterogeneous
+
+## External modules (Sprint 3)
+
+Third-party hardware drivers live outside `@pinout/core`:
+
+```bash
+cd examples/external-module/weird-sensor && npm install && npm run build
+npm run pinout -- module test ./examples/external-module/weird-sensor
+npm run pinout -- module install ./examples/external-module/weird-sensor
+npm run pinout -- device add sensor-01 --module weird-sensor/thermometer --simulated
+npm run pinout -- devices
+npm run pinout -- invoke sensor-01 temperature.read --payload '{}'
+```
+
+See [docs/build-a-module.md](docs/build-a-module.md) for the full developer guide.
 npm run example:mcp-heterogeneous  # inspect runtime MCP tool list
 npm run mcp:heterogeneous    # MCP stdio server over full runtime
 ```

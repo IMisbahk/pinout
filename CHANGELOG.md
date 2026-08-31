@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added (Sprint 3 — module ecosystem)
+
+- Public Module SDK: `defineModule`, `action`, `sensorRead`, declarative policies.
+- `pinout.module.json` manifest format with schema and Pinout version compatibility.
+- Local module registry (`~/.pinout/modules/`) with install/list/inspect/uninstall.
+- Persistent device configuration (`~/.pinout/devices.json`) and `PinoutRuntime.fromConfig()`.
+- Module conformance kit: `pinout module test`.
+- CLI: `module create|test|install|list|inspect`, `device add|remove|list|inspect`.
+- CLI: `pinout devices` (runtime devices), `pinout ports` (serial discovery), `pinout invoke`.
+- Reference external module: [examples/external-module/weird-sensor](examples/external-module/weird-sensor).
+- MCP bootstrap via `PINOUT_CONFIG` without `@pinout/mcp` changes.
+- Documentation: [build-a-module.md](docs/build-a-module.md).
+
+### Changed
+
+- Single-device invoke renamed to `pinout exec <action>` (runtime uses `pinout invoke`).
+
 ### Added (Sprint 2 — heterogeneous runtime)
 
 - `PinoutRuntime` multi-device registry with unified events.

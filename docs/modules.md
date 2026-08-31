@@ -31,7 +31,23 @@ Device instance (esp32-01)
 | `pinout/robot-arm` | `robot.manipulator` | In-process simulator |
 | `pinout/environmental-chamber` | `lab.environmental_chamber` | In-process simulator |
 
+## External modules (Sprint 3)
+
+Third-party modules use the public SDK:
+
+```ts
+import { defineModule, action } from '@pinout/core';
+
+export default defineModule({ /* ... */ });
+```
+
+Manifest: `pinout.module.json`. Install locally with `pinout module install ./path`. See [build-a-module.md](build-a-module.md).
+
+Built-in and installed modules share the same registry interface (`listAvailableModules`, `ensureModuleLoaded`).
+
 ## Registering devices
+
+### Programmatic
 
 ```ts
 import { PinoutRuntime, robotArmModuleId } from '@pinout/core';
@@ -44,7 +60,14 @@ await runtime.registerFromModule(robotArmModuleId, {
 await runtime.invoke('arm-sim-01', 'motion.home', {});
 ```
 
-Or use `createHeterogeneousRuntime()` to register the default demo set (ESP32 + arm + chamber).
+Or bootstrap from persistent config:
+
+```ts
+const runtime = await PinoutRuntime.fromConfig();
+// loads ~/.pinout/devices.json + installed modules
+```
+
+Or use `createHeterogeneousRuntime()` for the in-memory demo set when no config file exists.
 
 ## Semantic capability families
 
@@ -53,15 +76,18 @@ Capabilities use dotted names grouped by physical semantics:
 - `gpio.*` — digital I/O (microcontrollers)
 - `motion.*`, `gripper.*`, `pose.*` — manipulators
 - `temperature.*`, `door.*`, `experiment.*` — environmental chambers
+- `temperature.*`, `humidity.*` — sensors (external modules)
 - `status.*`, `sys.*` — diagnostics shared across classes
 
 Implementation-specific details stay in module backends. The runtime and policy layer only see capability names and schemas.
 
 ## Extending
 
-1. Define capability descriptors + policies in a new module file.
-2. Implement a `DeviceBackend` (protocol or simulated).
-3. Register the module with `registerModule()`.
-4. Register device instances on a `PinoutRuntime`.
+1. Run `pinout module create <name>` or copy [examples/external-module/weird-sensor](../examples/external-module/weird-sensor).
+2. Implement capabilities with `defineModule` / `action` helpers.
+3. Add `pinout.module.json` and build to `dist/`.
+4. `pinout module test .` then `pinout module install .`
+5. `pinout device add <id> --module <moduleId>`
+6. Devices appear in runtime, MCP, and `pinout invoke` automatically.
 
-MCP and CLI consume capabilities from the runtime — they do not need ESP32-specific code.
+Legacy in-process extension: `registerModule()` still works for tests.
