@@ -1,17 +1,26 @@
 import { UnsupportedCapabilityError, ValidationError } from './errors.js';
-import { describeCapabilities, toAgentTools } from './capabilities.js';
+import { describeCapability, describeCapabilities, toAgentTools } from './capabilities.js';
+import { validateInputSchema } from './schema.js';
 import {
+  assertEsp32AnalogPin,
+  assertEsp32ModePin,
+  assertEsp32PwmPin,
   assertEsp32ReadPin,
   assertEsp32WritePin,
+  assertGpioMode,
   assertGpioPin,
   assertGpioValue,
+  resolveEsp32BoardPin,
 } from './drivers/esp32/pins.js';
 import type { Session } from './session.js';
-import type { AgentTool, CapabilityDescriptor, DeviceInfo } from './types.js';
+import type { AgentTool, CapabilityDescriptor, DeviceEventHandler, DeviceInfo } from './types.js';
 
 export class Device {
   readonly capabilities: CapabilityDescriptor[];
   readonly gpio: Gpio;
+  private readonly handlers = new Map<string, Set<DeviceEventHandler>>();
+  private readonly onceHandlers = new Map<string, Set<DeviceEventHandler>>();
+  private removeEventListener: (() => void) | undefined;
 
   constructor(
     readonly info: DeviceInfo,
@@ -19,10 +28,29 @@ export class Device {
   ) {
     this.capabilities = describeCapabilities(info.capabilities);
     this.gpio = new Gpio(this);
+    this.removeEventListener = session.addEventListener((event) => {
+      if (event.event === 'ready') {
+        return;
+      }
+      this.emit(event.event, event.payload);
+    });
   }
 
   supports(action: string): boolean {
     return this.info.capabilities.includes(action);
+  }
+
+  on(event: string, handler: DeviceEventHandler): void {
+    this.addHandler(this.handlers, event, handler);
+  }
+
+  off(event: string, handler: DeviceEventHandler): void {
+    this.handlers.get(event)?.delete(handler);
+    this.onceHandlers.get(event)?.delete(handler);
+  }
+
+  once(event: string, handler: DeviceEventHandler): void {
+    this.addHandler(this.onceHandlers, event, handler);
   }
 
   async invoke(
@@ -32,7 +60,9 @@ export class Device {
     if (!this.supports(action)) {
       throw new UnsupportedCapabilityError(action);
     }
-    const normalized = validateAction(this.info.firmware, action, payload);
+    const descriptor = describeCapability(action);
+    const checked = validateInputSchema(descriptor.inputSchema, payload);
+    const normalized = validateAction(this.info.firmware, action, checked);
     return this.session.request(action, normalized);
   }
 
@@ -41,12 +71,54 @@ export class Device {
   }
 
   async close(): Promise<void> {
+    this.removeEventListener?.();
+    this.removeEventListener = undefined;
+    this.handlers.clear();
+    this.onceHandlers.clear();
     await this.session.close();
+  }
+
+  private emit(event: string, payload: Record<string, unknown>): void {
+    this.dispatch(this.handlers.get(event), payload);
+    const once = this.onceHandlers.get(event);
+    if (once) {
+      this.dispatch(once, payload);
+      this.onceHandlers.delete(event);
+    }
+  }
+
+  private dispatch(
+    handlers: Set<DeviceEventHandler> | undefined,
+    payload: Record<string, unknown>,
+  ): void {
+    if (!handlers) {
+      return;
+    }
+    for (const handler of handlers) {
+      handler(payload);
+    }
+  }
+
+  private addHandler(
+    store: Map<string, Set<DeviceEventHandler>>,
+    event: string,
+    handler: DeviceEventHandler,
+  ): void {
+    const handlers = store.get(event);
+    if (handlers) {
+      handlers.add(handler);
+      return;
+    }
+    store.set(event, new Set([handler]));
   }
 }
 
 class Gpio {
   constructor(private readonly device: Device) {}
+
+  async mode(pin: number, mode: 'input' | 'output' | 'pullup' | 'pulldown'): Promise<void> {
+    await this.device.invoke('gpio.mode', { pin, mode });
+  }
 
   async write(pin: number, value: boolean): Promise<void> {
     await this.device.invoke('gpio.write', { pin, value });
@@ -59,6 +131,47 @@ class Gpio {
     }
     return result.value;
   }
+
+  async toggle(pin: number): Promise<boolean> {
+    const result = await this.device.invoke('gpio.toggle', { pin });
+    if (typeof result.value !== 'boolean') {
+      throw new ValidationError('gpio.toggle returned a non-boolean value.');
+    }
+    return result.value;
+  }
+
+  async pulse(pin: number, durationMs: number): Promise<void> {
+    await this.device.invoke('gpio.pulse', { pin, durationMs });
+  }
+
+  async pwm(channel: number, pin: number, duty: number, frequency: number): Promise<void> {
+    await this.device.invoke('gpio.pwm', { channel, pin, duty, frequency });
+  }
+
+  async analogRead(pin: number): Promise<number> {
+    const result = await this.device.invoke('gpio.analogRead', { pin });
+    if (typeof result.value !== 'number') {
+      throw new ValidationError('gpio.analogRead returned a non-numeric value.');
+    }
+    return result.value;
+  }
+
+  async watch(pin: number): Promise<void> {
+    await this.device.invoke('gpio.watch', { pin });
+  }
+
+  async unwatch(pin: number): Promise<void> {
+    await this.device.invoke('gpio.unwatch', { pin });
+  }
+
+  resolveBoardPin(name: string): number {
+    if (this.device.info.firmware === 'esp32-bridge') {
+      return resolveEsp32BoardPin(name);
+    }
+    throw new ValidationError(
+      `Board pin names are not defined for '${this.device.info.firmware}'.`,
+    );
+  }
 }
 
 function validateAction(
@@ -66,21 +179,87 @@ function validateAction(
   action: string,
   payload: Record<string, unknown>,
 ): Record<string, unknown> {
-  if (action !== 'gpio.write' && action !== 'gpio.read') {
+  if (action === 'sys.hello' || action === 'sys.ping' || action === 'sys.info') {
+    assertEmptyPayload(payload, action);
+    return {};
+  }
+
+  if (firmware !== 'esp32-bridge') {
     return payload;
   }
 
-  const pin = assertGpioPin(payload.pin);
-  if (firmware === 'esp32-bridge') {
-    if (action === 'gpio.write') {
-      assertEsp32WritePin(pin);
-    } else {
-      assertEsp32ReadPin(pin);
+  switch (action) {
+    case 'gpio.mode': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32ModePin(pin);
+      return { pin, mode: assertGpioMode(payload.mode) };
     }
+    case 'gpio.write': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32WritePin(pin);
+      return { pin, value: assertGpioValue(payload.value) };
+    }
+    case 'gpio.read':
+    case 'gpio.watch':
+    case 'gpio.unwatch': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32ReadPin(pin);
+      return { pin };
+    }
+    case 'gpio.toggle':
+    case 'gpio.pulse': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32WritePin(pin);
+      if (action === 'gpio.toggle') {
+        return { pin };
+      }
+      return { pin, durationMs: assertPositiveInt(payload.durationMs, 'durationMs') };
+    }
+    case 'gpio.pwm': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32PwmPin(pin);
+      return {
+        channel: assertChannel(payload.channel),
+        pin,
+        duty: assertDuty(payload.duty),
+        frequency: assertPositiveInt(payload.frequency, 'frequency'),
+      };
+    }
+    case 'gpio.analogRead': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32AnalogPin(pin);
+      return { pin };
+    }
+    default:
+      return payload;
   }
+}
 
-  if (action === 'gpio.write') {
-    return { pin, value: assertGpioValue(payload.value) };
+function assertEmptyPayload(payload: Record<string, unknown>, action: string): void {
+  for (const key of Object.keys(payload)) {
+    throw new ValidationError(`Unexpected field '${key}' in payload for '${action}'.`);
   }
-  return { pin };
+}
+
+function assertPositiveInt(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new ValidationError(`${field} must be a positive integer, received ${String(value)}.`);
+  }
+  return value;
+}
+
+function assertChannel(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 15) {
+    throw new ValidationError(
+      `channel must be an integer from 0 to 15, received ${String(value)}.`,
+    );
+  }
+  return value;
+}
+
+function assertDuty(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new ValidationError(`duty must be a number from 0 to 1, received ${String(value)}.`);
+  }
+  return value;
 }

@@ -1,25 +1,34 @@
 import { randomUUID } from 'node:crypto';
 import {
+  AbortedError,
   DeviceError,
   DisconnectedError,
   ProtocolError,
   TimeoutError,
   TransportError,
 } from './errors.js';
+import { createLogger, type Logger } from './logger.js';
 import { readLines } from './lineReader.js';
 import { encodeRequest, parseDeviceInfo, parseLine } from './protocol.js';
 import type { ProtocolEvent, ProtocolResponse } from './protocol.js';
-import type { DeviceInfo, Transport } from './types.js';
+import type { DeviceInfo, RequestOptions, Transport } from './types.js';
 
 interface PendingRequest {
   resolve: (response: ProtocolResponse) => void;
   reject: (error: Error) => void;
   timer: ReturnType<typeof setTimeout>;
+  abortHandler?: () => void;
+  signal?: AbortSignal;
 }
+
+export type SessionEventListener = (event: ProtocolEvent) => void;
 
 export class Session {
   private readonly pending = new Map<string, PendingRequest>();
   private readonly readyWaiters: Array<(info: DeviceInfo) => void> = [];
+  private readonly eventListeners = new Set<SessionEventListener>();
+  private readonly logger: Logger;
+  private readonly sessionId = randomUUID();
   private readerTask: Promise<void> | undefined;
   private open = false;
   private closed = false;
@@ -28,7 +37,14 @@ export class Session {
   constructor(
     readonly transport: Transport,
     private readonly timeoutMs: number,
-  ) {}
+    private readonly connectSignal?: AbortSignal,
+    logger?: Logger,
+  ) {
+    this.logger = (logger ?? createLogger('info')).child({
+      sessionId: this.sessionId,
+      transport: transport.kind,
+    });
+  }
 
   async connect(): Promise<DeviceInfo> {
     if (this.open) {
@@ -42,7 +58,14 @@ export class Session {
 
     try {
       await ready;
-      this.deviceInfo = parseDeviceInfo(await this.request('sys.hello'));
+      this.deviceInfo = parseDeviceInfo(
+        await this.request(
+          'sys.hello',
+          {},
+          this.connectSignal ? { signal: this.connectSignal } : {},
+        ),
+      );
+      this.logger.info('connected', { firmware: this.deviceInfo.firmware });
       return this.deviceInfo;
     } catch (error) {
       await this.close().catch(() => undefined);
@@ -50,27 +73,52 @@ export class Session {
     }
   }
 
+  addEventListener(listener: SessionEventListener): () => void {
+    this.eventListeners.add(listener);
+    return () => {
+      this.eventListeners.delete(listener);
+    };
+  }
+
   async request(
     action: string,
     payload: Record<string, unknown> = {},
+    options: RequestOptions = {},
   ): Promise<Record<string, unknown>> {
     if (!this.open || this.closed) {
       throw new DisconnectedError();
     }
 
+    const signal = options.signal ?? this.connectSignal;
+    if (signal?.aborted) {
+      throw new AbortedError(`Request '${action}' was aborted before it was sent.`);
+    }
+
+    const timeoutMs = options.timeoutMs ?? this.timeoutMs;
     const id = randomUUID();
+    this.logger.debug('request', { requestId: id, action });
     const response = await new Promise<ProtocolResponse>((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new TimeoutError(`Timed out waiting for '${action}' (${this.timeoutMs}ms).`));
-      }, this.timeoutMs);
+        this.finishPending(id);
+        reject(new TimeoutError(`Timed out waiting for '${action}' (${timeoutMs}ms).`));
+      }, timeoutMs);
 
-      this.pending.set(id, { resolve, reject, timer });
+      const abortHandler = (): void => {
+        this.finishPending(id);
+        reject(new AbortedError(`Request '${action}' was aborted.`));
+      };
+
+      const pending: PendingRequest = { resolve, reject, timer, abortHandler };
+      if (signal) {
+        pending.signal = signal;
+        signal.addEventListener('abort', abortHandler, { once: true });
+      }
+      this.pending.set(id, pending);
+
       this.transport
         .write(new TextEncoder().encode(encodeRequest(id, action, payload)))
         .catch((error: unknown) => {
-          clearTimeout(timer);
-          this.pending.delete(id);
+          this.finishPending(id);
           reject(
             new TransportError(
               error instanceof Error ? error.message : 'Failed to write to transport.',
@@ -94,9 +142,8 @@ export class Session {
     this.open = false;
 
     for (const [id, pending] of this.pending) {
-      clearTimeout(pending.timer);
+      this.finishPending(id);
       pending.reject(new DisconnectedError('Connection closed before the device responded.'));
-      this.pending.delete(id);
     }
 
     await this.transport.close();
@@ -111,13 +158,15 @@ export class Session {
     return new Promise<DeviceInfo>((resolve, reject) => {
       const waiter = (info: DeviceInfo): void => {
         clearTimeout(timer);
+        this.connectSignal?.removeEventListener('abort', abortHandler);
         resolve(info);
       };
       const timer = setTimeout(() => {
-        const index = this.readyWaiters.indexOf(waiter);
+        const index = this.waitersIndex(waiter);
         if (index >= 0) {
           this.readyWaiters.splice(index, 1);
         }
+        this.connectSignal?.removeEventListener('abort', abortHandler);
         reject(
           new TimeoutError(
             `Timed out waiting for the device ready event (${this.timeoutMs}ms). Is firmware running, and is the serial port correct?`,
@@ -125,8 +174,26 @@ export class Session {
         );
       }, this.timeoutMs);
 
+      const abortHandler = (): void => {
+        clearTimeout(timer);
+        const index = this.waitersIndex(waiter);
+        if (index >= 0) {
+          this.readyWaiters.splice(index, 1);
+        }
+        reject(new AbortedError('Connection was aborted while waiting for ready.'));
+      };
+
       this.readyWaiters.push(waiter);
+      if (this.connectSignal?.aborted) {
+        abortHandler();
+        return;
+      }
+      this.connectSignal?.addEventListener('abort', abortHandler, { once: true });
     });
+  }
+
+  private waitersIndex(waiter: (info: DeviceInfo) => void): number {
+    return this.readyWaiters.indexOf(waiter);
   }
 
   private async readLoop(): Promise<void> {
@@ -165,13 +232,15 @@ export class Session {
   }
 
   private handleEvent(event: ProtocolEvent): void {
-    if (event.event !== 'ready') {
-      return;
+    if (event.event === 'ready') {
+      const info = parseDeviceInfo(event.payload);
+      this.deviceInfo = info;
+      while (this.readyWaiters.length > 0) {
+        this.readyWaiters.shift()?.(info);
+      }
     }
-    const info = parseDeviceInfo(event.payload);
-    this.deviceInfo = info;
-    while (this.readyWaiters.length > 0) {
-      this.readyWaiters.shift()?.(info);
+    for (const listener of this.eventListeners) {
+      listener(event);
     }
   }
 
@@ -180,16 +249,26 @@ export class Session {
     if (!pending) {
       return;
     }
-    clearTimeout(pending.timer);
-    this.pending.delete(response.id);
+    this.finishPending(response.id);
     pending.resolve(response);
+  }
+
+  private finishPending(id: string): void {
+    const pending = this.pending.get(id);
+    if (!pending) {
+      return;
+    }
+    clearTimeout(pending.timer);
+    if (pending.signal && pending.abortHandler) {
+      pending.signal.removeEventListener('abort', pending.abortHandler);
+    }
+    this.pending.delete(id);
   }
 
   private rejectAll(error: Error): void {
     for (const [id, pending] of this.pending) {
-      clearTimeout(pending.timer);
+      this.finishPending(id);
       pending.reject(error);
-      this.pending.delete(id);
     }
   }
 }
