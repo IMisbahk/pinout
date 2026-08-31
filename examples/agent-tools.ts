@@ -1,24 +1,18 @@
 /**
- * Blink GPIO 2 through Pinout.
+ * Print agent tools from a connected device.
  *
- *   npm run example:blink -- --mock
- *   npm run example:blink -- --port /dev/cu.usbserial-10
+ *   npm run example:agent-tools -- --mock
  */
 import { openDevice, resolveConnectionOptions } from '@pinout/cli/connection';
 
 const args = parseArgs(process.argv.slice(2));
-const options = resolveConnectionOptions(args);
-const board = await openDevice(options);
+const device = await openDevice(resolveConnectionOptions(args));
 
 try {
-  console.log(`connected ${board.info.firmware} ${board.info.version}`);
-  await board.gpio.write(2, true);
-  console.log('gpio 2 high');
-  await delay(options.mock ? 50 : 500);
-  await board.gpio.write(2, false);
-  console.log('gpio 2 low');
+  const tools = device.toAgentTools();
+  console.log(JSON.stringify(tools, null, 2));
 } finally {
-  await board.close();
+  await device.close();
 }
 
 function parseArgs(argv: string[]): {
@@ -49,10 +43,4 @@ function parseArgs(argv: string[]): {
   }
 
   return { mock, port, baud, timeout };
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }
