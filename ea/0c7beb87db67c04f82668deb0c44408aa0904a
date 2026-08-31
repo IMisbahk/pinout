@@ -1,0 +1,27 @@
+packages/core/tests/moduleEcosystem.test.ts
+  s_36883e4c616fba::t_833f5e76510b10 2-156
+  s_36883e4c616fba::t_c02552ca8ad1b1 1
+packages/mcp/tests/mcp.test.ts
+  s_36883e4c616fba::t_4abdc06d26fb9c 157-216,221-222
+  s_36883e4c616fba::t_1220e3fe0b1e25 3,7-15
+  s_36883e4c616fba::t_46e502b4673e26 4-6
+  s_36883e4c616fba::t_97353aba0c8c7d 16
+  s_36883e4c616fba::t_3c07a0697b461d 217-220
+  s_36883e4c616fba::t_db0799631daa3d 223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ea0c7beb87db67c04f82668deb0c44408aa0904a",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
