@@ -1,0 +1,57 @@
+# Generator Safety
+
+Pinout Generate produces **candidate** modules from documentation. Those candidates are **untrusted** until a human verifies them against real hardware.
+
+## Core principles
+
+1. **Generated code is untrusted.** Treat every generated backend, policy, and simulator as provisional source material — not production firmware drivers.
+2. **Generated constraints may be incomplete.** Missing documentation yields `NO SAFE RANGE FOUND` and explicit uncertainties — not invented limits.
+3. **Conformance ≠ physical certification.** `pinout module test` checks manifest structure, schemas, policy references, and simulator lifecycle. It does **not** prove safe behavior on a machine.
+4. **Human review is required.** Every generated module includes `GENERATION_REPORT.md` with review checklists and `PINOUT_REVIEW_REQUIRED` markers in code where behavior is uncertain.
+5. **Hardware testing is separate.** Connecting to physical devices requires explicit `pinout module install`, device registration, and operator configuration. Generation never auto-connects.
+
+## Safety generation rules
+
+| Source material | Generator behavior |
+| --- | --- |
+| Explicit documented range (e.g. "10°C to 80°C") | Hard policy with high confidence |
+| Inferred limit (e.g. "max 80°C" without full range) | `candidate` constraint with `requiresHumanReview: true` — **not** promoted to hard policy |
+| Missing limit | Uncertainty recorded; **no invented bound** |
+| Conflicting documentation | Critical uncertainty; no silent merge |
+
+Low-confidence capabilities (< 0.70) are flagged in plans and reports.
+
+## Candidate lifecycle
+
+Local metadata tracks progression:
+
+```text
+GENERATED → CONFORMANCE_PASSED → SIMULATION_TESTED → HUMAN_REVIEWED → HARDWARE_TESTED
+```
+
+Sprint 4 modules start at `GENERATED` only. No centralized certification infrastructure exists yet.
+
+## What generation does not do
+
+- Auto-install modules
+- Auto-register devices
+- Open serial/TCP connections to hardware
+- Flash firmware
+- Execute generated wire-protocol code against real machines
+- Reverse-engineer arbitrary binaries
+- Claim "verified" or "certified" status
+
+## Operator checklist
+
+Before running generated code against hardware:
+
+- [ ] Verify transport (serial/TCP/SDK) against vendor documentation
+- [ ] Verify capability semantics and units
+- [ ] Verify safety constraints with primary sources
+- [ ] Verify simulator behavior matches expected state model
+- [ ] Run targeted hardware tests in a controlled environment
+- [ ] Install only after review: `pinout module install <path>`
+
+## Reporting issues
+
+If the generator produces a confident safety constraint without evidence, treat it as a bug. False confident claims around physical limits are more dangerous than missed capabilities.

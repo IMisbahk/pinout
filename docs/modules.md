@@ -90,4 +90,6 @@ Implementation-specific details stay in module backends. The runtime and policy 
 5. `pinout device add <id> --module <moduleId>`
 6. Devices appear in runtime, MCP, and `pinout invoke` automatically.
 
+**Generated candidates (Sprint 4):** `pinout generate ./vendor-sdk --output ./generated/device` produces an unverified module using the same SDK surface. See [generator.md](generator.md).
+
 Legacy in-process extension: `registerModule()` still works for tests.

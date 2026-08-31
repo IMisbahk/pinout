@@ -27,8 +27,9 @@ Tests live next to each package under `packages/<name>/tests/`:
 | Package | Focus |
 | --- | --- |
 | `@pinout/core` | Protocol, runtime, **module SDK**, policy, local registry |
-| `@pinout/cli` | Commander parsing, **module/device commands** |
+| `@pinout/cli` | Commander parsing, **module/device/generate commands** |
 | `@pinout/mcp` | MCP tool listing; **dynamic runtime tools** (no per-device code) |
+| `@pinout/generator` | Source ingestion, Hardware IR, candidate module emission |
 
 Core Sprint 3 test files:
 
@@ -42,6 +43,18 @@ Core Sprint 3 test files:
 | `policy.test.ts` | Numeric range, state preconditions, workspace bounds, rejection format |
 | `runtime.test.ts` | Registration, duplicate IDs, invoke routing, event multiplexing, policy denials |
 | `simulators.test.ts` | Robot arm movement/gripper/events; chamber temperature/door/experiment |
+
+### Generator (Sprint 4)
+
+```bash
+npm run eval:generator          # deterministic fixture evaluation (CI)
+npm run demo:generate             # plan output for heatbox fixture
+npm run eval:generator:live       # optional live HTTP provider (not in CI)
+```
+
+Fixture SDKs: `fixtures/generator/heatbox-sdk`, `actuator-sdk`, `ambiguous-sdk`.
+
+Golden IR expectations and metrics (precision/recall, false safety constraints) live in `packages/generator/tests/`.
 
 Prefer real protocol round-trips over mocking internal functions. Mock transports are fine when testing error propagation or MCP wiring.
 
