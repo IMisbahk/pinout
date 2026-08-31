@@ -1,0 +1,21 @@
+packages/mcp/src/createServer.ts
+  s_8b389f08649e7f::t_ffcf4e395958d4 2
+packages/mcp/src/connectDevice.ts
+  s_8b389f08649e7f::t_ffcf4e395958d4 18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6578f0832f99ad7e109914e94a2b3a14e1f4e05f",
+  "prompts": {},
+  "sessions": {
+    "s_8b389f08649e7f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "550d2785-5e55-42cd-b77d-bc094e12873f",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
