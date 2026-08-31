@@ -1,0 +1,26 @@
+packages/cli/src/runCli.ts
+  s_31bf6e29b1447f::t_ca3d58646b356b 388
+  s_31bf6e29b1447f::t_6b6da377115aa1 368-369,376,383-387
+  s_31bf6e29b1447f::t_656b05ae3c364e 244-246
+  s_31bf6e29b1447f::t_e925519da23a12 101
+packages/cli/tests/cli.test.ts
+  s_31bf6e29b1447f::t_beec9a99f2b56a 28
+  s_31bf6e29b1447f::t_9a248a4017377f 155-165
+  s_31bf6e29b1447f::t_19680cf37757f3 166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "14d9070f851805b7f6ee5b5fcdefc96fd21d50cf",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
