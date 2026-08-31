@@ -1,0 +1,109 @@
+packages/generator/src/ingest/evidence.ts
+  s_36883e4c616fba::t_0788fbdac43b00 1-36
+packages/generator/src/types/ir.ts
+  s_36883e4c616fba::t_c07a70544889d9 1-105
+packages/generator/src/providers/httpProvider.ts
+  s_36883e4c616fba::t_842f7da4eeb69b 1-90
+vitest.config.ts
+  s_36883e4c616fba::t_cbc906a4fc1607 11-13
+packages/generator/src/providers/mockProvider.ts
+  s_36883e4c616fba::t_ee2546cc15927e 1-33
+packages/generator/src/config.ts
+  s_36883e4c616fba::t_c2c7bd8c7c11a7 1-7,10-12,20-27
+  s_36883e4c616fba::t_396e76cbee4092 8-9,13-19
+packages/generator/src/extract/heuristicExtractor.ts
+  s_36883e4c616fba::t_014165c948d0dd 80,84-96
+  s_36883e4c616fba::t_eb16ee2f595d2b 8,23-30,38,47-48,73-76,101-102,107,119,127,207,209-210,214,218,222-223,225,227,274-275,284,307,325-336,354,356-357,382,390
+  s_36883e4c616fba::t_c08849bd1df687 31-32,41-44
+  s_36883e4c616fba::t_4e9d2764ab0065 1-7,9-22,33-37,39-40,45-46,49-72,77-79,81-83,97-100,103-104,106,108,114-118,120-126,128-152,160-163,175-176,190-206,208,211-213,215-217,219-220,224,226,234-238,245-273,276-283,285-297,301-306,308-313,318-324,337-353,355,358-381,383-389,391-394
+  s_36883e4c616fba::t_ff56af4b588b1f 105,109-113
+  s_36883e4c616fba::t_60fc5e1bc616e0 221,228-233
+  s_36883e4c616fba::t_c6816b55047618 164-174,177-189
+  s_36883e4c616fba::t_cbc906a4fc1607 153-159,239-244,298-300,314-317
+fixtures/generator/ambiguous-sdk/manual.md
+  s_36883e4c616fba::t_bad0fa4502aa08 1-26
+packages/generator/src/emit/buildModule.ts
+  s_36883e4c616fba::t_08bff937b4eef4 1-56
+packages/generator/src/index.ts
+  s_36883e4c616fba::t_687921f9af8591 1,7-10,16-23
+  s_36883e4c616fba::t_cbc906a4fc1607 2-6,11-15
+packages/generator/tests/expectedFixtures.ts
+  s_36883e4c616fba::t_f2cd3ce684d439 1-3,5-23,32-39
+  s_36883e4c616fba::t_b7e90cb21dcfb8 4
+  s_36883e4c616fba::t_cbc906a4fc1607 24-31
+fixtures/generator/heatbox-sdk/device.h
+  s_36883e4c616fba::t_1a51bf045e2435 1-7
+packages/generator/src/emit/moduleEmitter.ts
+  s_36883e4c616fba::t_3dafb6a496ef95 335,337-345,348-349,351
+  s_36883e4c616fba::t_d59af2bc22bdbd 1
+  s_36883e4c616fba::t_cbc906a4fc1607 3-7,27-31,59-62,202-204,303-306,324-330
+  s_36883e4c616fba::t_7409d4d826e249 135-149,180
+  s_36883e4c616fba::t_bee6279412e211 2,8-26,32-58,63-134,150-179,181-201,205-302,307-323,331-334,336,346-347,350,352-490
+packages/generator/src/pipeline/analyze.ts
+  s_36883e4c616fba::t_f02f62eb27526e 1-59
+packages/generator/src/types/source.ts
+  s_36883e4c616fba::t_c6d5aa6f69e041 1-44
+packages/generator/src/ingest/ingestSource.ts
+  s_36883e4c616fba::t_4441291146e943 1-4,6-77,90-94,96-115
+  s_36883e4c616fba::t_cbc906a4fc1607 5
+  s_36883e4c616fba::t_07ec4f209be1ac 78-89,95
+fixtures/generator/heatbox-sdk/manual.md
+  s_36883e4c616fba::t_f47a4d8f456d7f 1-41
+packages/generator/src/pipeline/plan.ts
+  s_36883e4c616fba::t_cbc906a4fc1607 5-6
+  s_36883e4c616fba::t_edf0f7d0cf79e4 1-4,7-62
+packages/generator/package.json
+  s_36883e4c616fba::t_704b68a809199e 1-23
+packages/generator/src/types/provenance.ts
+  s_36883e4c616fba::t_168c4a80006234 1,3-12
+  s_36883e4c616fba::t_cbc906a4fc1607 2
+packages/generator/src/providers/registry.ts
+  s_36883e4c616fba::t_51289e3aa4fe3d 1-15,17-21
+  s_36883e4c616fba::t_39a17d400f2670 16
+packages/generator/src/eval/evaluate.ts
+  s_36883e4c616fba::t_f17c1b34a6f536 1-41,45-99,101-110
+  s_36883e4c616fba::t_cbc906a4fc1607 42-44,100
+packages/generator/tsconfig.json
+  s_36883e4c616fba::t_cca89b2f179b29 1-10
+packages/generator/src/semantic/capabilityMapper.ts
+  s_36883e4c616fba::t_cbc906a4fc1607 8-47,50-59
+  s_36883e4c616fba::t_8607ef464a80be 66-75
+  s_36883e4c616fba::t_cc7e788925f797 1-7,48-49,60-65,76-106
+packages/generator/src/providers/types.ts
+  s_36883e4c616fba::t_8ddbbd3f6b314a 1-2,4-7,9-20
+  s_36883e4c616fba::t_9c0847b766a56b 3,8
+packages/generator/src/pipeline/generate.ts
+  s_36883e4c616fba::t_4b2b2b5ed8f909 86
+  s_36883e4c616fba::t_87ed3d1a0159e7 11
+  s_36883e4c616fba::t_319638910175d2 12
+  s_36883e4c616fba::t_f3428a4f71e5e2 116
+  s_36883e4c616fba::t_b50796a1d5ef37 112-115
+  s_36883e4c616fba::t_7f1f8ffb3144ab 48,52-56
+  s_36883e4c616fba::t_28fcd110343c29 1-5,13-47,49-51,57-68,70-80,87-93,95-111,117-122
+  s_36883e4c616fba::t_cbc906a4fc1607 6-10,69
+  s_36883e4c616fba::t_5d05e00a2c8653 81-85,94
+packages/generator/tests/generator.test.ts
+  s_36883e4c616fba::t_be29d9708dfe12 1-2,4-10,17-79,83-93
+  s_36883e4c616fba::t_cf70a1105de774 3
+  s_36883e4c616fba::t_cbc906a4fc1607 11-16,80-82
+fixtures/generator/actuator-sdk/README.md
+  s_36883e4c616fba::t_815f819d2de96d 1-30
+tsconfig.json
+  s_36883e4c616fba::t_236507455fcf71 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3d22cce358cf16b5d4fb365f650757e605056279",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
