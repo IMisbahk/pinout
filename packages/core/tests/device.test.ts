@@ -59,6 +59,26 @@ describe('device events', () => {
       await device.close();
     }
   });
+
+  it('off removes a listener', async () => {
+    const transport = new EventEmittingTransport();
+    const device = await connect({ transport });
+    try {
+      const payloads: Array<Record<string, unknown>> = [];
+      const handler = (payload: Record<string, unknown>): void => {
+        payloads.push(payload);
+      };
+      device.on('gpio.changed', handler);
+      device.off('gpio.changed', handler);
+      transport.emit('gpio.changed', { pin: 2, value: true });
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10);
+      });
+      expect(payloads).toEqual([]);
+    } finally {
+      await device.close();
+    }
+  });
 });
 
 class EventEmittingTransport implements Transport {
