@@ -1,0 +1,68 @@
+CHANGELOG.md
+  s_94e0888c5cd5c5::t_fbcff4bb3ecb63 12-13
+packages/core/src/index.ts
+  s_94e0888c5cd5c5::t_36e6fee017c933 22-27
+  s_94e0888c5cd5c5::t_14b545a1f8f6fc 81,83,87
+packages/core/src/device.ts
+  s_94e0888c5cd5c5::t_41cc991fb50f54 244-309
+  s_94e0888c5cd5c5::t_9f3aabcf38d6ad 5-6,8,16
+docs/protocol.md
+  s_94e0888c5cd5c5::t_badacbfc604ef9 232
+  s_94e0888c5cd5c5::t_f90ffe4a582fae 179-222
+  s_94e0888c5cd5c5::t_0edb486ac7502e 70
+packages/core/src/drivers/esp32/bridge.ts
+  s_94e0888c5cd5c5::t_a189d8b7d5ad71 368-396,398-410,412-465,472-473,476-482
+  s_94e0888c5cd5c5::t_062effcda2ff25 543-549
+  s_94e0888c5cd5c5::t_923c9ca0a77b7d 46
+  s_94e0888c5cd5c5::t_22a8ac8cad40ae 466-471,474-475
+  s_94e0888c5cd5c5::t_bfb5cd30ce7280 34-39
+  s_94e0888c5cd5c5::t_42b3a43ed3d787 550-559
+  s_94e0888c5cd5c5::t_0c194535513f3e 147-158
+  s_94e0888c5cd5c5::t_e67d563a3e8dd1 97-112
+  s_94e0888c5cd5c5::t_91e7d4d3e4d3b5 12-15
+  s_94e0888c5cd5c5::t_d59b7c1d10f958 63-82
+  s_94e0888c5cd5c5::t_de628b9801e0de 16-17
+  s_94e0888c5cd5c5::t_630f247aef01f7 397,411
+packages/core/src/drivers/esp32/pins.ts
+  s_94e0888c5cd5c5::t_cb6c1b13bf073e 128-130,137
+  s_94e0888c5cd5c5::t_d7e67be61b5d61 14-29
+  s_94e0888c5cd5c5::t_ccd22fe4c77479 115-127,131-136,138-160
+docs/capabilities.md
+  s_94e0888c5cd5c5::t_5e255d1d8fa745 75-106
+firmware/esp32-bridge/README.md
+  s_94e0888c5cd5c5::t_5327eebec5996a 12-13
+packages/generator/src/semantic/capabilityMapper.ts
+  s_94e0888c5cd5c5::t_11a7a29b966f1f 88-102
+packages/core/src/capabilities.ts
+  s_94e0888c5cd5c5::t_7f72cf692ea6b0 220-382
+  s_94e0888c5cd5c5::t_37daa4f648df3c 440-445
+docs/architecture.md
+  s_94e0888c5cd5c5::t_865cffba2b9603 137
+packages/core/tests/buses.test.ts
+  s_94e0888c5cd5c5::t_6fd211afda9a01 1-18,23-36,38-81
+  s_94e0888c5cd5c5::t_cb6c1b13bf073e 19-22,37
+firmware/esp32-bridge/src/main.cpp
+  s_94e0888c5cd5c5::t_35491cdc01eb1a 52-68
+  s_94e0888c5cd5c5::t_322d5005884d85 126-131
+  s_94e0888c5cd5c5::t_faa8aab6c0e7bb 433
+  s_94e0888c5cd5c5::t_77acca3bb4626f 3-4,10-11
+  s_94e0888c5cd5c5::t_d4c77ce65b1d2e 26-37
+  s_94e0888c5cd5c5::t_dbf8d12d2862ff 349-432,434-558
+  s_94e0888c5cd5c5::t_4f885997eb5c5f 630-653
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ceafd881cdd22e5dbaf3214556692924a270b293",
+  "prompts": {},
+  "sessions": {
+    "s_94e0888c5cd5c5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f532e00b-3f00-48f5-ad5d-d3b4580b696e",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
