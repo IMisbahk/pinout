@@ -210,6 +210,17 @@ Events: `stepper.moved`, `stepper.stopped`.
 | `force.read` | `{}` | Newtons |
 | `status.read` | `{}` | Operational snapshot |
 
+## Mobile base (`pinout/mobile-base`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `drive.set_velocity` | `{ linear, angular }` | Policy: linear ±1.5 m/s, angular ±3 rad/s |
+| `drive.stop` | `{}` | Zero velocities |
+| `pose.read` | `{}` | Simulated odometry |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `drive.changed`.
+
 ## Agent tools
 
 `device.toAgentTools()` maps each advertised capability to an MCP-shaped tool descriptor for **single-device** connections.

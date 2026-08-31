@@ -107,6 +107,7 @@ npm run example:pwm -- --mock
 npm run example:analog -- --mock
 npm run example:watch -- --mock
 npm run demo:heterogeneous     # ESP32 + robot arm + chamber demo
+npm run demo:robotics          # full first-party robotics parts workbench
 npm run demo:generate          # generator plan for heatbox fixture
 npm run eval:generator         # deterministic generator fixture evaluation
 npm run example:mcp-heterogeneous

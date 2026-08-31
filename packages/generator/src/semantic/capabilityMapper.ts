@@ -125,6 +125,16 @@ const VENDOR_PATTERNS: Array<{ pattern: RegExp; capabilityId: string; confidence
     capabilityId: 'force.read',
     confidence: 0.88,
   },
+  {
+    pattern: /\b(set[_-]?velocity|cmd[_-]?vel|set[_-]?twist|drive[_-]?set)\b/i,
+    capabilityId: 'drive.set_velocity',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(drive[_-]?stop|stop[_-]?base)\b/i,
+    capabilityId: 'drive.stop',
+    confidence: 0.86,
+  },
 ];
 
 export function mapVendorSymbol(symbol: string): SemanticMapping | undefined {
@@ -157,6 +167,9 @@ export function mapVendorSymbol(symbol: string): SemanticMapping | undefined {
 export function inferDeviceClass(text: string): string | undefined {
   if (/environmental[_\s-]?chamber|heatbox|chamber/i.test(text)) {
     return 'lab.environmental_chamber';
+  }
+  if (/mobile[_-\s]?base|differential[_-\s]?drive|\bcmd_vel\b/i.test(text)) {
+    return 'robot.mobile_base';
   }
   if (/robot|manipulator|actuator|arm/i.test(text) && !/dc\s*motor|stepper|servo/i.test(text)) {
     return 'robot.manipulator';

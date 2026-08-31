@@ -38,6 +38,7 @@ Device instance (esp32-01)
 | `pinout/encoder` | `sensor.encoder` | In-process simulator |
 | `pinout/limit-switch` | `sensor.limit_switch` | In-process simulator |
 | `pinout/force` | `sensor.force` | In-process simulator |
+| `pinout/mobile-base` | `robot.mobile_base` | In-process simulator |
 
 ## External modules (Sprint 3)
 
@@ -75,7 +76,7 @@ const runtime = await PinoutRuntime.fromConfig();
 // loads ~/.pinout/devices.json + installed modules
 ```
 
-Or use `createHeterogeneousRuntime()` for the in-memory demo set when no config file exists.
+Or use `createHeterogeneousRuntime()` for the in-memory lab demo (ESP32 + arm + chamber), or `createRoboticsWorkbench()` for the full first-party parts set.
 
 ## Semantic capability families
 
@@ -91,6 +92,7 @@ Capabilities use dotted names grouped by physical semantics:
 - `encoder.*` — quadrature encoders
 - `limit.*` — end-stops / limit switches
 - `force.*` — load cells / force sensors
+- `drive.*` — mobile bases / differential drive
 - `temperature.*`, `door.*`, `experiment.*` — environmental chambers
 - `temperature.*`, `humidity.*` — sensors (external modules)
 - `status.*`, `sys.*` — diagnostics shared across classes

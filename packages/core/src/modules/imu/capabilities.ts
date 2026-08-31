@@ -1,6 +1,6 @@
-import type { CapabilityDescriptor } from '../../types.js';
+import type { CapabilityDescriptor, JsonSchema } from '../../types.js';
 
-const vectorSchema = {
+const vectorSchema: JsonSchema = {
   type: 'object',
   required: ['x', 'y', 'z'],
   properties: {
@@ -8,7 +8,7 @@ const vectorSchema = {
     y: { type: 'number' },
     z: { type: 'number' },
   },
-} as const;
+};
 
 export const imuReadCapability: CapabilityDescriptor = {
   name: 'imu.read',

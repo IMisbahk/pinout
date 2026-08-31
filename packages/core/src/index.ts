@@ -160,6 +160,10 @@ export {
   defaultHeterogeneousDeviceIds,
 } from './runtime/createHeterogeneousRuntime.js';
 export {
+  createRoboticsWorkbench,
+  defaultRoboticsDeviceIds,
+} from './runtime/createRoboticsWorkbench.js';
+export {
   runtimeToAgentTools,
   deviceToRuntimeAgentTools,
   buildMcpToolName,
@@ -181,6 +185,7 @@ export { imuModule, imuModuleId } from './modules/imuModule.js';
 export { encoderModule, encoderModuleId } from './modules/encoderModule.js';
 export { limitSwitchModule, limitSwitchModuleId } from './modules/limitSwitchModule.js';
 export { forceModule, forceModuleId } from './modules/forceModule.js';
+export { mobileBaseModule, mobileBaseModuleId } from './modules/mobileBaseModule.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
 export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';
@@ -191,6 +196,7 @@ export { createSimulatedImuBackend } from './modules/imu/simulator.js';
 export { createSimulatedEncoderBackend } from './modules/encoder/simulator.js';
 export { createSimulatedLimitSwitchBackend } from './modules/limitSwitch/simulator.js';
 export { createSimulatedForceBackend } from './modules/force/simulator.js';
+export { createSimulatedMobileBaseBackend } from './modules/mobileBase/simulator.js';
 export { evaluatePolicies } from './policy/engine.js';
 
 export type {

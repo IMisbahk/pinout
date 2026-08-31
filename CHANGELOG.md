@@ -13,6 +13,9 @@ All notable changes to this project are documented here. The format follows [Kee
 - SDK/simulator pin rules for I2C/SPI buses (defaults SDA 21 / SCL 22, HSPI pins).
 - ESP32 `gpio.servo` and `gpio.motor` pin-level actuator driving (distinct from standalone modules).
 - First-party sensor modules: `pinout/distance`, `pinout/imu`, `pinout/encoder`, `pinout/limit-switch`, `pinout/force`.
+- First-party mobile base (`pinout/mobile-base`) with `drive.set_velocity` / `drive.stop` and velocity policies.
+- `createRoboticsWorkbench()` registers the lab set plus actuators, sensors, and a differential-drive base.
+- `npm run demo:robotics` canonical robotics-parts demo.
 
 ### Added (Sprint 4 — module generator)
 

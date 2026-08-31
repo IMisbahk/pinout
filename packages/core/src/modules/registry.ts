@@ -6,6 +6,7 @@ import { esp32Module } from '../modules/esp32Module.js';
 import { forceModule } from '../modules/forceModule.js';
 import { imuModule } from '../modules/imuModule.js';
 import { limitSwitchModule } from '../modules/limitSwitchModule.js';
+import { mobileBaseModule } from '../modules/mobileBaseModule.js';
 import { robotArmModule } from '../modules/robotArmModule.js';
 import { servoModule } from '../modules/servoModule.js';
 import { stepperModule } from '../modules/stepperModule.js';
@@ -26,6 +27,7 @@ const builtinModules = new Map<string, PinoutModuleDefinition>([
   [encoderModule.id, encoderModule],
   [limitSwitchModule.id, limitSwitchModule],
   [forceModule.id, forceModule],
+  [mobileBaseModule.id, mobileBaseModule],
 ]);
 
 const runtimeModules = new Map<string, PinoutModuleDefinition>();

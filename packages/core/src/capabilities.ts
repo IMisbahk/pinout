@@ -7,6 +7,7 @@ import { encoderCapabilities } from './modules/encoder/capabilities.js';
 import { forceCapabilities } from './modules/force/capabilities.js';
 import { imuCapabilities } from './modules/imu/capabilities.js';
 import { limitSwitchCapabilities } from './modules/limitSwitch/capabilities.js';
+import { mobileBaseCapabilities } from './modules/mobileBase/capabilities.js';
 import { robotArmCapabilities } from './modules/robotArm/capabilities.js';
 import { servoCapabilities } from './modules/servo/capabilities.js';
 import { stepperCapabilities } from './modules/stepper/capabilities.js';
@@ -519,6 +520,7 @@ for (const capability of [
   ...encoderCapabilities,
   ...limitSwitchCapabilities,
   ...forceCapabilities,
+  ...mobileBaseCapabilities,
 ]) {
   catalog[capability.name] = capability;
 }
