@@ -1,0 +1,28 @@
+.github/workflows/ci.yml
+  s_d4f6620ddbae02::t_b7dfd0972eefb4 26-39
+  s_12a61c49ed3cea::t_f59f679950329b 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1ee33c51392d6d4a541ee5ffcbe3abc971d1a944",
+  "prompts": {},
+  "sessions": {
+    "s_12a61c49ed3cea": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f21ebb70-6909-4a60-88a8-1d164f0ef8aa",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_d4f6620ddbae02": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "153b33a7-0d64-429b-b6bf-6d3cdcae9f7b",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
