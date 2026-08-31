@@ -1,0 +1,25 @@
+packages/core/tests/simulators.test.ts
+  s_36883e4c616fba::t_31d5131cf19d2d 2
+  s_36883e4c616fba::t_434e441a973d80 1,3-31,33-40
+  s_36883e4c616fba::t_db07270f178504 32
+packages/core/tests/policy.test.ts
+  s_36883e4c616fba::t_8159227cfc1d6c 1-57
+packages/core/tests/runtime.test.ts
+  s_36883e4c616fba::t_c342b0540a7fdf 1-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "70b5f02f2728973f67c0d9a5b2f9143916882487",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
