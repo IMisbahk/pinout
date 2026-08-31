@@ -1,0 +1,19 @@
+packages/core/tests/tcpTransport.test.ts
+  s_31bf6e29b1447f::t_8c86199fd031ef 1-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f3a50af92b2780d874dcd6faa3dac3c281967272",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
