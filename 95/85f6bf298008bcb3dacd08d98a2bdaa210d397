@@ -1,0 +1,32 @@
+packages/cli/package.json
+  s_36883e4c616fba::t_dc63f0639f92ee 37
+package.json
+  s_36883e4c616fba::t_bca5effd794ea9 32-34
+packages/cli/src/runCli.ts
+  s_36883e4c616fba::t_37817be2db89cd 14
+  s_36883e4c616fba::t_c09cfd6d1d73b8 103
+packages/cli/src/generateCommands.ts
+  s_36883e4c616fba::t_5f9efb24b92f26 43,45-65
+  s_36883e4c616fba::t_e7e14520a2e108 1,3-42,44,66-91
+  s_36883e4c616fba::t_a04f78a2197dcd 2
+packages/cli/tsconfig.json
+  s_36883e4c616fba::t_16d3ed9f66d59c 9
+package-lock.json
+  s_36883e4c616fba::t_ebfbdc57fb077b 922-925,5614,5617,5629-5630,5638-5648,5652,5655
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9585f6bf298008bcb3dacd08d98a2bdaa210d397",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
