@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  decodeLine,
   encodeEvent,
   encodeFailure,
   encodeRequest,
@@ -93,5 +94,12 @@ describe('protocol', () => {
 
   it('exports the firmware max line length', () => {
     expect(maxProtocolLineBytes).toBe(512);
+  });
+
+  it('classifies parse failures through decodeLine', () => {
+    expect(decodeLine('ets Jun  8 2016 00:22:57')).toEqual({ kind: 'ignore' });
+    expect(decodeLine('{not-json').kind).toBe('invalidJson');
+    expect(decodeLine('{"v":99,"id":"1","ok":true,"result":{}}').kind).toBe('invalidMessage');
+    expect(() => parseLine('{not-json')).toThrow(ProtocolError);
   });
 });

@@ -1,9 +1,28 @@
 export { connect } from './connect.js';
+export { loadPinoutConfig } from './config.js';
 export { Device } from './device.js';
 export { simulatedEsp32 } from './drivers/esp32/simulatedTransport.js';
 export { loopbackTransport, LoopbackTransport } from './transports/loopbackTransport.js';
 export { tcpTransport } from './transports/tcpTransport.js';
-export { describeCapabilities, toAgentTools } from './capabilities.js';
+export {
+  capabilityCatalog,
+  describeCapabilities,
+  describeCapability,
+  firstPartyCapabilities,
+  gpioAnalogReadCapability,
+  gpioModeCapability,
+  gpioPulseCapability,
+  gpioPwmCapability,
+  gpioReadCapability,
+  gpioToggleCapability,
+  gpioUnwatchCapability,
+  gpioWatchCapability,
+  gpioWriteCapability,
+  sysHelloCapability,
+  sysInfoCapability,
+  sysPingCapability,
+  toAgentTools,
+} from './capabilities.js';
 export {
   PinoutError,
   ValidationError,
@@ -13,7 +32,9 @@ export {
   ProtocolError,
   DisconnectedError,
   DeviceError,
+  AbortedError,
 } from './errors.js';
+export { createLogger } from './logger.js';
 export {
   decodeLine,
   encodeEvent,
@@ -24,22 +45,40 @@ export {
   parseLine,
   protocolVersion,
 } from './protocol.js';
-export { handleBridgeAction, esp32BridgeInfo, createGpioState } from './drivers/esp32/bridge.js';
 export {
+  esp32BridgeActions,
+  esp32BridgeCapabilities,
+  handleBridgeAction,
+  esp32BridgeInfo,
+  createGpioState,
+} from './drivers/esp32/bridge.js';
+export {
+  assertEsp32AnalogPin,
+  assertEsp32ModePin,
+  assertEsp32PwmPin,
   assertEsp32ReadPin,
   assertEsp32WritePin,
   assertGpioPin,
   assertGpioValue,
+  esp32AdcPins,
   esp32DefaultLedPin,
+  esp32DevKitPins,
+  esp32StrapPins,
   isEsp32StrapPin,
+  resolveEsp32BoardPin,
 } from './drivers/esp32/pins.js';
+export { esp32DevKitPinMap, resolveEsp32DevKitPin } from './drivers/esp32/boardMap.js';
 
 export type {
   Transport,
   ConnectOptions,
   CapabilityDescriptor,
   CapabilitySafety,
+  DeviceEventHandler,
   DeviceInfo,
   AgentTool,
   JsonSchema,
+  RequestOptions,
 } from './types.js';
+export type { LogContext, LogLevel, Logger } from './logger.js';
+export type { PinoutEnvConfig } from './config.js';
