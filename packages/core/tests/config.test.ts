@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   connect,
   loadPinoutConfig,
-  simulatedEsp32,
   TimeoutError,
   ValidationError,
 } from '@pinout/core';

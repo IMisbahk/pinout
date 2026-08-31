@@ -6,7 +6,14 @@ import { connect } from '../src/connect.js';
 describe('loopbackTransport', () => {
   it('responds to writes with scripted lines', async () => {
     const transport = loopbackTransport({
-      onOpen: () => [encodeEvent('ready', { firmware: 'test', version: '0', protocol: 1, capabilities: ['sys.hello'] })],
+      onOpen: () => [
+        encodeEvent('ready', {
+          firmware: 'test',
+          version: '0',
+          protocol: 1,
+          capabilities: ['sys.hello'],
+        }),
+      ],
       onWrite: (data) => {
         const line = data.trim();
         const message = parseLine(line);
@@ -32,7 +39,9 @@ describe('loopbackTransport', () => {
 
   it('supports manual inject', async () => {
     const transport = loopbackTransport();
-    transport.inject(encodeEvent('ready', { firmware: 'x', version: '0', protocol: 1, capabilities: [] }));
+    transport.inject(
+      encodeEvent('ready', { firmware: 'x', version: '0', protocol: 1, capabilities: [] }),
+    );
     await transport.open();
     await transport.close();
   });
