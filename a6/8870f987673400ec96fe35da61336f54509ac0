@@ -1,0 +1,46 @@
+packages/core/src/version.ts
+  s_36883e4c616fba::t_23c64efc1c6177 1-2
+packages/core/src/module/policies.ts
+  s_36883e4c616fba::t_3564f085743d40 1-81,83-87,92-94,101-124
+  s_36883e4c616fba::t_300282bdc39fbc 82,88-91,95-100
+packages/core/src/module/manifest.ts
+  s_36883e4c616fba::t_64f61f8ef16280 1-45,47-52,73-108
+  s_36883e4c616fba::t_98d680c952659a 46,53-72
+packages/core/src/module/loadModule.ts
+  s_36883e4c616fba::t_e158276aec04d0 1-67
+packages/core/package.json
+  s_36883e4c616fba::t_6d125af34e1e3c 3
+packages/core/src/module/validate.ts
+  s_36883e4c616fba::t_257b108675e891 39-44
+  s_36883e4c616fba::t_6a88c5e25a3565 1-38,45-63
+  s_36883e4c616fba::t_d3c6eaa1bcb129 64-66
+packages/core/src/module/defineModule.ts
+  s_36883e4c616fba::t_c1ee8d4dc3f99c 1-55,57-74
+  s_36883e4c616fba::t_4b48e52ccaf47b 56,75-78
+packages/core/src/module/conformance.ts
+  s_36883e4c616fba::t_2588a21b09d222 1-4,6-151,153-158
+  s_36883e4c616fba::t_a824898b2565f6 5
+  s_36883e4c616fba::t_458e8c4690dc59 152
+packages/core/src/module/errors.ts
+  s_36883e4c616fba::t_1633468f7c2c6b 34
+  s_36883e4c616fba::t_3cbc3759430b27 63
+  s_36883e4c616fba::t_ab6cd48a776b88 1-33,35-62,64-74
+packages/core/src/module/action.ts
+  s_36883e4c616fba::t_6535a9d662fe68 1-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a68870f987673400ec96fe35da61336f54509ac0",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
