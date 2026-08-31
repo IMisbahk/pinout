@@ -1,0 +1,58 @@
+# Testing
+
+Pinout uses [Vitest](https://vitest.dev/) for unit and integration tests. No physical hardware is required for CI — the simulated ESP32 transport implements the same protocol as firmware.
+
+## Running tests
+
+```bash
+npm test              # run all tests once
+npm run test:watch    # watch mode
+npm run test:coverage # coverage report (core package)
+```
+
+Quality gates used before merging:
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+## Test layout
+
+Tests live next to each package under `packages/<name>/tests/`:
+
+| Package | Focus |
+| --- | --- |
+| `@pinout/core` | Protocol codecs, pin validation, session/timeouts, simulator integration |
+| `@pinout/cli` | Commander parsing and command wiring |
+| `@pinout/mcp` | MCP tool listing and invocation via in-memory transport + mock device |
+
+Prefer real protocol round-trips over mocking internal functions. Mock transports are fine when testing error propagation or MCP wiring.
+
+## Simulator vs hardware
+
+CI runs against `simulatedEsp32()` only. To verify on a board:
+
+1. Flash [firmware/esp32-bridge](../firmware/esp32-bridge/README.md).
+2. Run `npm run pinout -- hello --port <path>`.
+3. Run GPIO write/read against a safe pin (typically GPIO 2 on DevKit boards).
+
+Hardware tests are manual; do not gate CI on attached devices.
+
+## Firmware compile (optional)
+
+CI includes a PlatformIO compile job when the toolchain is available. Locally:
+
+```bash
+cd firmware/esp32-bridge
+pio run
+```
+
+If PlatformIO is not installed, skip this step — Node tests and the simulator remain sufficient for SDK changes. Install via [platformio.org](https://platformio.org/) or `pip install platformio`.
+
+## Coverage
+
+`npm run test:coverage` reports line/branch coverage for `packages/core/src`. Thresholds are configured in [vitest.config.ts](../vitest.config.ts). Coverage is a development aid, not a publish gate.

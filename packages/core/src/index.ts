@@ -2,6 +2,7 @@ export { connect } from './connect.js';
 export { loadPinoutConfig } from './config.js';
 export { Device } from './device.js';
 export { simulatedEsp32 } from './drivers/esp32/simulatedTransport.js';
+export { listSerialPorts, serialPort } from './serial.js';
 export { loopbackTransport, LoopbackTransport } from './transports/loopbackTransport.js';
 export { tcpTransport } from './transports/tcpTransport.js';
 export {

@@ -17,9 +17,9 @@ Device / Driver / Adapter
  Physical Hardware
 ```
 
-A device exposes **capabilities** (named actions with typed inputs, outputs, and safety notes). The first capability is GPIO. The architecture is not GPIO-shaped: a later motor, sensor, or arm is another capability on a device, not a rewrite of the core.
+A device exposes **capabilities** (named actions with typed inputs, outputs, and safety notes). The first capability family is GPIO. The architecture is not GPIO-shaped: a later motor, sensor, or arm is another capability on a device, not a rewrite of the core.
 
-**This repository is early and experimental.** The useful surface area is one vertical slice: a TypeScript SDK, a small CLI, a simulated ESP32, and firmware that can drive a pin on a real ESP32 over serial.
+**This repository is early and experimental.** The useful surface area is a TypeScript SDK, CLI, MCP adapter, simulated ESP32, and firmware that can drive a pin on a real ESP32 over serial.
 
 ## Quick start
 
@@ -51,6 +51,8 @@ const board = await connect({ transport: simulatedEsp32() });
 await board.gpio.write(2, true);
 await board.close();
 ```
+
+Copy [.env.example](.env.example) to `.env` to set a default serial port and timeouts.
 
 ## ESP32 hardware demo
 
@@ -92,11 +94,14 @@ Opening the serial port usually resets the ESP32. The SDK waits for a `ready` ev
 ## Scripts
 
 ```bash
-npm test           # unit + simulator integration tests
+npm test              # unit + simulator integration tests
+npm run test:coverage # coverage report for @pinout/core
 npm run lint
 npm run typecheck
 npm run build
-npm run pinout --  # CLI (builds first)
+npm run pinout --      # CLI (builds first)
+npm run example:blink -- --mock
+npm run mcp            # MCP stdio server (simulator; set PINOUT_PORT for hardware)
 ```
 
 ## Architecture
@@ -105,19 +110,32 @@ npm run pinout --  # CLI (builds first)
 | --- | --- |
 | `@pinout/core` | Device, capabilities, protocol, transports, ESP32 pin rules, simulator |
 | `@pinout/cli` | `pinout` commands that call the SDK |
+| `@pinout/mcp` | MCP stdio server — tools from `toAgentTools()`, calls via `invoke()` |
 | `firmware/esp32-bridge` | Minimal ESP32 firmware speaking protocol v1 over UART |
 
 Transports are replaceable. Drivers own board-specific knowledge (ESP32 flash pins, input-only GPIOs). The core does not catalog every device ever made.
 
-Longer notes:
+Documentation:
 
 - [docs/architecture.md](docs/architecture.md)
 - [docs/protocol.md](docs/protocol.md)
+- [docs/capabilities.md](docs/capabilities.md)
+- [docs/cli.md](docs/cli.md)
+- [docs/testing.md](docs/testing.md)
+- [CHANGELOG.md](CHANGELOG.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Agents
 
-Capabilities carry enough structure to become tools later (`name`, `description`, input/output JSON Schema, safety annotations). `device.toAgentTools()` returns that shape. There is no MCP server in this repository; the SDK stays independent of any agent framework.
+Capabilities carry enough structure to become tools (`name`, `description`, input/output JSON Schema, safety annotations). `device.toAgentTools()` returns that shape.
+
+Run the MCP adapter over stdio:
+
+```bash
+PINOUT_MOCK=1 npm run mcp
+```
+
+Configure your MCP client to launch `node packages/mcp/dist/index.js` (after `npm run build`) with `PINOUT_PORT` or `PINOUT_MOCK=1`. The SDK itself stays MCP-free; only `@pinout/mcp` depends on `@modelcontextprotocol/sdk`.
 
 ## Safety
 
