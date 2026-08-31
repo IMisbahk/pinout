@@ -1,6 +1,12 @@
 {
   "name": "pinout",
   "private": true,
+  "description": "Hardware abstraction layer for programmable devices — SDK, CLI, firmware, and MCP adapter.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imisbahk/pinout.git"
+  },
+  "license": "MIT",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -10,19 +16,26 @@
     "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pinout": "npm run build --silent && node packages/cli/dist/index.js",
-    "example:blink": "npm run build --silent && tsx examples/blink.ts"
+    "example:blink": "npm run build --silent && tsx examples/blink.ts",
+    "example:script": "npm run build --silent && tsx examples/script.ts",
+    "example:agent-tools": "npm run build --silent && tsx examples/agent-tools.ts",
+    "mcp": "npm run build --silent && PINOUT_MOCK=1 node packages/mcp/dist/index.js"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",
+    "@pinout/cli": "*",
+    "@pinout/core": "*",
     "@types/node": "^22.10.1",
+    "@vitest/coverage-v8": "^2.1.8",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.4.2",
