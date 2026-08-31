@@ -1,0 +1,23 @@
+examples/pwm.ts
+  s_31bf6e29b1447f::t_a15cd8fa1d42d2 1-40
+examples/watch.ts
+  s_31bf6e29b1447f::t_736f8e8d8eb9a2 1-42
+examples/analog.ts
+  s_31bf6e29b1447f::t_6f715cfe31a920 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ababecf29423ed973ec3a8544561930e52306e14",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
