@@ -1,0 +1,49 @@
+packages/core/src/home/transportFactory.ts
+  s_36883e4c616fba::t_f83b61d14edc1a 1-30,32-91
+  s_36883e4c616fba::t_50aeb934737fe6 31
+packages/core/src/home/moduleStore.ts
+  s_36883e4c616fba::t_52bc8484e8ef96 1,3-37,39-130
+  s_36883e4c616fba::t_2d50a5559fb937 38
+  s_36883e4c616fba::t_e990f2f02aadc4 2
+packages/core/src/home/deviceStore.ts
+  s_36883e4c616fba::t_8d0afcf671034a 1-142
+packages/core/src/runtime/runtime.ts
+  s_36883e4c616fba::t_7272dcf9386cc2 129
+  s_36883e4c616fba::t_21d7261b03ad09 6
+  s_36883e4c616fba::t_08a14beacc5b49 32-36
+  s_36883e4c616fba::t_d32bd90dc52d14 2
+packages/core/src/runtime/createHeterogeneousRuntime.ts
+  s_36883e4c616fba::t_bc925e9580a627 24-38
+  s_36883e4c616fba::t_b8064a1ea58990 7
+packages/core/src/modules/registry.ts
+  s_36883e4c616fba::t_f7c0f162d6ab81 1-3,5-7,9,15-16,18-20,22-26,30-31,35-95
+  s_36883e4c616fba::t_1f04947171fae3 96-97
+packages/core/src/runtime/types.ts
+  s_36883e4c616fba::t_405962ee6cd6bd 4
+  s_36883e4c616fba::t_dac360c995e63d 67
+packages/core/src/index.ts
+  s_36883e4c616fba::t_9b71ac614539de 83-141,143
+  s_36883e4c616fba::t_73916bc16bdc38 142,144-145
+packages/core/src/home/paths.ts
+  s_36883e4c616fba::t_6d8814205cec61 1-37
+packages/core/src/runtime/fromConfig.ts
+  s_36883e4c616fba::t_40b85bb511e45d 1-31,33-68,86-106
+  s_36883e4c616fba::t_016c9392713bd6 32
+  s_36883e4c616fba::t_9ceb20283dd9b6 69-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f5c6f5174ab125293b27c11088ffeb1ba0166839",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
