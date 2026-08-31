@@ -1,0 +1,31 @@
+examples/external-module/weird-sensor/src/backend.ts
+  s_36883e4c616fba::t_ab983251898b32 1-61
+examples/external-module/weird-sensor/src/index.ts
+  s_36883e4c616fba::t_af5df5df33b1d0 1-53
+examples/external-module/weird-sensor/tsconfig.json
+  s_36883e4c616fba::t_b2258d26147b88 1-13
+examples/external-module/weird-sensor/README.md
+  s_36883e4c616fba::t_46b8834643ba94 1-58
+examples/external-module/weird-sensor/test/module.test.ts
+  s_36883e4c616fba::t_66c175e06965fd 1-19
+examples/external-module/weird-sensor/pinout.module.json
+  s_36883e4c616fba::t_ea7cac39c18274 1-14
+examples/external-module/weird-sensor/package.json
+  s_36883e4c616fba::t_ee78b1978792f9 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9824997a700a1fff9ad82fb07cc0874085dea084",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
