@@ -98,7 +98,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      printHello(device, output);
+      await printHello(device, output);
     });
   });
 
@@ -241,6 +241,9 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, value: boolean, options: ConnectionFlags & { duration: number }) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
+      if (!output.json) {
+        output.log(`pulsing gpio ${pin} ${value ? 'high' : 'low'} for ${options.duration}ms`);
+      }
       const result = await device.invoke('gpio.pulse', {
         pin,
         value,
@@ -362,19 +365,27 @@ async function withDevice(
   }
 }
 
-function printHello(device: Device, output: CliOutput): void {
+async function printHello(device: Device, output: CliOutput): Promise<void> {
+  const info = device.supports('sys.info') ? await device.invoke('sys.info') : {};
   if (output.json) {
     output.log({
       firmware: device.info.firmware,
       version: device.info.version,
       protocol: device.info.protocol,
       capabilities: device.capabilities,
+      info,
     });
     return;
   }
 
   output.log(`firmware    ${device.info.firmware} ${device.info.version}`);
   output.log(`protocol    v${device.info.protocol}`);
+  if (typeof info.uptimeMs === 'number') {
+    output.log(`uptime      ${info.uptimeMs}ms`);
+  }
+  if (typeof info.freeHeap === 'number') {
+    output.log(`free heap   ${info.freeHeap}`);
+  }
   output.log('capabilities');
   for (const capability of device.capabilities) {
     const safety = capability.safety.physicalOutput ? 'physical-output' : 'read-only';

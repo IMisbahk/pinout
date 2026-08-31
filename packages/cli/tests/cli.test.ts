@@ -25,6 +25,7 @@ describe('cli', () => {
     expect(code).toBe(0);
     expect(io.logs.join('\n')).toContain('esp32-bridge');
     expect(io.logs.join('\n')).toContain('gpio.write');
+    expect(io.logs.join('\n')).toContain('uptime');
   });
 
   it('handshakes with json output', async () => {
@@ -150,6 +151,18 @@ describe('cli', () => {
     const code = await runCli(['node', 'pinout', 'gpio', 'write', '34', 'high', '--mock'], io);
     expect(code).toBe(1);
     expect(io.errors.join('\n')).toMatch(/input-only/);
+  });
+
+  it('sets gpio mode and invokes sys.ping', async () => {
+    const mode = captureIo();
+    expect(await runCli(['node', 'pinout', 'gpio', 'mode', '4', 'pullup', '--mock'], mode)).toBe(0);
+    expect(mode.logs.join('\n')).toContain('mode');
+
+    const ping = captureIo();
+    expect(
+      await runCli(['node', 'pinout', 'invoke', 'sys.ping', '--payload', '{}', '--mock'], ping),
+    ).toBe(0);
+    expect(ping.logs.join('\n')).toContain('pong');
   });
 });
 
