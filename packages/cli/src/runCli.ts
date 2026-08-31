@@ -3,7 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Command } from 'commander';
 import type { Device } from '@pinout/core';
-import { esp32DefaultLedPin, listSerialPorts, createHeterogeneousRuntime } from '@pinout/core';
+import { esp32DefaultLedPin, listSerialPorts } from '@pinout/core';
+import {
+  registerDeviceCommands,
+  registerModuleCommands,
+  runConfiguredDevicesCommand,
+  runInvokeCommand,
+  runRuntimeStartCommand,
+} from './pinoutHomeCommands.js';
 import {
   addConnectionOptions,
   openDevice,
@@ -49,7 +56,14 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
 
   program
     .command('devices')
-    .description('List serial ports on this machine.')
+    .description('List configured/active Pinout runtime devices.')
+    .action(async () => {
+      await runConfiguredDevicesCommand(program, io, outputFor);
+    });
+
+  program
+    .command('ports')
+    .description('List discoverable serial ports on this machine.')
     .action(async () => {
       const output = outputFor(program, io);
       const ports = await listSerialPorts();
@@ -67,63 +81,54 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
       }
     });
 
-  const runtime = program.command('runtime').description('Multi-device Pinout runtime commands.');
-
-  runtime
-    .command('devices')
-    .description('List registered devices in the heterogeneous runtime demo set.')
-    .option('--hardware', 'use PINOUT_PORT for ESP32 instead of the simulator')
-    .action(async (options: { hardware?: boolean }) => {
-      const output = outputFor(program, io);
-      const demoRuntime = await createHeterogeneousRuntime({
-        useHardwareEsp32: Boolean(options.hardware),
-        motionDelayMs: 0,
-      });
-      try {
-        const devices = demoRuntime.devices();
-        if (output.json) {
-          output.log({ devices });
-          return;
-        }
-        if (devices.length === 0) {
-          output.log('No devices registered.');
-          return;
-        }
-        output.log(`${'ID'.padEnd(20)} ${'CLASS'.padEnd(28)} STATUS`);
-        for (const device of devices) {
-          output.log(
-            `${device.id.padEnd(20)} ${device.deviceClass.padEnd(28)} ${device.lifecycle}`,
-          );
-        }
-      } finally {
-        await demoRuntime.close();
-      }
-    });
-
-  runtime
+  program
     .command('invoke')
-    .description('Invoke a capability on a registered runtime device.')
-    .argument('<deviceId>', 'registered device id')
+    .description('Invoke a capability on a configured runtime device.')
+    .argument('<deviceId>', 'device id')
     .argument('<capability>', 'capability name')
     .option('--payload <json>', 'JSON payload object', parseJsonObject, {})
-    .option('--hardware', 'use PINOUT_PORT for ESP32 instead of the simulator')
     .action(
       async (
         deviceId: string,
         capability: string,
-        options: { payload: Record<string, unknown>; hardware?: boolean },
+        options: { payload: Record<string, unknown> },
       ) => {
-        const output = outputFor(program, io);
-        const demoRuntime = await createHeterogeneousRuntime({
-          useHardwareEsp32: Boolean(options.hardware),
-          motionDelayMs: 0,
-        });
-        try {
-          const result = await demoRuntime.invoke(deviceId, capability, options.payload);
-          output.log(result);
-        } finally {
-          await demoRuntime.close();
-        }
+        await runInvokeCommand(program, deviceId, capability, options.payload, io, outputFor);
+      },
+    );
+
+  registerModuleCommands(program, outputFor, io);
+  registerDeviceCommands(program, outputFor, io);
+
+  const runtime = program.command('runtime').description('Multi-device Pinout runtime commands.');
+
+  runtime
+    .command('start')
+    .description('Bootstrap the runtime from ~/.pinout/devices.json and list active devices.')
+    .action(async () => {
+      await runRuntimeStartCommand(program, io, outputFor);
+    });
+
+  runtime
+    .command('devices')
+    .description('List registered devices (alias for pinout devices).')
+    .action(async () => {
+      await runConfiguredDevicesCommand(program, io, outputFor);
+    });
+
+  runtime
+    .command('invoke')
+    .description('Invoke a capability on a registered runtime device (alias for pinout invoke).')
+    .argument('<deviceId>', 'registered device id')
+    .argument('<capability>', 'capability name')
+    .option('--payload <json>', 'JSON payload object', parseJsonObject, {})
+    .action(
+      async (
+        deviceId: string,
+        capability: string,
+        options: { payload: Record<string, unknown> },
+      ) => {
+        await runInvokeCommand(program, deviceId, capability, options.payload, io, outputFor);
       },
     );
 
@@ -164,8 +169,8 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
 
   addDeviceCommand(
     program
-      .command('invoke <action>')
-      .description('Invoke any device action with a JSON payload.')
+      .command('exec <action>')
+      .description('Invoke an action on a directly connected device (single-device mode).')
       .option('--payload <json>', 'action payload object', parseJsonObject, {}),
   ).action(
     async (action: string, options: ConnectionFlags & { payload: Record<string, unknown> }) => {

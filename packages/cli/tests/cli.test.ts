@@ -160,7 +160,7 @@ describe('cli', () => {
 
     const ping = captureIo();
     expect(
-      await runCli(['node', 'pinout', 'invoke', 'sys.ping', '--payload', '{}', '--mock'], ping),
+      await runCli(['node', 'pinout', 'exec', 'sys.ping', '--payload', '{}', '--mock'], ping),
     ).toBe(0);
     expect(ping.logs.join('\n')).toContain('pong');
   });
