@@ -1,0 +1,42 @@
+examples/script.ts
+  s_8b389f08649e7f::t_a4234bca25efb1 10
+  s_8b389f08649e7f::t_9e93034acd7348 1-9,11-66
+examples/blink.ts
+  s_165a83285c1770::t_e8704d3813a4ce 7
+  s_8b389f08649e7f::t_ae8c6abf453bf9 10-11,17,24-29,32-33,40-43,46,51
+  s_31bf6e29b1447f::t_ec90e1df66ea15 31
+examples/agent-tools.ts
+  s_8b389f08649e7f::t_4d6296229a28d6 1-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "778e20627cf797a98af53b2bfed3ae6ac8285c47",
+  "prompts": {},
+  "sessions": {
+    "s_165a83285c1770": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ce339a6c-0cef-4cff-a8db-7cc21a7356fa",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_8b389f08649e7f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "550d2785-5e55-42cd-b77d-bc094e12873f",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
