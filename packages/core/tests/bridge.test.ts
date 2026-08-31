@@ -22,11 +22,13 @@ describe('gpio validation', () => {
     expect(() => assertGpioValue('high')).toThrow(ValidationError);
   });
 
-  it('refuses ESP32 flash, UART0, and input-only output pins', () => {
+  it('refuses ESP32 flash, UART0, strap, and input-only output pins', () => {
     expect(() => assertEsp32WritePin(6)).toThrow(/flash/);
     expect(() => assertEsp32WritePin(1)).toThrow(/UART0/);
     expect(() => assertEsp32WritePin(34)).toThrow(/input-only/);
+    expect(() => assertEsp32WritePin(12)).toThrow(/strap/);
     expect(() => assertEsp32ReadPin(10)).toThrow(/flash/);
+    expect(() => assertEsp32ReadPin(12)).toThrow(/strap/);
   });
 
   it('allows the usual DevKit LED pin', () => {

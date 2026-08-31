@@ -20,9 +20,8 @@ Do not use:
 
 - GPIO 6–11 (SPI flash)
 - GPIO 1 and 3 (USB serial)
+- GPIO 12 (boot strap; held high at reset can prevent boot)
 - GPIO 34–39 as outputs (input-only)
-
-GPIO 12 held high at reset can prevent boot.
 
 ## Flash with PlatformIO
 

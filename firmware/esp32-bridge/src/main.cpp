@@ -13,9 +13,10 @@ size_t lineLength = 0;
 bool isFlashPin(int pin) { return pin >= 6 && pin <= 11; }
 bool isInputOnlyPin(int pin) { return pin >= 34 && pin <= 39; }
 bool isUart0Pin(int pin) { return pin == 1 || pin == 3; }
+bool isStrapPin(int pin) { return pin == 12; }
 
 bool isReadablePin(int pin) {
-  return pin >= 0 && pin <= 39 && !isFlashPin(pin) && !isUart0Pin(pin);
+  return pin >= 0 && pin <= 39 && !isFlashPin(pin) && !isUart0Pin(pin) && !isStrapPin(pin);
 }
 
 bool isWritablePin(int pin) {

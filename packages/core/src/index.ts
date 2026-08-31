@@ -31,6 +31,7 @@ export {
   assertGpioPin,
   assertGpioValue,
   esp32DefaultLedPin,
+  isEsp32StrapPin,
 } from './drivers/esp32/pins.js';
 
 export type {

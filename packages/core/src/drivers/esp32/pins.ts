@@ -3,6 +3,7 @@ import { ValidationError } from '../../errors.js';
 export const esp32FlashPins = [6, 7, 8, 9, 10, 11] as const;
 export const esp32InputOnlyPins = [34, 35, 36, 37, 38, 39] as const;
 export const esp32Uart0Pins = [1, 3] as const;
+export const esp32StrapPins = [12] as const;
 export const esp32DefaultLedPin = 2;
 
 export function assertGpioPin(pin: unknown): number {
@@ -31,19 +32,32 @@ export function isEsp32Uart0Pin(pin: number): boolean {
   return pin === 1 || pin === 3;
 }
 
+export function isEsp32StrapPin(pin: number): boolean {
+  return pin === 12;
+}
+
 export function assertEsp32ReadPin(pin: number): void {
-  if (pin > 39 || isEsp32FlashPin(pin) || isEsp32Uart0Pin(pin)) {
+  if (pin > 39 || isEsp32FlashPin(pin) || isEsp32Uart0Pin(pin) || isEsp32StrapPin(pin)) {
     throw new ValidationError(esp32PinMessage(pin, 'read'));
   }
 }
 
 export function assertEsp32WritePin(pin: number): void {
-  if (pin > 39 || isEsp32FlashPin(pin) || isEsp32InputOnlyPin(pin) || isEsp32Uart0Pin(pin)) {
+  if (
+    pin > 39 ||
+    isEsp32FlashPin(pin) ||
+    isEsp32InputOnlyPin(pin) ||
+    isEsp32Uart0Pin(pin) ||
+    isEsp32StrapPin(pin)
+  ) {
     throw new ValidationError(esp32PinMessage(pin, 'write'));
   }
 }
 
 function esp32PinMessage(pin: number, operation: 'read' | 'write'): string {
+  if (isEsp32StrapPin(pin)) {
+    return `GPIO ${pin} is a boot strap pin on ESP32. ${operation} is refused because it can prevent boot.`;
+  }
   if (isEsp32FlashPin(pin)) {
     return `GPIO ${pin} is wired to SPI flash on ESP32. ${operation} is refused.`;
   }

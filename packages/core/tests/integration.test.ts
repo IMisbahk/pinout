@@ -48,6 +48,7 @@ describe('sdk to simulated ESP32', () => {
       );
       await expect(device.gpio.write(34, true)).rejects.toBeInstanceOf(ValidationError);
       await expect(device.gpio.write(6, true)).rejects.toBeInstanceOf(ValidationError);
+      await expect(device.gpio.write(12, true)).rejects.toBeInstanceOf(ValidationError);
     } finally {
       await device.close();
     }
