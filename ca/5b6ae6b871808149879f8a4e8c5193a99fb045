@@ -1,0 +1,41 @@
+packages/core/src/modules/robotArmModule.ts
+  s_36883e4c616fba::t_1bdb0dc5bde661 22
+  s_36883e4c616fba::t_02df94887a96df 21
+  s_36883e4c616fba::t_726d4c02c07766 2-20,23-25
+  s_36883e4c616fba::t_ee3775d6e80857 1
+packages/core/src/modules/robotArm/simulator.ts
+  s_36883e4c616fba::t_e40d18741999ed 1-56,61-160
+  s_36883e4c616fba::t_001290c386cabb 57-60
+  s_36883e4c616fba::t_e3dd20eadaa03b 161-164
+packages/core/src/modules/robotArm/capabilities.ts
+  s_36883e4c616fba::t_407fabfe37e614 1-148
+  s_36883e4c616fba::t_3a4227297bf4bf 149-152
+packages/core/src/modules/chamberModule.ts
+  s_36883e4c616fba::t_dc57d4db9ed3fa 1,22
+  s_36883e4c616fba::t_35d365f0552934 2-21,23-25
+packages/core/src/capabilities.ts
+  s_36883e4c616fba::t_8e679db322ba36 276-278
+  s_36883e4c616fba::t_2f1f936c95fbab 3-4
+  s_36883e4c616fba::t_e8242a8a088aa2 279
+packages/core/src/modules/chamber/simulator.ts
+  s_36883e4c616fba::t_929dcb3539b161 42-45
+  s_36883e4c616fba::t_720ede2f7f123a 1-41,46-130
+packages/core/src/modules/chamber/capabilities.ts
+  s_36883e4c616fba::t_41b24ebe15ae2c 1-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ca5b6ae6b871808149879f8a4e8c5193a99fb045",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
