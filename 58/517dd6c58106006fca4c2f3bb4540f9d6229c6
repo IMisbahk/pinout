@@ -1,0 +1,62 @@
+packages/core/src/policy/engine.ts
+  s_36883e4c616fba::t_56d5b963e29c9e 1-102
+packages/core/src/runtime/deviceInstance.ts
+  s_36883e4c616fba::t_f23cb0acb88730 154-161
+  s_36883e4c616fba::t_625879a679306f 8
+  s_36883e4c616fba::t_e83bd94cd86562 7
+  s_36883e4c616fba::t_da12cf770bf0e9 110
+  s_36883e4c616fba::t_3f7c82106e73b3 1-6,9-35,37-66,68-109,111-153,162
+  s_36883e4c616fba::t_8f36ca533347ba 36
+  s_36883e4c616fba::t_25ee72d87bf144 67
+  s_36883e4c616fba::t_fad36724c1ea72 163-165
+packages/core/src/runtime/protocolBackend.ts
+  s_36883e4c616fba::t_85f58c9dae7ea9 1-8,11-23,32
+  s_36883e4c616fba::t_7f24862426acb8 9-10
+  s_36883e4c616fba::t_6a2e27e083dfa4 24-31
+packages/core/src/policy/errors.ts
+  s_36883e4c616fba::t_eea77ab10729e8 1-28
+packages/core/src/modules/esp32Module.ts
+  s_36883e4c616fba::t_f4e68dd20bea7e 1
+  s_36883e4c616fba::t_0fcc3923c4a3cc 2-3,6-15,18-27,36-42
+  s_36883e4c616fba::t_c7397320cdc684 5,28
+  s_36883e4c616fba::t_8e93491e30d2aa 16-17
+  s_36883e4c616fba::t_3f27372ac29b1a 4
+  s_36883e4c616fba::t_a0766998adbb5e 29-35
+packages/core/src/modules/registry.ts
+  s_36883e4c616fba::t_0e4dfb1fcd752f 1-26
+packages/core/src/runtime/types.ts
+  s_36883e4c616fba::t_712d4192d96a05 44
+  s_36883e4c616fba::t_80be5df103ea1c 2-43,45-55,60-64,66-78
+  s_36883e4c616fba::t_9718d70c3c357d 1
+  s_36883e4c616fba::t_921022c79bf290 56-58
+  s_36883e4c616fba::t_1b4c42e84a1cd5 59
+  s_36883e4c616fba::t_fb3e79a03889ce 65
+packages/core/src/policy/types.ts
+  s_36883e4c616fba::t_1d0c03fef77b87 1-43
+packages/core/src/runtime/runtime.ts
+  s_36883e4c616fba::t_8d3b00f425dcd2 103
+  s_36883e4c616fba::t_b2cbe1c4884d1b 88-93
+  s_36883e4c616fba::t_eedce0ccb82714 164
+  s_36883e4c616fba::t_d1068e0be5dbf3 81
+  s_36883e4c616fba::t_68ade527e8a4f3 138,143,146,152
+  s_36883e4c616fba::t_620fe5730dfe67 1-4,13-26,28-35,55-57,59-65,67-80,82-87,94-102,118,120-137,139-142,144-145,147-151,153-163,165-175
+  s_36883e4c616fba::t_31d5131cf19d2d 5-12
+  s_36883e4c616fba::t_826d34a568226e 27,36-54,58,66
+  s_36883e4c616fba::t_2b968a49ed2adc 104-117,119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "58517dd6c58106006fca4c2f3bb4540f9d6229c6",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
