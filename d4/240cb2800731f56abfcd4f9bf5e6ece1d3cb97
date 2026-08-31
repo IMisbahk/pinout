@@ -1,0 +1,49 @@
+scripts/mcp-bootstrap.js
+  s_36883e4c616fba::t_146e0a74889009 1-8,11-13
+  s_36883e4c616fba::t_f183ef210e95f8 9-10
+docs/architecture.md
+  s_36883e4c616fba::t_41171c0905b91e 26-32
+docs/build-a-module.md
+  s_36883e4c616fba::t_62269c6f6bd3b2 1-178
+eslint.config.js
+  s_36883e4c616fba::t_ac8f9312d654e9 13-19
+  s_36883e4c616fba::t_e72e9f17b7c52e 12
+docs/cli.md
+  s_36883e4c616fba::t_7184e309bf52e9 70-72
+  s_36883e4c616fba::t_85bd73a405da7a 25-26,29-34,43-48,52-63
+  s_36883e4c616fba::t_371cc7ba74ddba 64
+CHANGELOG.md
+  s_36883e4c616fba::t_97066a25efa649 7-23
+docs/testing.md
+  s_36883e4c616fba::t_e8a21056a9b6f0 29-31,33-38
+  s_36883e4c616fba::t_9df844ba68bf4b 52-53
+CONTRIBUTING.md
+  s_36883e4c616fba::t_afee37740f3d78 26-28
+README.md
+  s_36883e4c616fba::t_b6fdf8b07fb3e4 65
+  s_36883e4c616fba::t_8219b7307bbced 110-125
+package.json
+  s_36883e4c616fba::t_efcdec71773907 33
+docs/modules.md
+  s_36883e4c616fba::t_1f695955748f54 34-47,50
+  s_36883e4c616fba::t_328a647d205486 86-91,93
+  s_36883e4c616fba::t_db9462b5829f6a 63-70
+  s_36883e4c616fba::t_8f7dd2335ee56a 79
+  s_36883e4c616fba::t_07a197ae260e04 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d4240cb2800731f56abfcd4f9bf5e6ece1d3cb97",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
