@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/runCli.js';
 
 describe('cli', () => {
+  it('prints help for gpio and top-level commands', async () => {
+    const io = captureIo();
+    expect(await runCli(['node', 'pinout', '--help'], io)).toBe(0);
+    expect(io.logs.join('\n')).toMatch(/doctor|gpio|invoke|blink/);
+
+    const gpioHelp = captureIo();
+    expect(await runCli(['node', 'pinout', 'gpio', '--help'], gpioHelp)).toBe(0);
+    expect(gpioHelp.logs.join('\n')).toMatch(/mode|toggle|pulse|pwm|analog|watch/);
+  });
+
   it('prints version', async () => {
     const io = captureIo();
     const code = await runCli(['node', 'pinout', '--version'], io);
