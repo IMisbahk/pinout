@@ -1,0 +1,28 @@
+{
+  "name": "@pinout/core",
+  "version": "0.1.0",
+  "description": "Hardware abstraction core for Pinout — devices, capabilities, transports, and protocol.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./serial": {
+      "types": "./dist/serial.d.ts",
+      "default": "./dist/serial.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "serialport": "^13.0.0"
+  }
+}
