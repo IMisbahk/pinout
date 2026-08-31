@@ -1,0 +1,19 @@
+packages/core/src/index.ts
+  s_8b389f08649e7f::t_304559df242d71 4-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "fa3240de4dea8c0e0aee693464ea51cb761e118d",
+  "prompts": {},
+  "sessions": {
+    "s_8b389f08649e7f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "550d2785-5e55-42cd-b77d-bc094e12873f",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
