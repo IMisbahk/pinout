@@ -1,0 +1,21 @@
+packages/core/tests/bridge.test.ts
+  s_0a925cf046f798::t_4a64293e38b88c 3,6,11-13,30-33,47-52,76-77,89-174
+packages/core/src/drivers/esp32/boardMap.ts
+  s_0a925cf046f798::t_3f169160cfef7c 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "14a20c466f7839613de718174c1266588110693f",
+  "prompts": {},
+  "sessions": {
+    "s_0a925cf046f798": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "d5dcc4af-0193-4ca5-ba88-9a9f9ab83ae1",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
