@@ -1,0 +1,30 @@
+docs/protocol.md
+  s_000a425205c0e6::t_232e15e3724f9e 1-123
+.github/workflows/ci.yml
+  s_000a425205c0e6::t_202a87ae016597 8-10
+  s_000a425205c0e6::t_90e97387d0cbad 1-7,11-24
+docs/architecture.md
+  s_000a425205c0e6::t_7834dc832a7524 1-114
+README.md
+  s_000a425205c0e6::t_895681f956cd96 1-128
+LICENSE
+  s_000a425205c0e6::t_bce9685d41ddd3 1-21
+CONTRIBUTING.md
+  s_000a425205c0e6::t_132cac6c2ca968 1-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "414ba2537cbae63a0bc49839fe1d5b79b77b1d03",
+  "prompts": {},
+  "sessions": {
+    "s_000a425205c0e6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "4869d552-1e60-4987-9c89-ef85f6cda351",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
