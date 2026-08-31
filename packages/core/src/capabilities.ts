@@ -2,6 +2,11 @@ import type { CapabilityDescriptor } from './types.js';
 import { esp32BridgeCapabilities } from './drivers/esp32/bridge.js';
 import { chamberCapabilities } from './modules/chamber/capabilities.js';
 import { dcMotorCapabilities } from './modules/dcMotor/capabilities.js';
+import { distanceCapabilities } from './modules/distance/capabilities.js';
+import { encoderCapabilities } from './modules/encoder/capabilities.js';
+import { forceCapabilities } from './modules/force/capabilities.js';
+import { imuCapabilities } from './modules/imu/capabilities.js';
+import { limitSwitchCapabilities } from './modules/limitSwitch/capabilities.js';
 import { robotArmCapabilities } from './modules/robotArm/capabilities.js';
 import { servoCapabilities } from './modules/servo/capabilities.js';
 import { stepperCapabilities } from './modules/stepper/capabilities.js';
@@ -509,6 +514,11 @@ for (const capability of [
   ...dcMotorCapabilities,
   ...servoCapabilities,
   ...stepperCapabilities,
+  ...distanceCapabilities,
+  ...imuCapabilities,
+  ...encoderCapabilities,
+  ...limitSwitchCapabilities,
+  ...forceCapabilities,
 ]) {
   catalog[capability.name] = capability;
 }

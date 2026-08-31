@@ -100,6 +100,31 @@ const VENDOR_PATTERNS: Array<{ pattern: RegExp; capabilityId: string; confidence
     capabilityId: 'spi.transfer',
     confidence: 0.88,
   },
+  {
+    pattern: /\b(read[_-]?distance|get[_-]?distance|ultrasonic[_-]?read)\b/i,
+    capabilityId: 'distance.read',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(read[_-]?imu|get[_-]?accel|read[_-]?gyro)\b/i,
+    capabilityId: 'imu.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?encoder|encoder[_-]?count|get[_-]?ticks)\b/i,
+    capabilityId: 'encoder.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?limit|limit[_-]?switch|end[_-]?stop)\b/i,
+    capabilityId: 'limit.read',
+    confidence: 0.86,
+  },
+  {
+    pattern: /\b(read[_-]?force|load[_-]?cell|get[_-]?newtons)\b/i,
+    capabilityId: 'force.read',
+    confidence: 0.88,
+  },
 ];
 
 export function mapVendorSymbol(symbol: string): SemanticMapping | undefined {
@@ -144,6 +169,21 @@ export function inferDeviceClass(text: string): string | undefined {
   }
   if (/\bservo\b/i.test(text)) {
     return 'actuator.servo';
+  }
+  if (/rangefinder|ultrasonic|tof|time[_-]?of[_-]?flight|lidar/i.test(text)) {
+    return 'sensor.distance';
+  }
+  if (/\bimu\b|accelerometer|gyroscope/i.test(text)) {
+    return 'sensor.imu';
+  }
+  if (/\bencoder\b|quadrature/i.test(text)) {
+    return 'sensor.encoder';
+  }
+  if (/limit[_-\s]?switch|end[_-\s]?stop/i.test(text)) {
+    return 'sensor.limit_switch';
+  }
+  if (/load[_-\s]?cell|force[_-\s]?sensor/i.test(text)) {
+    return 'sensor.force';
   }
   if (/thermometer|temperature sensor|humidity sensor/i.test(text)) {
     return 'sensor.temperature';

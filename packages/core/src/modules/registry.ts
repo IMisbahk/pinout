@@ -1,6 +1,11 @@
 import { chamberModule } from '../modules/chamberModule.js';
 import { dcMotorModule } from '../modules/dcMotorModule.js';
+import { distanceModule } from '../modules/distanceModule.js';
+import { encoderModule } from '../modules/encoderModule.js';
 import { esp32Module } from '../modules/esp32Module.js';
+import { forceModule } from '../modules/forceModule.js';
+import { imuModule } from '../modules/imuModule.js';
+import { limitSwitchModule } from '../modules/limitSwitchModule.js';
 import { robotArmModule } from '../modules/robotArmModule.js';
 import { servoModule } from '../modules/servoModule.js';
 import { stepperModule } from '../modules/stepperModule.js';
@@ -16,6 +21,11 @@ const builtinModules = new Map<string, PinoutModuleDefinition>([
   [dcMotorModule.id, dcMotorModule],
   [servoModule.id, servoModule],
   [stepperModule.id, stepperModule],
+  [distanceModule.id, distanceModule],
+  [imuModule.id, imuModule],
+  [encoderModule.id, encoderModule],
+  [limitSwitchModule.id, limitSwitchModule],
+  [forceModule.id, forceModule],
 ]);
 
 const runtimeModules = new Map<string, PinoutModuleDefinition>();

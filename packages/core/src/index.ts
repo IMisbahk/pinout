@@ -176,11 +176,21 @@ export { chamberModule, chamberModuleId } from './modules/chamberModule.js';
 export { dcMotorModule, dcMotorModuleId } from './modules/dcMotorModule.js';
 export { servoModule, servoModuleId } from './modules/servoModule.js';
 export { stepperModule, stepperModuleId } from './modules/stepperModule.js';
+export { distanceModule, distanceModuleId } from './modules/distanceModule.js';
+export { imuModule, imuModuleId } from './modules/imuModule.js';
+export { encoderModule, encoderModuleId } from './modules/encoderModule.js';
+export { limitSwitchModule, limitSwitchModuleId } from './modules/limitSwitchModule.js';
+export { forceModule, forceModuleId } from './modules/forceModule.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
 export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';
 export { createSimulatedServoBackend } from './modules/servo/simulator.js';
 export { createSimulatedStepperBackend } from './modules/stepper/simulator.js';
+export { createSimulatedDistanceBackend } from './modules/distance/simulator.js';
+export { createSimulatedImuBackend } from './modules/imu/simulator.js';
+export { createSimulatedEncoderBackend } from './modules/encoder/simulator.js';
+export { createSimulatedLimitSwitchBackend } from './modules/limitSwitch/simulator.js';
+export { createSimulatedForceBackend } from './modules/force/simulator.js';
 export { evaluatePolicies } from './policy/engine.js';
 
 export type {

@@ -174,6 +174,42 @@ Events: `servo.changed`.
 
 Events: `stepper.moved`, `stepper.stopped`.
 
+## Distance sensor (`pinout/distance`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `distance.read` | `{}` | Range in meters |
+| `status.read` | `{}` | Operational snapshot |
+
+## IMU (`pinout/imu`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `imu.read` | `{}` | Accel (g) and gyro (rad/s) |
+| `status.read` | `{}` | Operational snapshot |
+
+## Encoder (`pinout/encoder`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `encoder.read` | `{}` | Tick count |
+| `encoder.reset` | `{}` | Zero ticks |
+| `status.read` | `{}` | Operational snapshot |
+
+## Limit switch (`pinout/limit-switch`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `limit.read` | `{}` | `{ triggered }` |
+| `status.read` | `{}` | Operational snapshot |
+
+## Force sensor (`pinout/force`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `force.read` | `{}` | Newtons |
+| `status.read` | `{}` | Operational snapshot |
+
 ## Agent tools
 
 `device.toAgentTools()` maps each advertised capability to an MCP-shaped tool descriptor for **single-device** connections.

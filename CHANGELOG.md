@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - ESP32 bridge firmware 0.2.0: `i2c.begin|write|read|scan` and `spi.begin|transfer`.
 - SDK/simulator pin rules for I2C/SPI buses (defaults SDA 21 / SCL 22, HSPI pins).
 - ESP32 `gpio.servo` and `gpio.motor` pin-level actuator driving (distinct from standalone modules).
+- First-party sensor modules: `pinout/distance`, `pinout/imu`, `pinout/encoder`, `pinout/limit-switch`, `pinout/force`.
 
 ### Added (Sprint 4 — module generator)
 
