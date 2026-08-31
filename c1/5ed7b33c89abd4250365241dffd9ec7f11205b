@@ -1,0 +1,36 @@
+docs/policies.md
+  s_36883e4c616fba::t_ccbb5ff183ea51 1-68
+README.md
+  s_36883e4c616fba::t_557c6e2bd76746 128-129
+  s_36883e4c616fba::t_bcd18d398fce95 109-111
+CHANGELOG.md
+  s_36883e4c616fba::t_16bfa491eaa00f 7,9-19
+docs/testing.md
+  s_36883e4c616fba::t_092e29d30250af 29,31-39
+  s_36883e4c616fba::t_3b77f8eba73f82 43-48
+  s_36883e4c616fba::t_9cf22d3f1df95f 49
+docs/capabilities.md
+  s_36883e4c616fba::t_617be8b62b583a 75-102,105-107
+docs/architecture.md
+  s_36883e4c616fba::t_fea18f921871fd 9,11-21,24-26
+  s_36883e4c616fba::t_5f360e75499302 36
+  s_36883e4c616fba::t_4571803105d8ed 27
+docs/modules.md
+  s_36883e4c616fba::t_6fc34fbbc05c04 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c15ed7b33c89abd4250365241dffd9ec7f11205b",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
