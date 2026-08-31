@@ -1,6 +1,9 @@
 import { chamberModule } from '../modules/chamberModule.js';
+import { dcMotorModule } from '../modules/dcMotorModule.js';
 import { esp32Module } from '../modules/esp32Module.js';
 import { robotArmModule } from '../modules/robotArmModule.js';
+import { servoModule } from '../modules/servoModule.js';
+import { stepperModule } from '../modules/stepperModule.js';
 import type { PinoutModuleDefinition } from '../runtime/types.js';
 import { ModuleNotFoundError } from '../module/errors.js';
 import { loadInstalledModule, readModulesIndex } from '../home/moduleStore.js';
@@ -10,6 +13,9 @@ const builtinModules = new Map<string, PinoutModuleDefinition>([
   [esp32Module.id, esp32Module],
   [robotArmModule.id, robotArmModule],
   [chamberModule.id, chamberModule],
+  [dcMotorModule.id, dcMotorModule],
+  [servoModule.id, servoModule],
+  [stepperModule.id, stepperModule],
 ]);
 
 const runtimeModules = new Map<string, PinoutModuleDefinition>();

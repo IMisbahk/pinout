@@ -100,6 +100,40 @@ Events: `motion.started`, `motion.completed`, `motion.stopped`, `gripper.changed
 
 Events: `temperature.changed`, `door.changed`, `experiment.started`, `experiment.stopped`.
 
+## DC motor (`pinout/dc-motor`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `motor.set` | `{ speed }` | Policy: speed −1 to 1 |
+| `motor.stop` | `{}` | Sets speed to 0 |
+| `motor.read` | `{}` | Commanded speed |
+| `status.read` | `{}` | `ready` / `running` / `stopped` / `faulted` |
+
+Events: `motor.changed`.
+
+## Hobby servo (`pinout/servo`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `servo.set_angle` | `{ angle }` | Policy: 0–180° |
+| `servo.read` | `{}` | Commanded angle |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `servo.changed`.
+
+## Stepper motor (`pinout/stepper`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `stepper.step` | `{ steps }` | Relative steps; policy ±100000 |
+| `stepper.goto` | `{ position }` | Absolute position; policy ±100000 |
+| `stepper.home` | `{}` | Move to step 0 |
+| `stepper.stop` | `{}` | Halt motion |
+| `stepper.read` | `{}` | Position + homed |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `stepper.moved`, `stepper.stopped`.
+
 ## Agent tools
 
 `device.toAgentTools()` maps each advertised capability to an MCP-shaped tool descriptor for **single-device** connections.

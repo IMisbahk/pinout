@@ -162,8 +162,14 @@ export {
 } from './modules/esp32Module.js';
 export { robotArmModule, robotArmModuleId } from './modules/robotArmModule.js';
 export { chamberModule, chamberModuleId } from './modules/chamberModule.js';
+export { dcMotorModule, dcMotorModuleId } from './modules/dcMotorModule.js';
+export { servoModule, servoModuleId } from './modules/servoModule.js';
+export { stepperModule, stepperModuleId } from './modules/stepperModule.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
+export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';
+export { createSimulatedServoBackend } from './modules/servo/simulator.js';
+export { createSimulatedStepperBackend } from './modules/stepper/simulator.js';
 export { evaluatePolicies } from './policy/engine.js';
 
 export type {

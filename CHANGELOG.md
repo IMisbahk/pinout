@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added (Sprint 5 — robotics parts)
+
+- First-party actuator modules: `pinout/dc-motor`, `pinout/servo`, `pinout/stepper`.
+- Semantic families `motor.*`, `servo.*`, `stepper.*` with speed/angle/step policies.
+- Generator maps vendor motor/servo/stepper symbols onto those families.
+
 ### Added (Sprint 4 — module generator)
 
 - `@pinout/generator` package: documentation/SDK → Hardware Interface IR → candidate module.

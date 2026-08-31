@@ -1,7 +1,10 @@
 import type { CapabilityDescriptor } from './types.js';
 import { esp32BridgeCapabilities } from './drivers/esp32/bridge.js';
 import { chamberCapabilities } from './modules/chamber/capabilities.js';
+import { dcMotorCapabilities } from './modules/dcMotor/capabilities.js';
 import { robotArmCapabilities } from './modules/robotArm/capabilities.js';
+import { servoCapabilities } from './modules/servo/capabilities.js';
+import { stepperCapabilities } from './modules/stepper/capabilities.js';
 
 const gpioPinSchema = {
   type: 'integer',
@@ -273,7 +276,13 @@ const catalog: Record<string, CapabilityDescriptor> = {
   [gpioUnwatchCapability.name]: gpioUnwatchCapability,
 };
 
-for (const capability of [...robotArmCapabilities, ...chamberCapabilities]) {
+for (const capability of [
+  ...robotArmCapabilities,
+  ...chamberCapabilities,
+  ...dcMotorCapabilities,
+  ...servoCapabilities,
+  ...stepperCapabilities,
+]) {
   catalog[capability.name] = capability;
 }
 
