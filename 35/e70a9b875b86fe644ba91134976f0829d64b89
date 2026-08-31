@@ -1,0 +1,21 @@
+packages/core/tests/schema.test.ts
+  s_31bf6e29b1447f::t_a96ef3e346ff21 1-28
+packages/core/src/schema.ts
+  s_31bf6e29b1447f::t_fe23651c88c2ba 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "35e70a9b875b86fe644ba91134976f0829d64b89",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": null
+    }
+  }
+}
