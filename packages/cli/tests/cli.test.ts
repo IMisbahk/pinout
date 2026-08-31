@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/runCli.js';
 
 describe('cli', () => {
+  it('prints version', async () => {
+    const io = captureIo();
+    const code = await runCli(['node', 'pinout', '--version'], io);
+    expect(code).toBe(0);
+    expect(io.logs.join('\n')).toMatch(/0\.1\.0/);
+  });
+
   it('handshakes with the simulator', async () => {
     const io = captureIo();
     const code = await runCli(['node', 'pinout', 'hello', '--mock'], io);
@@ -10,21 +17,122 @@ describe('cli', () => {
     expect(io.logs.join('\n')).toContain('gpio.write');
   });
 
-  it('writes and reads GPIO through the same SDK path', async () => {
-    const write = captureIo();
-    expect(await runCli(['node', 'pinout', 'gpio', 'write', '2', 'high', '--mock'], write)).toBe(0);
-    expect(write.logs.join('\n')).toContain('gpio 2 -> high');
+  it('handshakes with json output', async () => {
+    const io = captureIo();
+    const code = await runCli(['node', 'pinout', '--json', 'hello', '--mock'], io);
+    expect(code).toBe(0);
+    const payload = JSON.parse(io.logs[0] ?? '{}') as { firmware: string };
+    expect(payload.firmware).toBe('esp32-bridge');
+  });
 
-    const read = captureIo();
-    expect(await runCli(['node', 'pinout', 'gpio', 'read', '2', '--mock'], read)).toBe(0);
-    expect(read.logs).toEqual(['low']);
+  it('writes and reads GPIO through invoke on one connection', async () => {
+    const io = captureIo();
+    expect(
+      await runCli(
+        [
+          'node',
+          'pinout',
+          'run',
+          '--mock',
+          '--script',
+          '{"action":"gpio.write","payload":{"pin":2,"value":true}}\n{"action":"gpio.read","payload":{"pin":2}}',
+        ],
+        io,
+      ),
+    ).toBe(0);
+    expect(io.logs.join('\n')).toContain('"value":true');
+  });
+
+  it('writes and reads GPIO through gpio subcommands via run script', async () => {
+    const io = captureIo();
+    expect(
+      await runCli(
+        [
+          'node',
+          'pinout',
+          'run',
+          '--mock',
+          '--script',
+          '{"action":"gpio.write","payload":{"pin":2,"value":true}}\n{"action":"gpio.read","payload":{"pin":2}}',
+        ],
+        io,
+      ),
+    ).toBe(0);
+    expect(io.logs.join('\n')).toContain('true');
+  });
+
+  it('runs an inline action script', async () => {
+    const io = captureIo();
+    const code = await runCli(
+      [
+        'node',
+        'pinout',
+        'run',
+        '--mock',
+        '--script',
+        '{"action":"gpio.write","payload":{"pin":2,"value":true}}\n{"action":"gpio.read","payload":{"pin":2}}',
+      ],
+      io,
+    );
+    expect(code).toBe(0);
+    expect(io.logs.join('\n')).toContain('gpio.read');
+    expect(io.logs.join('\n')).toContain('true');
+  });
+
+  it('blinks on the simulator', async () => {
+    const io = captureIo();
+    const code = await runCli(
+      ['node', 'pinout', 'blink', '--mock', '--count', '2', '--delay', '10'],
+      io,
+    );
+    expect(code).toBe(0);
+    expect(io.logs.join('\n')).toContain('blinked gpio 2 2 time(s)');
+  });
+
+  it('passes doctor checks', async () => {
+    const io = captureIo();
+    const code = await runCli(['node', 'pinout', 'doctor'], io);
+    expect(code).toBe(0);
+    expect(io.logs.join('\n')).toContain('mock');
+  });
+
+  it('prints pin groups', async () => {
+    const io = captureIo();
+    const code = await runCli(['node', 'pinout', 'pins'], io);
+    expect(code).toBe(0);
+    expect(io.logs.join('\n')).toContain('SPI flash');
+  });
+
+  it('uses PINOUT_PORT when set', async () => {
+    const previous = process.env.PINOUT_PORT;
+    process.env.PINOUT_PORT = '/dev/test-port';
+    try {
+      const io = captureIo();
+      const code = await runCli(['node', 'pinout', 'hello'], io);
+      expect(code).toBe(1);
+      expect(io.errors.join('\n')).toMatch(/serial|port|open/i);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.PINOUT_PORT;
+      } else {
+        process.env.PINOUT_PORT = previous;
+      }
+    }
   });
 
   it('fails clearly without --port or --mock', async () => {
-    const io = captureIo();
-    const code = await runCli(['node', 'pinout', 'hello'], io);
-    expect(code).toBe(1);
-    expect(io.errors.join('\n')).toMatch(/--port|--mock/);
+    const previous = process.env.PINOUT_PORT;
+    delete process.env.PINOUT_PORT;
+    try {
+      const io = captureIo();
+      const code = await runCli(['node', 'pinout', 'hello'], io);
+      expect(code).toBe(1);
+      expect(io.errors.join('\n')).toMatch(/--port|--mock|PINOUT_PORT/);
+    } finally {
+      if (previous !== undefined) {
+        process.env.PINOUT_PORT = previous;
+      }
+    }
   });
 
   it('rejects an invalid ESP32 pin', async () => {

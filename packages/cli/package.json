@@ -6,9 +6,20 @@
   "bin": {
     "pinout": "./dist/index.js"
   },
-  "files": [
-    "dist"
-  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./connection": {
+      "types": "./dist/connectionArgs.d.ts",
+      "default": "./dist/connectionArgs.js"
+    },
+    "./script": {
+      "types": "./dist/runScript.d.ts",
+      "default": "./dist/runScript.js"
+    }
+  },
   "scripts": {
     "build": "tsc -b"
   },
