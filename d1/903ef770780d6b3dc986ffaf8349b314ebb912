@@ -1,0 +1,24 @@
+examples/heterogeneous.ts
+  s_36883e4c616fba::t_1e8fa9e0429285 111,113
+  s_36883e4c616fba::t_2feff211941e7d 1-110,112,114-119
+package.json
+  s_36883e4c616fba::t_f3b37075667ffc 31-34
+examples/mcp-heterogeneous.ts
+  s_36883e4c616fba::t_cbddff60d62abe 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d1903ef770780d6b3dc986ffaf8349b314ebb912",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
