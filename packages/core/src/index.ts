@@ -35,7 +35,7 @@ export {
   DeviceError,
   AbortedError,
 } from './errors.js';
-export { createLogger } from './logger.js';
+export { validateInputSchema } from './schema.js';
 export {
   decodeLine,
   encodeEvent,
