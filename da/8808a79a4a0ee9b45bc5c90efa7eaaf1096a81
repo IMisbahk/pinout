@@ -1,0 +1,19 @@
+packages/core/tests/loopbackTransport.test.ts
+  s_8b389f08649e7f::t_ffcf4e395958d4 9-16,42-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "da8808a79a4a0ee9b45bc5c90efa7eaaf1096a81",
+  "prompts": {},
+  "sessions": {
+    "s_8b389f08649e7f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "550d2785-5e55-42cd-b77d-bc094e12873f",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
