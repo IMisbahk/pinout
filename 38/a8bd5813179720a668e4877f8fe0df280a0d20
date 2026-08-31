@@ -1,0 +1,74 @@
+packages/core/src/modules/limitSwitch/capabilities.ts
+  s_94e0888c5cd5c5::t_6dce7b05d48424 1-33
+packages/core/src/capabilities.ts
+  s_94e0888c5cd5c5::t_ec88c21831a737 517-521
+  s_94e0888c5cd5c5::t_1c2c17aa5ce2d4 5-9
+packages/generator/src/semantic/capabilityMapper.ts
+  s_94e0888c5cd5c5::t_61956d818ddb31 103-127
+  s_94e0888c5cd5c5::t_479ed887b31ada 173-187
+packages/core/src/modules/force/simulator.ts
+  s_94e0888c5cd5c5::t_8c931e8256a227 1-45
+packages/core/src/modules/distance/simulator.ts
+  s_94e0888c5cd5c5::t_116b3892a2783c 5,11,19,32,40
+  s_94e0888c5cd5c5::t_6f7068cefbaea7 1-4,6-10,12-18,20-31,33-39,41-47
+packages/core/src/modules/imu/capabilities.ts
+  s_94e0888c5cd5c5::t_7f04c4246d49d6 1-14,16-42
+  s_94e0888c5cd5c5::t_3f60477dba2f11 15
+packages/core/src/modules/encoder/capabilities.ts
+  s_94e0888c5cd5c5::t_43659e3f6f17e1 1-48
+docs/modules.md
+  s_94e0888c5cd5c5::t_4ba8aefa832822 89-93
+  s_94e0888c5cd5c5::t_e03d774277f1e4 36-40
+packages/core/tests/sensors.test.ts
+  s_94e0888c5cd5c5::t_6f3e2e4a1d228e 1-80
+packages/core/src/index.ts
+  s_94e0888c5cd5c5::t_77b938bd9a42b1 179-183,189-193
+packages/core/src/modules/distance/capabilities.ts
+  s_94e0888c5cd5c5::t_2565cb043ff701 5,11,19
+  s_94e0888c5cd5c5::t_8e1b798da176d8 9,23,26
+  s_94e0888c5cd5c5::t_b3fdd0ffe70156 1-4,6-8,10,12-18,20-22,24-25,27-37
+packages/core/src/modules/encoderModule.ts
+  s_94e0888c5cd5c5::t_96606677c9e4c2 1-21
+packages/core/src/modules/distanceModule.ts
+  s_94e0888c5cd5c5::t_bc5395a1db1d82 5,12,18-19
+  s_94e0888c5cd5c5::t_21c767a041906a 1-4,6-11,13-17,20-21
+packages/core/src/modules/forceModule.ts
+  s_94e0888c5cd5c5::t_42462a1379dbd2 1-21
+packages/core/src/modules/registry.ts
+  s_94e0888c5cd5c5::t_3a292b80ec0733 3-4,6-8,24-28
+CHANGELOG.md
+  s_94e0888c5cd5c5::t_c7724ec4da00fd 15
+packages/core/src/modules/encoder/simulator.ts
+  s_94e0888c5cd5c5::t_e1e2e8d00e6681 1-51
+packages/core/src/modules/limitSwitchModule.ts
+  s_94e0888c5cd5c5::t_6b8a28651e7852 1-24
+docs/capabilities.md
+  s_94e0888c5cd5c5::t_db4e90fbaea5ee 177-212
+packages/core/src/modules/imu/simulator.ts
+  s_94e0888c5cd5c5::t_d5cf605335ff05 1-3,5-9,12-16,19-39,41-47
+  s_94e0888c5cd5c5::t_d4c4babbf24299 4,10-11,17-18,40
+packages/core/src/modules/force/capabilities.ts
+  s_94e0888c5cd5c5::t_0ab66098567ce1 1-31
+docs/build-a-module.md
+  s_94e0888c5cd5c5::t_dbda6738beddaa 190
+packages/core/src/modules/imuModule.ts
+  s_94e0888c5cd5c5::t_87fa17058049be 1-20
+packages/core/src/modules/limitSwitch/simulator.ts
+  s_94e0888c5cd5c5::t_45ec9be2bd8560 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "38a8bd5813179720a668e4877f8fe0df280a0d20",
+  "prompts": {},
+  "sessions": {
+    "s_94e0888c5cd5c5": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f532e00b-3f00-48f5-ad5d-d3b4580b696e",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
