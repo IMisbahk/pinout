@@ -1,0 +1,39 @@
+firmware/esp32-bridge/src/main.cpp
+  s_31bf6e29b1447f::t_244df770d2a00d 16,19
+packages/core/src/index.ts
+  s_31bf6e29b1447f::t_f885cfb0abec24 34
+packages/core/src/drivers/esp32/pins.ts
+  s_31bf6e29b1447f::t_3c6f3c78b6945d 6
+  s_31bf6e29b1447f::t_6a09f445c1f4a6 35-38,40,46-52
+  s_12a61c49ed3cea::t_39c3ecc160cff2 58-60
+packages/core/tests/integration.test.ts
+  s_31bf6e29b1447f::t_3bff8ba383088f 51
+packages/core/tests/bridge.test.ts
+  s_31bf6e29b1447f::t_c31b66be6ca311 25,29,31
+firmware/esp32-bridge/README.md
+  s_31bf6e29b1447f::t_3c6624f68a0e42 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1d89ae9471cb6c22e2ba67468fdc2d72136048b4",
+  "prompts": {},
+  "sessions": {
+    "s_12a61c49ed3cea": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f21ebb70-6909-4a60-88a8-1d164f0ef8aa",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
