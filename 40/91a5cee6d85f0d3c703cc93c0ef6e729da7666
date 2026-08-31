@@ -1,0 +1,31 @@
+packages/core/src/protocol.ts
+  s_31bf6e29b1447f::t_e74931647aa681 56-64,66-83
+  s_31bf6e29b1447f::t_6e1a795502ff62 55,65
+  s_31bf6e29b1447f::t_0b10f08a215888 5
+packages/core/tests/protocol.test.ts
+  s_31bf6e29b1447f::t_98f82ea5d812af 2-11
+  s_31bf6e29b1447f::t_fcf972167cc757 71-96
+docs/protocol.md
+  s_31bf6e29b1447f::t_99713a47cca5bb 13
+packages/core/src/drivers/esp32/simulatedTransport.ts
+  s_31bf6e29b1447f::t_d6c5bae7327c23 77,81,85
+  s_31bf6e29b1447f::t_77981be38e7a13 3
+packages/core/src/index.ts
+  s_31bf6e29b1447f::t_21ab74f7adf2f0 15-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4091a5cee6d85f0d3c703cc93c0ef6e729da7666",
+  "prompts": {},
+  "sessions": {
+    "s_31bf6e29b1447f": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bee4fbb0-d7de-4785-8e31-d302043b2d48",
+        "model": "cursor-grok-4.6-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
