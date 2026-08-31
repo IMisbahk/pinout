@@ -36,6 +36,7 @@ class SimulatedEsp32Transport implements Transport {
   }
 
   async close(): Promise<void> {
+    this.state.watched.clear();
     this.inbound.close();
   }
 
@@ -76,7 +77,9 @@ class SimulatedEsp32Transport implements Transport {
     }
 
     try {
-      const result = handleBridgeAction(message.action, message.payload, this.state);
+      const result = handleBridgeAction(message.action, message.payload, this.state, {
+        emitEvent: (event, payload) => this.emitEvent(event, payload),
+      });
       this.emitSuccess(message.id, result);
     } catch (error) {
       if (error instanceof DeviceError) {
