@@ -1,0 +1,227 @@
+docs/cli.md
+  s_42722ed58dc8a2::t_c146383a01797a 35-38,53-55,59
+  s_42722ed58dc8a2::t_316a246f9f31c8 60
+packages/core/tests/bridge.test.ts
+  s_42722ed58dc8a2::t_2972a7a2e3ad31 65-66,96-100
+  s_42722ed58dc8a2::t_91c418cfc5a5af 67-95
+firmware/esp32-bridge/README.md
+  s_42722ed58dc8a2::t_ca700e54d82a3d 10,17
+  s_42722ed58dc8a2::t_bf8abdfdefe3e5 18-22
+  s_42722ed58dc8a2::t_5d253740a08b81 23
+packages/core/src/device.ts
+  s_42722ed58dc8a2::t_91c418cfc5a5af 140-143,225-229
+  s_42722ed58dc8a2::t_b1095144267f4e 3,72-73
+  s_42722ed58dc8a2::t_de1d9c60f35d57 134-139,144-148
+  s_42722ed58dc8a2::t_4abad8343d5dfa 224,230-246
+packages/core/tests/schema.test.ts
+  s_42722ed58dc8a2::t_b6c5c97d6e3768 4,30-32
+  s_42722ed58dc8a2::t_b1095144267f4e 2-3,38-44
+  s_42722ed58dc8a2::t_93aba715c566d5 28-29,33-36
+  s_42722ed58dc8a2::t_5cff1a6dafa13a 37
+packages/core/src/runtime/runtime.ts
+  s_42722ed58dc8a2::t_2855436f561ff1 49,133
+  s_42722ed58dc8a2::t_187fa06180c5d4 31,147,155-156,162-168
+packages/core/tests/gpio.integration.test.ts
+  s_42722ed58dc8a2::t_6f36c57b6a99b6 97-100
+  s_42722ed58dc8a2::t_ba70aeae0c9621 105-120
+  s_42722ed58dc8a2::t_7b20bb6424cf19 90-96,101-104
+CHANGELOG.md
+  s_42722ed58dc8a2::t_c146383a01797a 7-22,61
+packages/core/src/modules/pumpModule.ts
+  s_42722ed58dc8a2::t_75d9faf2e6d536 1-3
+packages/core/src/runtime/deviceInstance.ts
+  s_42722ed58dc8a2::t_2855436f561ff1 22,32,51
+  s_42722ed58dc8a2::t_187fa06180c5d4 38,54-56,90-92,161,166,176-178
+  s_42722ed58dc8a2::t_b1095144267f4e 1,4,40-41,121-123,138,142-147,152-155,162-165
+  s_42722ed58dc8a2::t_9969bde931496c 93-94
+packages/core/src/runtime/types.ts
+  s_42722ed58dc8a2::t_2855436f561ff1 26,75
+  s_42722ed58dc8a2::t_64bc326fedb8b7 41
+packages/core/src/home/moduleStore.ts
+  s_42722ed58dc8a2::t_a2fef2656e01a5 10,81-83,112,133-135,139-143,147-154,159-160,164-171
+  s_42722ed58dc8a2::t_5c103013bf499a 1-9,144-146,155-158,161-163
+  s_42722ed58dc8a2::t_cbe23ec9656945 172
+README.md
+  s_42722ed58dc8a2::t_a87a44f805564a 5-7,10-13,15-18,21,34,37-39,49,51,56,59,61,63-64,66,68-69,71,73-81,83,86,89-91,93,98,100-110,114
+  s_42722ed58dc8a2::t_f0861fc523da0c 3,14
+  s_42722ed58dc8a2::t_3f6d5f2884a6f0 92
+  s_42722ed58dc8a2::t_0e61eea39f2f0f 65,67
+docs/production-architecture.md
+  s_42722ed58dc8a2::t_0fdb49a6e378cd 1-36
+packages/core/src/modules/relayModule.ts
+  s_42722ed58dc8a2::t_75d9faf2e6d536 1-3
+packages/core/src/module/loadModule.ts
+  s_42722ed58dc8a2::t_894b243b503145 32-34,36-38,40-45,59-60
+  s_42722ed58dc8a2::t_fb352dd35b61f9 2
+  s_42722ed58dc8a2::t_1818e0df4151e4 3,61
+  s_42722ed58dc8a2::t_c6ced783bf446d 62-63
+packages/core/tests/moduleSecurity.test.ts
+  s_42722ed58dc8a2::t_43d1d6c765e5e5 6,66-97,99-100
+  s_42722ed58dc8a2::t_5c103013bf499a 7-10,18-27,29-31,41-56,59-64
+  s_42722ed58dc8a2::t_0e3c4743818fac 1-4,11-17,28,32-40,57-58,65,101-105
+  s_42722ed58dc8a2::t_1ec8ce86cfddff 98
+  s_42722ed58dc8a2::t_9b7abdefa25967 5
+docs/capabilities.md
+  s_42722ed58dc8a2::t_c146383a01797a 51-58,69,232-247,252
+packages/core/src/schema.ts
+  s_42722ed58dc8a2::t_b1095144267f4e 1,16,18-28
+  s_42722ed58dc8a2::t_5c103013bf499a 17
+  s_42722ed58dc8a2::t_93aba715c566d5 61-66
+  s_42722ed58dc8a2::t_b13eddaed37ada 29-31
+docs/architecture.md
+  s_42722ed58dc8a2::t_c146383a01797a 77-80
+packages/core/src/runtime/fromConfig.ts
+  s_42722ed58dc8a2::t_43d1d6c765e5e5 3
+packages/core/src/capabilities.ts
+  s_42722ed58dc8a2::t_93aba715c566d5 56-57
+  s_42722ed58dc8a2::t_8f5bd1f3f73aea 46-49,66-67,73-76,78,90-91,542-543
+  s_42722ed58dc8a2::t_91c418cfc5a5af 50-55,58-65,68-72,79-86,89
+  s_42722ed58dc8a2::t_bf8abdfdefe3e5 183-184
+  s_42722ed58dc8a2::t_685ff3fceae59b 77,87-88
+package.json
+  s_42722ed58dc8a2::t_3f6d5f2884a6f0 33
+packages/cli/tests/cli.test.ts
+  s_42722ed58dc8a2::t_6556a1ebee1f26 171-177,179-182
+  s_42722ed58dc8a2::t_53367102b609f8 167-170,178,183-184,194-195,204-211,222
+  s_42722ed58dc8a2::t_f65b824a7f78c3 185-193,196-203,212-221
+packages/cli/src/pinoutHomeCommands.ts
+  s_42722ed58dc8a2::t_90ac0678031e15 14,299-302,307-313,322,356-357,383-384,405-406,416,468
+  s_42722ed58dc8a2::t_bf8abdfdefe3e5 413
+  s_42722ed58dc8a2::t_71f9545e26b80c 347
+  s_42722ed58dc8a2::t_f65b824a7f78c3 303-306,314-321,323-326,329-345,348-355,358-382,385-404,407-412,414-415,417-467
+  s_42722ed58dc8a2::t_2855436f561ff1 327-328,346
+packages/core/tests/deviceInstanceContracts.test.ts
+  s_42722ed58dc8a2::t_36a43b140f59d6 1-4,7,9-58,74-75,80-88,90-109
+  s_42722ed58dc8a2::t_a1bbe1ebbdc625 5-6,8,59-65,70-73,76-79,89
+  s_42722ed58dc8a2::t_5c103013bf499a 66-69
+packages/core/tests/compositeSemantic.test.ts
+  s_42722ed58dc8a2::t_8d1df861f66df9 32
+  s_42722ed58dc8a2::t_6b4a3278067a58 7
+  s_42722ed58dc8a2::t_fe7f90f164cf33 16
+  s_42722ed58dc8a2::t_187fa06180c5d4 43-64
+  s_42722ed58dc8a2::t_97c7c8c5b1991e 1-6,8-15,17-23,33-42,65-67,72-83
+  s_42722ed58dc8a2::t_5c103013bf499a 24-31,68-71
+packages/core/src/modules/distance/capabilities.ts
+  s_42722ed58dc8a2::t_ef875479510965 32
+ROADMAP.md
+  s_42722ed58dc8a2::t_0fdb49a6e378cd 1-29
+docs/product.md
+  s_42722ed58dc8a2::t_0fdb49a6e378cd 1-27
+packages/core/tests/simulators.test.ts
+  s_42722ed58dc8a2::t_ba70aeae0c9621 21-30
+packages/core/src/runtime/createRoboticsWorkbench.ts
+  s_42722ed58dc8a2::t_12f3802734fa1a 14
+packages/core/src/modules/robotArm/simulator.ts
+  s_42722ed58dc8a2::t_ba70aeae0c9621 38,55-56,124-125,128,141,146,150
+docs/demo.md
+  s_42722ed58dc8a2::t_0fdb49a6e378cd 1-14
+  s_42722ed58dc8a2::t_3f6d5f2884a6f0 15-18
+packages/core/src/modules/powerSupplyModule.ts
+  s_42722ed58dc8a2::t_75d9faf2e6d536 1-3
+packages/mcp/src/createRuntimeServer.ts
+  s_42722ed58dc8a2::t_61a0beb010fbb4 16,46,125-137,171
+  s_42722ed58dc8a2::t_2855436f561ff1 35-36,102-103,111-112
+  s_42722ed58dc8a2::t_827fb83af348be 157-158
+  s_42722ed58dc8a2::t_dafe9de2bd3eeb 6-7,9,20-34,37-45,47,59,68-101,104-110,113-124,160,166-169
+  s_42722ed58dc8a2::t_5f2aaa99269a3e 138
+  s_42722ed58dc8a2::t_fa515e0c3525f9 170
+  s_42722ed58dc8a2::t_58b1648282ff1a 172
+packages/core/src/runtime/composite.ts
+  s_42722ed58dc8a2::t_5c103013bf499a 47-50,57-61,70-73,78-79,96-97,149-156,167-169
+  s_42722ed58dc8a2::t_eac5b2917980fc 2-3,5,107-119,121-124,157-162,170,172
+  s_42722ed58dc8a2::t_2855436f561ff1 166
+  s_42722ed58dc8a2::t_64bc326fedb8b7 4,25,34-44,120,125-148,163-165
+  s_42722ed58dc8a2::t_96c9b1469a2b3d 1,6-24,26-33,53-56,62-69,74-77,80-95,98-106,173-175
+  s_42722ed58dc8a2::t_54b4973811554f 171
+  s_42722ed58dc8a2::t_bb140fcce28e06 45-46,51-52
+examples/robotics-parts.ts
+  s_42722ed58dc8a2::t_93743b47012143 17-22,29
+  s_42722ed58dc8a2::t_ce85d7d4aece32 26-28
+  s_42722ed58dc8a2::t_e3e3949d90c130 10,25
+packages/core/src/drivers/esp32/bridge.ts
+  s_42722ed58dc8a2::t_e44500ce3db597 52
+  s_42722ed58dc8a2::t_9a59c7af70409b 240,246-250,253-254,259
+  s_42722ed58dc8a2::t_95d8ca2a9d9e18 242
+  s_42722ed58dc8a2::t_2589fcc732a3c5 241
+  s_42722ed58dc8a2::t_332ac12b27a9e9 29-30,141-144,207-239,243-245,251-252,255-258,260
+  s_42722ed58dc8a2::t_1a949851f25296 261
+docs/protocol.md
+  s_42722ed58dc8a2::t_1c543d9e82317d 133
+packages/mcp/src/createServer.ts
+  s_42722ed58dc8a2::t_827fb83af348be 64-65
+  s_42722ed58dc8a2::t_dafe9de2bd3eeb 67
+SECURITY.md
+  s_42722ed58dc8a2::t_0fdb49a6e378cd 1-30
+packages/core/src/home/transportFactory.ts
+  s_42722ed58dc8a2::t_fb4b1916d338fe 45
+packages/core/src/modules/registry.ts
+  s_42722ed58dc8a2::t_22bb97df157e14 13,32-35
+packages/cli/src/runCli.ts
+  s_42722ed58dc8a2::t_8861e144e01c53 13-16,143-144,147-148,151-152,158
+  s_42722ed58dc8a2::t_f65b824a7f78c3 141-142,145-146,149-150,153-157,159-161
+  s_42722ed58dc8a2::t_8d042f5192d847 162
+packages/core/tests/buses.test.ts
+  s_42722ed58dc8a2::t_2276982666b5ff 83
+packages/core/src/modules/semanticModules.ts
+  s_42722ed58dc8a2::t_5c103013bf499a 6-10,13-45,49-89,93-144,148-213,221-236,238-248,252-286,289-296,300-319,321-363
+  s_42722ed58dc8a2::t_f877fa36be7226 1-5,11-12,46-48,90-92,145-147,214-220,237,249-251,287-288,297-299,320
+packages/core/src/index.ts
+  s_42722ed58dc8a2::t_360b8c6c388c24 14,19
+  s_42722ed58dc8a2::t_b1095144267f4e 54
+  s_42722ed58dc8a2::t_a1bbe1ebbdc625 179
+  s_42722ed58dc8a2::t_5c103013bf499a 160-169
+  s_42722ed58dc8a2::t_22bb97df157e14 202-211
+  s_42722ed58dc8a2::t_d2477b39de316b 212-215
+docs/company.md
+  s_42722ed58dc8a2::t_0fdb49a6e378cd 1-29
+packages/core/src/types.ts
+  s_42722ed58dc8a2::t_93aba715c566d5 7-8
+docs/modules.md
+  s_42722ed58dc8a2::t_c146383a01797a 42-82,137-140
+packages/core/tests/runtime.test.ts
+  s_42722ed58dc8a2::t_782050e8972b49 24-27
+packages/core/src/runtime/agentTools.ts
+  s_42722ed58dc8a2::t_a1bbe1ebbdc625 12-20,27,31-33,67-78
+firmware/esp32-bridge/src/main.cpp
+  s_42722ed58dc8a2::t_1c543d9e82317d 488-489,616-618,693,735-738
+  s_42722ed58dc8a2::t_c1d69b6c12d358 23-25,27-29,32,342-350,357-358,360,369-372,374-376
+  s_42722ed58dc8a2::t_e5ce745e437c93 286-288,908
+  s_42722ed58dc8a2::t_ba70aeae0c9621 47-53,205,226,261,319,394
+  s_42722ed58dc8a2::t_bf8abdfdefe3e5 26,351-353,355,359,365,373
+  s_42722ed58dc8a2::t_7ce61cc625c739 10,45,136-137,227,235-260,262-285,289-291,320,377,395,695,740,745,800-807
+  s_42722ed58dc8a2::t_4751caaa560f45 207
+  s_42722ed58dc8a2::t_0304975d1d673a 46
+  s_42722ed58dc8a2::t_6b700baba03124 378
+packages/core/src/modules/limitSwitchModule.ts
+  s_42722ed58dc8a2::t_ef875479510965 2
+packages/mcp/tests/mcp.test.ts
+  s_42722ed58dc8a2::t_dafe9de2bd3eeb 130-131,143-168,171-174
+  s_42722ed58dc8a2::t_71c801383206b9 41-52
+  s_42722ed58dc8a2::t_2855436f561ff1 169-170
+  s_42722ed58dc8a2::t_c5c5e06e35938c 175-177
+  s_42722ed58dc8a2::t_38e6134f0f3565 178-181
+packages/core/src/modules/valveModule.ts
+  s_42722ed58dc8a2::t_75d9faf2e6d536 1-3
+examples/multi-driver-rig.ts
+  s_42722ed58dc8a2::t_3f6d5f2884a6f0 1-59
+packages/core/src/drivers/esp32/simulatedTransport.ts
+  s_42722ed58dc8a2::t_ba70aeae0c9621 89,145-162,174-177,183-191
+  s_42722ed58dc8a2::t_dde6f5e53c6b00 24,40-41,93-95,134-136,142,144
+  s_42722ed58dc8a2::t_71f9545e26b80c 163-173,178-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ed6140106be4107b84322a64d24babcc1d35c68b",
+  "prompts": {},
+  "sessions": {
+    "s_42722ed58dc8a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a058c4-d2e6-7920-bacc-a0b0873bbf48",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
