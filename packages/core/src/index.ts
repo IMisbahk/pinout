@@ -12,7 +12,15 @@ export {
   DisconnectedError,
   DeviceError,
 } from './errors.js';
-export { encodeRequest, parseLine, protocolVersion } from './protocol.js';
+export {
+  encodeEvent,
+  encodeFailure,
+  encodeRequest,
+  encodeResponse,
+  maxProtocolLineBytes,
+  parseLine,
+  protocolVersion,
+} from './protocol.js';
 export { handleBridgeAction, esp32BridgeInfo, createGpioState } from './drivers/esp32/bridge.js';
 export {
   assertEsp32ReadPin,

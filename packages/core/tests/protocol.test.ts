@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { encodeRequest, parseLine, protocolVersion } from '@pinout/core';
-import { ProtocolError } from '@pinout/core';
+import {
+  encodeEvent,
+  encodeFailure,
+  encodeRequest,
+  encodeResponse,
+  maxProtocolLineBytes,
+  parseLine,
+  protocolVersion,
+  ProtocolError,
+} from '@pinout/core';
 
 describe('protocol', () => {
   it('encodes a versioned request as a JSON line', () => {
@@ -59,5 +67,31 @@ describe('protocol', () => {
 
   it('rejects an unsupported protocol version', () => {
     expect(() => parseLine('{"v":99,"id":"1","ok":true,"result":{}}')).toThrow(ProtocolError);
+  });
+
+  it('encodes success, failure, and event lines with a trailing newline', () => {
+    expect(JSON.parse(encodeResponse('abc', { pin: 2 }))).toEqual({
+      v: protocolVersion,
+      id: 'abc',
+      ok: true,
+      result: { pin: 2 },
+    });
+    expect(JSON.parse(encodeFailure('abc', 'INVALID_PIN', 'nope'))).toEqual({
+      v: protocolVersion,
+      id: 'abc',
+      ok: false,
+      error: { code: 'INVALID_PIN', message: 'nope' },
+    });
+    expect(JSON.parse(encodeEvent('ready', { firmware: 'esp32-bridge' }))).toEqual({
+      v: protocolVersion,
+      event: 'ready',
+      payload: { firmware: 'esp32-bridge' },
+    });
+    expect(encodeResponse('abc').endsWith('\n')).toBe(true);
+    expect(encodeEvent('ready').endsWith('\n')).toBe(true);
+  });
+
+  it('exports the firmware max line length', () => {
+    expect(maxProtocolLineBytes).toBe(512);
   });
 });

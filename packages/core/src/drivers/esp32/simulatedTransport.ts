@@ -1,6 +1,6 @@
 import { ByteQueue } from '../../transports/byteQueue.js';
 import { encodeLine } from '../../lineReader.js';
-import { parseLine, protocolVersion } from '../../protocol.js';
+import { encodeEvent, encodeFailure, encodeResponse, parseLine } from '../../protocol.js';
 import type { Transport } from '../../types.js';
 import { DeviceError } from '../../errors.js';
 import { createGpioState, esp32BridgeInfo, handleBridgeAction } from './bridge.js';
@@ -74,16 +74,14 @@ class SimulatedEsp32Transport implements Transport {
   }
 
   private emitEvent(event: string, payload: Record<string, unknown>): void {
-    this.inbound.push(encodeLine(JSON.stringify({ v: protocolVersion, event, payload })));
+    this.inbound.push(encodeLine(encodeEvent(event, payload)));
   }
 
   private emitSuccess(id: string, result: Record<string, unknown>): void {
-    this.inbound.push(encodeLine(JSON.stringify({ v: protocolVersion, id, ok: true, result })));
+    this.inbound.push(encodeLine(encodeResponse(id, result)));
   }
 
   private emitError(id: string, code: string, message: string): void {
-    this.inbound.push(
-      encodeLine(JSON.stringify({ v: protocolVersion, id, ok: false, error: { code, message } })),
-    );
+    this.inbound.push(encodeLine(encodeFailure(id, code, message)));
   }
 }

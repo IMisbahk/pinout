@@ -2,6 +2,7 @@ import { ProtocolError } from './errors.js';
 import type { DeviceInfo } from './types.js';
 
 export const protocolVersion = 1;
+export const maxProtocolLineBytes = 512;
 
 export interface ProtocolRequest {
   v: number;
@@ -49,6 +50,35 @@ export function encodeRequest(
     payload,
   };
   return `${JSON.stringify(request)}\n`;
+}
+
+export function encodeResponse(id: string, result: Record<string, unknown> = {}): string {
+  const response: ProtocolSuccess = {
+    v: protocolVersion,
+    id,
+    ok: true,
+    result,
+  };
+  return `${JSON.stringify(response)}\n`;
+}
+
+export function encodeFailure(id: string, code: string, message: string): string {
+  const response: ProtocolFailure = {
+    v: protocolVersion,
+    id,
+    ok: false,
+    error: { code, message },
+  };
+  return `${JSON.stringify(response)}\n`;
+}
+
+export function encodeEvent(event: string, payload: Record<string, unknown> = {}): string {
+  const message: ProtocolEvent = {
+    v: protocolVersion,
+    event,
+    payload,
+  };
+  return `${JSON.stringify(message)}\n`;
 }
 
 export function parseLine(line: string): ProtocolMessage | null {
