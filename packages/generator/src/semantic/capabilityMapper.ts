@@ -85,6 +85,21 @@ const VENDOR_PATTERNS: Array<{ pattern: RegExp; capabilityId: string; confidence
     capabilityId: 'stepper.goto',
     confidence: 0.86,
   },
+  {
+    pattern: /\b(i2c[_-]?write|wire[_-]?write)\b/i,
+    capabilityId: 'i2c.write',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(i2c[_-]?read|wire[_-]?read)\b/i,
+    capabilityId: 'i2c.read',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(spi[_-]?transfer|spi[_-]?write)\b/i,
+    capabilityId: 'spi.transfer',
+    confidence: 0.88,
+  },
 ];
 
 export function mapVendorSymbol(symbol: string): SemanticMapping | undefined {

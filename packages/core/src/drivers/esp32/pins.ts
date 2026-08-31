@@ -11,6 +11,22 @@ export const esp32DevKitPins = {
   led: 2,
 } as const;
 
+export const esp32DefaultI2c = {
+  sda: 21,
+  scl: 22,
+  frequency: 100_000,
+} as const;
+
+export const esp32DefaultSpi = {
+  sck: 18,
+  miso: 19,
+  mosi: 23,
+  chipSelect: 5,
+  frequency: 1_000_000,
+} as const;
+
+export const maxEsp32BusPayloadBytes = 32;
+
 export type GpioModeName = 'input' | 'output' | 'pullup' | 'pulldown';
 export type GpioPinMode = GpioModeName;
 
@@ -95,6 +111,52 @@ export function assertEsp32AnalogPin(pin: number): void {
 }
 
 export const assertEsp32AdcPin = assertEsp32AnalogPin;
+
+export function assertEsp32BusPin(pin: number, role: string): void {
+  try {
+    assertEsp32WritePin(pin);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw new ValidationError(`ESP32 ${role} pin is invalid: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+export function assertI2cAddress(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 127) {
+    throw new ValidationError(
+      `I2C address must be an integer from 0 to 127, received ${String(value)}.`,
+    );
+  }
+  return value;
+}
+
+export function assertBusBytes(value: unknown, field: string): number[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > maxEsp32BusPayloadBytes) {
+    throw new ValidationError(`${field} must be an array of 1–${maxEsp32BusPayloadBytes} bytes.`);
+  }
+  return value.map((entry, index) => {
+    if (typeof entry !== 'number' || !Number.isInteger(entry) || entry < 0 || entry > 255) {
+      throw new ValidationError(`${field}[${index}] must be an integer from 0 to 255.`);
+    }
+    return entry;
+  });
+}
+
+export function assertBusLength(value: unknown): number {
+  if (
+    typeof value !== 'number' ||
+    !Number.isInteger(value) ||
+    value < 1 ||
+    value > maxEsp32BusPayloadBytes
+  ) {
+    throw new ValidationError(
+      `length must be an integer from 1 to ${maxEsp32BusPayloadBytes}, received ${String(value)}.`,
+    );
+  }
+  return value;
+}
 
 export function resolveEsp32BoardPin(name: string): number {
   const normalized = name.trim().toLowerCase();

@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - First-party actuator modules: `pinout/dc-motor`, `pinout/servo`, `pinout/stepper`.
 - Semantic families `motor.*`, `servo.*`, `stepper.*` with speed/angle/step policies.
 - Generator maps vendor motor/servo/stepper symbols onto those families.
+- ESP32 bridge firmware 0.2.0: `i2c.begin|write|read|scan` and `spi.begin|transfer`.
+- SDK/simulator pin rules for I2C/SPI buses (defaults SDA 21 / SCL 22, HSPI pins).
 
 ### Added (Sprint 4 — module generator)
 

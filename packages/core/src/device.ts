@@ -2,7 +2,10 @@ import { UnsupportedCapabilityError, ValidationError } from './errors.js';
 import { describeCapability, describeCapabilities, toAgentTools } from './capabilities.js';
 import { validateInputSchema } from './schema.js';
 import {
+  assertBusBytes,
+  assertBusLength,
   assertEsp32AnalogPin,
+  assertEsp32BusPin,
   assertEsp32ModePin,
   assertEsp32PwmPin,
   assertEsp32ReadPin,
@@ -10,6 +13,7 @@ import {
   assertGpioMode,
   assertGpioPin,
   assertGpioValue,
+  assertI2cAddress,
   resolveEsp32BoardPin,
 } from './drivers/esp32/pins.js';
 import type { Session } from './session.js';
@@ -236,6 +240,72 @@ function validateAction(
       const pin = assertGpioPin(payload.pin);
       assertEsp32AnalogPin(pin);
       return { pin };
+    }
+    case 'i2c.begin': {
+      const next: Record<string, unknown> = {};
+      if (payload.sda !== undefined) {
+        const sda = assertGpioPin(payload.sda);
+        assertEsp32BusPin(sda, 'I2C SDA');
+        next.sda = sda;
+      }
+      if (payload.scl !== undefined) {
+        const scl = assertGpioPin(payload.scl);
+        assertEsp32BusPin(scl, 'I2C SCL');
+        next.scl = scl;
+      }
+      if (payload.frequency !== undefined) {
+        next.frequency = assertPositiveInt(payload.frequency, 'frequency');
+      }
+      return next;
+    }
+    case 'i2c.write':
+      return {
+        address: assertI2cAddress(payload.address),
+        data: assertBusBytes(payload.data, 'data'),
+      };
+    case 'i2c.read':
+      return {
+        address: assertI2cAddress(payload.address),
+        length: assertBusLength(payload.length),
+      };
+    case 'i2c.scan':
+      assertEmptyPayload(payload, action);
+      return {};
+    case 'spi.begin': {
+      const next: Record<string, unknown> = {};
+      if (payload.sck !== undefined) {
+        const sck = assertGpioPin(payload.sck);
+        assertEsp32BusPin(sck, 'SPI SCK');
+        next.sck = sck;
+      }
+      if (payload.miso !== undefined) {
+        const miso = assertGpioPin(payload.miso);
+        assertEsp32ReadPin(miso);
+        next.miso = miso;
+      }
+      if (payload.mosi !== undefined) {
+        const mosi = assertGpioPin(payload.mosi);
+        assertEsp32BusPin(mosi, 'SPI MOSI');
+        next.mosi = mosi;
+      }
+      if (payload.chipSelect !== undefined) {
+        const chipSelect = assertGpioPin(payload.chipSelect);
+        assertEsp32BusPin(chipSelect, 'SPI chip-select');
+        next.chipSelect = chipSelect;
+      }
+      if (payload.frequency !== undefined) {
+        next.frequency = assertPositiveInt(payload.frequency, 'frequency');
+      }
+      return next;
+    }
+    case 'spi.transfer': {
+      const next: Record<string, unknown> = { data: assertBusBytes(payload.data, 'data') };
+      if (payload.chipSelect !== undefined) {
+        const chipSelect = assertGpioPin(payload.chipSelect);
+        assertEsp32BusPin(chipSelect, 'SPI chip-select');
+        next.chipSelect = chipSelect;
+      }
+      return next;
     }
     default:
       return payload;

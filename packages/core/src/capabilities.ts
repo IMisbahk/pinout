@@ -217,6 +217,169 @@ export const gpioUnwatchCapability: CapabilityDescriptor = {
   safety: { physicalOutput: false, reversible: true },
 };
 
+const busByteSchema = {
+  type: 'integer',
+  minimum: 0,
+  maximum: 255,
+  description: 'Byte value 0–255.',
+} as const;
+
+const busDataSchema = {
+  type: 'array',
+  minItems: 1,
+  maxItems: 32,
+  items: busByteSchema,
+  description: 'Payload bytes. Limited to 32 bytes by the protocol line size.',
+} as const;
+
+export const i2cBeginCapability: CapabilityDescriptor = {
+  name: 'i2c.begin',
+  description: 'Initialize the ESP32 I2C bus (defaults: SDA 21, SCL 22, 100 kHz).',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      sda: gpioPinSchema,
+      scl: gpioPinSchema,
+      frequency: { type: 'integer', minimum: 1, description: 'Bus frequency in Hz.' },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['sda', 'scl', 'frequency'],
+    properties: {
+      sda: gpioPinSchema,
+      scl: gpioPinSchema,
+      frequency: { type: 'integer' },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Configures I2C pins. Do not share these GPIOs with other outputs.',
+  },
+};
+
+export const i2cWriteCapability: CapabilityDescriptor = {
+  name: 'i2c.write',
+  description: 'Write bytes to an I2C device address.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['address', 'data'],
+    properties: {
+      address: { type: 'integer', minimum: 0, maximum: 127 },
+      data: busDataSchema,
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['address', 'bytesWritten'],
+    properties: {
+      address: { type: 'integer' },
+      bytesWritten: { type: 'integer' },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Writes to a shared I2C bus. A NACK is returned as BUS_ERROR.',
+  },
+};
+
+export const i2cReadCapability: CapabilityDescriptor = {
+  name: 'i2c.read',
+  description: 'Read bytes from an I2C device address.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['address', 'length'],
+    properties: {
+      address: { type: 'integer', minimum: 0, maximum: 127 },
+      length: { type: 'integer', minimum: 1, maximum: 32 },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['address', 'data'],
+    properties: {
+      address: { type: 'integer' },
+      data: busDataSchema,
+    },
+  },
+  safety: { physicalOutput: false, reversible: true },
+};
+
+export const i2cScanCapability: CapabilityDescriptor = {
+  name: 'i2c.scan',
+  description: 'Scan I2C addresses 1–127 and return devices that acknowledge.',
+  inputSchema: { type: 'object', additionalProperties: false, properties: {} },
+  outputSchema: {
+    type: 'object',
+    required: ['addresses'],
+    properties: {
+      addresses: { type: 'array', items: { type: 'integer', minimum: 0, maximum: 127 } },
+    },
+  },
+  safety: { physicalOutput: false, reversible: true },
+};
+
+export const spiBeginCapability: CapabilityDescriptor = {
+  name: 'spi.begin',
+  description: 'Initialize the ESP32 SPI bus (defaults: SCK 18, MISO 19, MOSI 23, CS 5).',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      sck: gpioPinSchema,
+      miso: gpioPinSchema,
+      mosi: gpioPinSchema,
+      chipSelect: gpioPinSchema,
+      frequency: { type: 'integer', minimum: 1 },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['sck', 'miso', 'mosi', 'chipSelect', 'frequency'],
+    properties: {
+      sck: gpioPinSchema,
+      miso: gpioPinSchema,
+      mosi: gpioPinSchema,
+      chipSelect: gpioPinSchema,
+      frequency: { type: 'integer' },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Configures SPI pins. GPIO 6–11 remain reserved for flash.',
+  },
+};
+
+export const spiTransferCapability: CapabilityDescriptor = {
+  name: 'spi.transfer',
+  description: 'Full-duplex SPI transfer of 1–32 bytes.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['data'],
+    properties: {
+      chipSelect: gpioPinSchema,
+      data: busDataSchema,
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['data'],
+    properties: { data: busDataSchema, chipSelect: gpioPinSchema },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Drives MOSI and chip-select. Response bytes are device-specific.',
+  },
+};
+
 export const sysHelloCapability: CapabilityDescriptor = {
   name: 'sys.hello',
   description: 'Handshake with the device and return firmware identity plus supported actions.',
@@ -274,6 +437,12 @@ const catalog: Record<string, CapabilityDescriptor> = {
   [gpioAnalogReadCapability.name]: gpioAnalogReadCapability,
   [gpioWatchCapability.name]: gpioWatchCapability,
   [gpioUnwatchCapability.name]: gpioUnwatchCapability,
+  [i2cBeginCapability.name]: i2cBeginCapability,
+  [i2cWriteCapability.name]: i2cWriteCapability,
+  [i2cReadCapability.name]: i2cReadCapability,
+  [i2cScanCapability.name]: i2cScanCapability,
+  [spiBeginCapability.name]: spiBeginCapability,
+  [spiTransferCapability.name]: spiTransferCapability,
 };
 
 for (const capability of [

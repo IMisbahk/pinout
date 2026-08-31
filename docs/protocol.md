@@ -67,7 +67,7 @@ Events have `event` and no `id`.
     "firmware": "esp32-bridge",
     "version": "0.1.0",
     "protocol": 1,
-    "capabilities": ["sys.hello", "gpio.mode", "gpio.write", "gpio.read", "gpio.toggle", "gpio.pulse", "gpio.pwm", "gpio.analogRead", "gpio.watch", "gpio.unwatch"]
+    "capabilities": ["sys.hello", "gpio.mode", "gpio.write", "gpio.read", "gpio.toggle", "gpio.pulse", "gpio.pwm", "gpio.analogRead", "gpio.watch", "gpio.unwatch", "i2c.begin", "i2c.write", "i2c.read", "i2c.scan", "spi.begin", "spi.transfer"]
   }
 }
 ```
@@ -176,6 +176,50 @@ Unsolicited event emitted when a watched pin changes level:
 
 Firmware polls watched pins in `loop()`. The simulator emits this event when a watched pin is written, toggled, pulsed, or reverted after a pulse.
 
+### `i2c.begin`
+
+Payload (all fields optional): `{ "sda": 21, "scl": 22, "frequency": 100000 }`
+
+Default ESP32 pins are SDA 21 and SCL 22 at 100 kHz.
+
+### `i2c.write`
+
+```json
+{ "address": 60, "data": [0, 175] }
+```
+
+`address` is 0–127. `data` is 1–32 bytes. Hardware returns `BUS_ERROR` if the device NACKs.
+
+Result: `{ "address": 60, "bytesWritten": 2 }`
+
+### `i2c.read`
+
+Payload: `{ "address": 60, "length": 2 }`
+
+Result: `{ "address": 60, "data": [0, 175] }`
+
+The simulator returns the last bytes written to that address, padded with zeros.
+
+### `i2c.scan`
+
+Payload: `{}`
+
+Result: `{ "addresses": [60] }`
+
+### `spi.begin`
+
+Payload (all fields optional): `{ "sck": 18, "miso": 19, "mosi": 23, "chipSelect": 5, "frequency": 1000000 }`
+
+### `spi.transfer`
+
+```json
+{ "data": [18, 52], "chipSelect": 5 }
+```
+
+Full-duplex, 1–32 bytes, SPI mode 0. The simulator echoes `data`.
+
+Result: `{ "chipSelect": 5, "data": [18, 52] }`
+
 ## Error codes
 
 | Code | Meaning |
@@ -185,6 +229,7 @@ Firmware polls watched pins in `loop()`. The simulator emits this event when a w
 | `UNKNOWN_ACTION` | Action is not implemented on this device. |
 | `INVALID_PIN` | Pin is out of range or forbidden on this device. |
 | `INVALID_PAYLOAD` | Action input failed validation. |
+| `BUS_ERROR` | I2C NACK or other bus failure (hardware only). |
 
 Host-only errors (never sent by the device): `TIMEOUT`, `TRANSPORT_ERROR`, `PROTOCOL_ERROR`, `DISCONNECTED`, `UNSUPPORTED_CAPABILITY`, `VALIDATION_ERROR`, `ABORTED`.
 

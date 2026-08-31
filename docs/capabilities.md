@@ -72,6 +72,38 @@ ADC sample on GPIO 32–39. Output `value` is 0–4095.
 
 Subscribe or unsubscribe to `gpio.changed` events for a pin.
 
+## I2C (ESP32 bridge)
+
+Default pins: SDA 21, SCL 22, 100 kHz. Payloads are capped at 32 bytes by the 512-byte protocol line.
+
+### `i2c.begin`
+
+Optional `{ sda, scl, frequency }`. Result echoes the active bus config.
+
+### `i2c.write`
+
+Input: `{ address, data }` where `address` is 0–127 and `data` is 1–32 bytes. Hardware returns `BUS_ERROR` on NACK.
+
+### `i2c.read`
+
+Input: `{ address, length }`. Output: `{ address, data }`.
+
+### `i2c.scan`
+
+Returns `{ addresses }` for devices that acknowledge (1–127). The simulator returns addresses that have been written.
+
+## SPI (ESP32 bridge)
+
+Default pins: SCK 18, MISO 19, MOSI 23, CS 5, 1 MHz, mode 0.
+
+### `spi.begin`
+
+Optional `{ sck, miso, mosi, chipSelect, frequency }`.
+
+### `spi.transfer`
+
+Input: `{ data, chipSelect? }`. Full-duplex; the simulator echoes `data`.
+
 ## Robot manipulator (`pinout/robot-arm`)
 
 Semantic motion and gripper capabilities for simulated and future real arms.
