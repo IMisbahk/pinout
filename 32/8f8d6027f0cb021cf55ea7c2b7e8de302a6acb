@@ -1,0 +1,42 @@
+CONTRIBUTING.md
+  s_36883e4c616fba::t_ad36e4ac2f3d30 24,26,28
+docs/architecture.md
+  s_36883e4c616fba::t_2a52f3b2d1bc4a 43,47-63
+  s_36883e4c616fba::t_b0b19982f080cb 32
+  s_36883e4c616fba::t_848588ed3b293d 64
+docs/generator.md
+  s_36883e4c616fba::t_3a349ac3ca48d0 1-188
+CHANGELOG.md
+  s_36883e4c616fba::t_b37c186e51f678 7-18
+docs/generator-safety.md
+  s_36883e4c616fba::t_b83f19aefdd22a 1-57
+docs/modules.md
+  s_36883e4c616fba::t_97843d988f6b3d 93-94
+docs/build-a-module.md
+  s_36883e4c616fba::t_a781676b00356a 168-179
+README.md
+  s_36883e4c616fba::t_9f0f102f709221 163-165
+  s_36883e4c616fba::t_bee15640794f0e 110-111,113-114,130-138,141
+  s_36883e4c616fba::t_46e38727dd9078 150
+  s_36883e4c616fba::t_54852b3559d554 142
+docs/testing.md
+  s_36883e4c616fba::t_70e9ad5527f5a9 47-57
+  s_36883e4c616fba::t_76a35311ff5b70 30,32
+  s_36883e4c616fba::t_950e341c8c7e8a 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "328f8d6027f0cb021cf55ea7c2b7e8de302a6acb",
+  "prompts": {},
+  "sessions": {
+    "s_36883e4c616fba": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a09f6552-d211-43e8-bf8d-1b6634260421",
+        "model": "default"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
