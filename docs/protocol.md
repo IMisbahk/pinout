@@ -186,7 +186,7 @@ Firmware polls watched pins in `loop()`. The simulator emits this event when a w
 | `INVALID_PIN` | Pin is out of range or forbidden on this device. |
 | `INVALID_PAYLOAD` | Action input failed validation. |
 
-Host-only errors (never sent by the device): `TIMEOUT`, `TRANSPORT_ERROR`, `PROTOCOL_ERROR`, `DISCONNECTED`, `UNSUPPORTED_CAPABILITY`, `VALIDATION_ERROR`.
+Host-only errors (never sent by the device): `TIMEOUT`, `TRANSPORT_ERROR`, `PROTOCOL_ERROR`, `DISCONNECTED`, `UNSUPPORTED_CAPABILITY`, `VALIDATION_ERROR`, `ABORTED`.
 
 The simulator uses the same device error codes as firmware. There is no `INTERNAL` code.
 
