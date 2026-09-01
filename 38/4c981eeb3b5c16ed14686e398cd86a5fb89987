@@ -1,0 +1,34 @@
+package-lock.json
+  h_b8c068798e4e71 8,922-925,5618,5634,5642-5655,5659,5670
+packages/core/src/index.ts
+  h_b8c068798e4e71 234-282
+packages/core/src/operation/operationManager.ts
+  h_b8c068798e4e71 111-114
+packages/daemon/package.json
+  h_b8c068798e4e71 1-28
+packages/daemon/src/httpServer.ts
+  h_b8c068798e4e71 1-597
+packages/daemon/src/index.ts
+  h_b8c068798e4e71 1-8
+packages/daemon/src/main.ts
+  h_b8c068798e4e71 1-81
+packages/daemon/src/start.ts
+  h_b8c068798e4e71 1-32
+packages/daemon/tests/api.test.ts
+  h_b8c068798e4e71 1-272
+packages/daemon/tsconfig.json
+  h_b8c068798e4e71 1-9
+tsconfig.json
+  h_b8c068798e4e71 4-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "384c981eeb3b5c16ed14686e398cd86a5fb89987",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
