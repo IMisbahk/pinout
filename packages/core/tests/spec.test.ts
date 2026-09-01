@@ -68,3 +68,30 @@ describe('danger classification', () => {
     expect(requiresLease('LOW_RISK', 'LOW_RISK')).toBe(true);
   });
 });
+
+describe('structured errors', () => {
+  it('serializes with category and retryability', async () => {
+    const { PinoutStructuredError, toStructuredError } = await import('../src/errors.js');
+    const err = new PinoutStructuredError('LEASE_CONFLICT', 'LEASE', 'device is leased', {
+      device: 'arm-01',
+      capability: 'motion.move_to',
+    });
+    const json = err.toJSON();
+    expect(json.category).toBe('LEASE');
+    expect(json.retryable).toBe(false);
+    expect(json.device).toBe('arm-01');
+
+    const wrapped = toStructuredError(new Error('boom'), { device: 'arm-01' });
+    expect(wrapped.code).toBe('INTERNAL_ERROR');
+    expect(wrapped.device).toBe('arm-01');
+  });
+
+  it('classifies legacy codes into categories', async () => {
+    const { toStructuredError } = await import('../src/errors.js');
+    const { PolicyActionDenied } = await import('../src/policy/errors.js');
+    const { TimeoutError, DisconnectedError } = await import('../src/errors.js');
+    expect(toStructuredError(new PolicyActionDenied('nope')).category).toBe('POLICY');
+    expect(toStructuredError(new TimeoutError()).code).toBe('TIMEOUT');
+    expect(toStructuredError(new DisconnectedError()).category).toBe('TRANSPORT');
+  });
+});

@@ -44,7 +44,13 @@ export {
   DisconnectedError,
   DeviceError,
   AbortedError,
+  PinoutStructuredError,
+  toStructuredError,
+  RETRYABLE_CODES,
 } from './errors.js';
+export type { StructuredError, ErrorCategory } from './errors.js';
+export type { Capability, ActionCapability, SensorCapability, StreamCapability, StateCapability, EventCapability, DangerLevel, OperationSnapshot, OperationStatus, Lease, LeaseMode, SupportStatus, DeviceClass as SpecDeviceClass, DeviceHealthStatus, Unit as SpecUnit } from './spec/types.js';
+export { SPEC_VERSION, isCompatibleSpecVersion, convert as convertUnit, toCanonical as toCanonicalUnit, requiresLease } from './spec/index.js';
 export {
   PolicyError,
   PolicyConstraintViolation,
