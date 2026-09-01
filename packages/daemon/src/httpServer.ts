@@ -327,8 +327,10 @@ export class DaemonHttpServer {
       const waitFor = body?.waitFor === 'result' ? 'result' : 'accepted';
       const idempotencyKey = typeof body?.idempotencyKey === 'string' ? body.idempotencyKey : undefined;
 
-      // Safety gates, in order: halt → v2 safety rules.
-      c.halt.enforceGate();
+      // Dry-run plans without executing; the halt gate applies to execution.
+      if (!dryRun) {
+        c.halt.enforceGate();
+      }
       const decision = c.safety.check({ deviceId, capability, payload: args, operationalState: device.getOperationalStateSnapshot(), ...(owner !== undefined ? { owner } : {}) });
       if (!decision.allowed) {
         c.journal.append('policy.rejected', { deviceId }, { capability, decision });

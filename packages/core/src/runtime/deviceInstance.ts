@@ -1,6 +1,8 @@
 import { DisconnectedError, UnsupportedCapabilityError } from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
+import type { SafetyEngine } from '../policy/safety.js';
 import type { PolicyRule } from '../policy/types.js';
+import type { HaltCoordinator } from '../halt/haltCoordinator.js';
 import { validateInputSchema, validateOutputSchema } from '../schema.js';
 import type { CapabilityDescriptor } from '../types.js';
 import type {
@@ -23,6 +25,22 @@ export interface DeviceInstanceOptions {
   transportKinds: string[];
   getOperationalState: () => Record<string, unknown>;
   onRuntimeEvent?: RuntimeEventHandler;
+  /** Global safety halt gate consulted before physical invocations. */
+  halt?: HaltCoordinator;
+  /**
+   * Safety engine v2 for rate/interlock/sequence/approval/lease/deadman/
+   * resource rules. Give it ONLY v2 rules; the legacy kinds in `policies`
+   * are already evaluated on every invoke.
+   */
+  safetyEngine?: SafetyEngine;
+}
+
+/** Per-invocation options (leases, dry-run). */
+export interface InvokeOptions {
+  /** Lease owner asserting control; required by lease-gated capabilities. */
+  owner?: string;
+  /** Resolve and policy-check without executing any physical side effect. */
+  dryRun?: boolean;
 }
 
 export class DeviceInstance {
@@ -34,6 +52,8 @@ export class DeviceInstance {
 
   private readonly backend: DeviceBackend;
   private readonly policies: PolicyRule[];
+  private readonly halt: HaltCoordinator | undefined;
+  private readonly safetyEngine: SafetyEngine | undefined;
   private readonly getOperationalState: () => Record<string, unknown>;
   private readonly runtimeEventHandlers = new Set<RuntimeEventHandler>();
   private health: DeviceHealth;
@@ -51,6 +71,8 @@ export class DeviceInstance {
     this.activeTransportKind = options.activeTransportKind ?? options.backend.kind;
     this.transportKinds = options.transportKinds;
     this.getOperationalState = options.getOperationalState;
+    this.halt = options.halt;
+    this.safetyEngine = options.safetyEngine;
     if (options.onRuntimeEvent) {
       this.runtimeEventHandlers.add(options.onRuntimeEvent);
     }
@@ -117,6 +139,7 @@ export class DeviceInstance {
   async invoke(
     capability: string,
     input: Record<string, unknown> = {},
+    options: InvokeOptions = {},
   ): Promise<Record<string, unknown>> {
     if (this.closing || this.health.lifecycle === 'disconnected') {
       throw new DisconnectedError(`Device '${this.id}' is closing or disconnected.`);
@@ -128,12 +151,38 @@ export class DeviceInstance {
     const descriptor = this.resolveCapability(capability);
     const payload = validateInputSchema(descriptor.inputSchema, input);
 
+    // Safety order: halt gate (skipped for dry-run: planning during a halt
+    // is safe and useful — nothing executes) → legacy policies → v2 rules.
+    if (!options.dryRun) {
+      this.halt?.enforceGate();
+    }
     evaluatePolicies(this.policies, {
       deviceId: this.id,
       capability,
       payload,
       operationalState: this.getOperationalState(),
     });
+    if (this.safetyEngine) {
+      this.safetyEngine.enforce({
+        deviceId: this.id,
+        capability,
+        payload,
+        operationalState: this.getOperationalState(),
+        ...(options.owner !== undefined ? { owner: options.owner } : {}),
+      });
+    }
+
+    if (options.dryRun) {
+      // Everything above is the full resolution/validation/policy pass;
+      // a dry run stops here, before any physical side effect.
+      return {
+        dryRun: true,
+        deviceId: this.id,
+        capability,
+        resolvedArgs: payload,
+        haltState: this.halt?.state ?? 'NORMAL',
+      };
+    }
 
     this.activeInvocations += 1;
     this.setLifecycle('busy');

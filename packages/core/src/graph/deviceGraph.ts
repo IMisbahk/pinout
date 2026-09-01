@@ -141,7 +141,7 @@ export class DeviceGraph {
       throw new PinoutStructuredError('VALIDATION_ERROR', 'VALIDATION', `Address '${address}' must include a device and a capability.`);
     }
 
-    const rootId = segments[0];
+    const rootId = segments[0]!;
     if (!this.nodes.has(rootId)) {
       throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown root device '${rootId}' in address '${address}'.`, { device: rootId });
     }

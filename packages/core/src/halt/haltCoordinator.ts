@@ -55,7 +55,7 @@ export class HaltCoordinator {
   private faulted = false;
   private readonly listeners = new Set<(change: SafetyStateChange) => void>();
   private readonly nowFn: () => number;
-  private readonly externalOnStateChange?: (change: SafetyStateChange) => void;
+  private readonly externalOnStateChange: ((change: SafetyStateChange) => void) | undefined;
 
   constructor(options: HaltCoordinatorOptions = {}) {
     this.nowFn = options.now ?? Date.now;

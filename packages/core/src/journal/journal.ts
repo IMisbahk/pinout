@@ -115,7 +115,9 @@ export class Journal {
       kind,
       ...(context.deviceId !== undefined ? { deviceId: context.deviceId } : {}),
       ...(context.operationId !== undefined ? { operationId: context.operationId } : {}),
-      payload: truncatePayload(redactPayload(payload), this.maxPayloadChars),
+      ...(payload && Object.keys(payload).length > 0
+        ? { payload: truncatePayload(redactPayload(payload), this.maxPayloadChars) as Record<string, unknown> }
+        : {}),
     };
     // Journal writes are serialized off the control path: callers never wait
     // for disk, but close() flushes everything appended so far. In-memory
