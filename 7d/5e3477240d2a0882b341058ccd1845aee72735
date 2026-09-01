@@ -1,0 +1,20 @@
+packages/core/src/index.ts
+  h_b8c068798e4e71 191-193
+packages/core/src/runtime/runtime.ts
+  h_b8c068798e4e71 4,175,177
+packages/core/src/runtime/toolExport.ts
+  h_b8c068798e4e71 1-69
+packages/core/tests/toolExport.test.ts
+  h_b8c068798e4e71 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7d5e3477240d2a0882b341058ccd1845aee72735",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
