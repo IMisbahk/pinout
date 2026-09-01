@@ -1,0 +1,16 @@
+packages/generator/src/safety/provenance.ts
+  h_b8c068798e4e71 1-319
+packages/generator/tests/provenance.test.ts
+  h_b8c068798e4e71 1-207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "dd6a516a6dfe862a6a477dd048347b8873883856",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
