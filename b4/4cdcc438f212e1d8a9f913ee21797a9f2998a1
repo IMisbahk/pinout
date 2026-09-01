@@ -1,0 +1,16 @@
+packages/core/src/halt/haltCoordinator.ts
+  h_b8c068798e4e71 1-191
+packages/core/tests/halt.test.ts
+  h_b8c068798e4e71 1-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b44cdcc438f212e1d8a9f913ee21797a9f2998a1",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
