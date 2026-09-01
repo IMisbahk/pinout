@@ -1,0 +1,22 @@
+package-lock.json
+  h_b8c068798e4e71 1597-1606,5594-5614,5667-5671
+packages/core/package.json
+  h_b8c068798e4e71 32-36
+packages/core/src/index.ts
+  h_b8c068798e4e71 8-9
+packages/core/src/transports/udpTransport.ts
+  h_b8c068798e4e71 1-188
+packages/core/src/transports/webSocketTransport.ts
+  h_b8c068798e4e71 1-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5edc8b89a285f56481b4228320bc59edba01d53c",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
