@@ -16,7 +16,12 @@ function daemonUrl(program: Command): string {
   return opts.url ?? process.env.PINOUT_URL ?? DEFAULT_DAEMON_URL;
 }
 
-async function call(program: Command, method: string, path: string, body?: unknown): Promise<unknown> {
+async function call(
+  program: Command,
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<unknown> {
   const url = `${daemonUrl(program)}${path}`;
   let response: Response;
   try {
@@ -24,7 +29,9 @@ async function call(program: Command, method: string, path: string, body?: unkno
       method,
       headers: {
         ...(body !== undefined ? { 'content-type': 'application/json' } : {}),
-        ...(process.env.PINOUT_TOKEN ? { authorization: `Bearer ${process.env.PINOUT_TOKEN}` } : {}),
+        ...(process.env.PINOUT_TOKEN
+          ? { authorization: `Bearer ${process.env.PINOUT_TOKEN}` }
+          : {}),
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
@@ -44,7 +51,10 @@ async function call(program: Command, method: string, path: string, body?: unkno
 }
 
 export function registerDaemonCommands(program: Command, outputFor: OutputFactory): void {
-  program.option('--url <url>', 'Pinout daemon base URL (default PINOUT_URL or http://127.0.0.1:8787)');
+  program.option(
+    '--url <url>',
+    'Pinout daemon base URL (default PINOUT_URL or http://127.0.0.1:8787)',
+  );
 
   const out = (): CliOutput => outputFor();
 
@@ -117,7 +127,11 @@ export function registerDaemonCommands(program: Command, outputFor: OutputFactor
     .requiredOption('--owner <owner>')
     .action(async (leaseId: string, options: { owner: string }) => {
       out().log(
-        await call(program, 'DELETE', `/v1/leases/${encodeURIComponent(leaseId)}?owner=${encodeURIComponent(options.owner)}`),
+        await call(
+          program,
+          'DELETE',
+          `/v1/leases/${encodeURIComponent(leaseId)}?owner=${encodeURIComponent(options.owner)}`,
+        ),
       );
     });
 

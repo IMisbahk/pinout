@@ -20,7 +20,8 @@ function makeHarness(): CliHarness {
       // runCli expects full process.argv (node, script, ...args) because
       // commander parses with the default `from: 'node'` semantics.
       return runCli(['node', 'pinout', ...argv], {
-        log: (value: unknown) => lines.push(typeof value === 'string' ? value : JSON.stringify(value)),
+        log: (value: unknown) =>
+          lines.push(typeof value === 'string' ? value : JSON.stringify(value)),
         error: (message: string) => lines.push(message),
       });
     },
@@ -67,7 +68,14 @@ describe('CLI daemon commands', () => {
   });
 
   it('acquires and releases a lease', async () => {
-    const acquireCode = await harness.run(['lease', 'acquire', 'relay-cli', '--owner', 'cli-agent', '--json']);
+    const acquireCode = await harness.run([
+      'lease',
+      'acquire',
+      'relay-cli',
+      '--owner',
+      'cli-agent',
+      '--json',
+    ]);
     if (acquireCode !== 0) console.error('acquire output:', harness.lines.join(' | '));
     expect(acquireCode).toBe(0);
 
