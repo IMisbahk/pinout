@@ -1,0 +1,18 @@
+packages/generator/src/index.ts
+  h_b8c068798e4e71 24-42
+packages/generator/src/pipeline/repair.ts
+  h_b8c068798e4e71 1-173
+packages/generator/tests/repair.test.ts
+  h_b8c068798e4e71 1-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4376961a59be362e232e1d648aeb2422e1b1822f",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
