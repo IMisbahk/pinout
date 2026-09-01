@@ -15,6 +15,7 @@
  */
 import { AbortedError, PinoutStructuredError, toStructuredError } from '../errors.js';
 import type { OperationProgress, OperationSnapshot, OperationStatus } from '../spec/types.js';
+import { BoundedIdempotencyStore } from './idempotencyStore.js';
 
 export type { OperationSnapshot, OperationStatus, OperationProgress };
 
@@ -44,6 +45,8 @@ export interface OperationRunContext {
 export interface BeginOperationOptions {
   deviceId: string;
   capability: string;
+  /** Lease owner / caller identity; scopes idempotency keys per caller. */
+  owner?: string;
   idempotencyKey?: string;
   /** Absolute epoch-ms deadline; the operation becomes `timed_out` past it. */
   deadline?: number;
@@ -91,8 +94,7 @@ export interface OperationHandle {
 }
 
 export class OperationManager {
-  private readonly operations = new Map<string, OperationSnapshot & { abort?: AbortController }>();
-  private readonly idempotency = new Map<string, string>();
+  private readonly operations = new Map<string, OperationSnapshot & { abort?: AbortController; owner?: string }>();
   private readonly waiters = new Map<
     string,
     Array<(err: unknown, result?: Record<string, unknown>) => void>
@@ -104,8 +106,14 @@ export class OperationManager {
   private readonly events: OperationManagerEvents;
   private sequence = 0;
 
-  constructor(events: OperationManagerEvents = {}) {
+  readonly idempotencyStore: BoundedIdempotencyStore;
+
+  constructor(
+    events: OperationManagerEvents = {},
+    idempotencyStore: BoundedIdempotencyStore = new BoundedIdempotencyStore(),
+  ) {
     this.events = events;
+    this.idempotencyStore = idempotencyStore;
   }
 
   /**
@@ -116,13 +124,19 @@ export class OperationManager {
    */
   begin(options: BeginOperationOptions): OperationBeginResult {
     if (options.idempotencyKey) {
-      const key = idempotencyKeyFor(options.deviceId, options.capability, options.idempotencyKey);
-      const existingId = this.idempotency.get(key);
-      if (existingId && this.operations.has(existingId)) {
-        // The key resolves to the original outcome forever, so a client retry
-        // can never re-trigger a physical side effect.
-        return { deduped: true, handle: this.getHandle(existingId) };
+      const scopedKey = BoundedIdempotencyStore.keyFor(
+        options.deviceId,
+        options.capability,
+        options.owner,
+        options.idempotencyKey,
+      );
+      const lookup = this.idempotencyStore.lookup(options.deviceId, options.capability, options.owner, options.idempotencyKey);
+      if (lookup.hit && lookup.operationId && this.operations.has(lookup.operationId)) {
+        // Within the retention window the key resolves to the original
+        // outcome, so a client retry can never re-trigger the side effect.
+        return { deduped: true, handle: this.getHandle(lookup.operationId) };
       }
+      void scopedKey;
     }
 
     const id = `op_${++this.sequence}_${randomId()}`;
@@ -130,12 +144,13 @@ export class OperationManager {
     const deadline =
       options.deadline ?? (options.timeoutMs !== undefined ? now + options.timeoutMs : undefined);
 
-    const snapshot: OperationSnapshot & { abort?: AbortController } = {
+    const snapshot: OperationSnapshot & { abort?: AbortController; owner?: string } = {
       id,
       deviceId: options.deviceId,
       capability: options.capability,
       status: 'queued',
       ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
+      ...(options.owner !== undefined ? { owner: options.owner } : {}),
       createdAt: now,
       ...(deadline !== undefined ? { deadline } : {}),
       progress: null,
@@ -144,8 +159,17 @@ export class OperationManager {
     this.emit('operation.requested', id, options.deviceId, options.capability, now);
 
     if (options.idempotencyKey) {
-      const key = idempotencyKeyFor(options.deviceId, options.capability, options.idempotencyKey);
-      this.idempotency.set(key, id);
+      this.idempotencyStore.recordUnder(
+        BoundedIdempotencyStore.keyFor(options.deviceId, options.capability, options.owner, options.idempotencyKey),
+        {
+          operationId: id,
+          deviceId: options.deviceId,
+          capability: options.capability,
+          owner: options.owner,
+          status: 'queued',
+          createdAt: now,
+        },
+      );
     }
 
     this.start(id, options);
@@ -367,7 +391,7 @@ export class OperationManager {
   }
 
   private transition(
-    op: OperationSnapshot & { abort?: AbortController },
+    op: OperationSnapshot & { abort?: AbortController; owner?: string },
     status: OperationStatus,
     extra: {
       result?: Record<string, unknown>;
@@ -530,14 +554,10 @@ export class OperationManager {
     });
   }
 
-  private publicSnapshot(op: OperationSnapshot & { abort?: AbortController }): OperationSnapshot {
+  private publicSnapshot(op: OperationSnapshot & { abort?: AbortController; owner?: string }): OperationSnapshot {
     const { abort: _abort, ...rest } = op;
     return { ...rest };
   }
-}
-
-function idempotencyKeyFor(deviceId: string, capability: string, key: string): string {
-  return `${deviceId}::${capability}::${key}`;
 }
 
 function randomId(): string {

@@ -275,6 +275,8 @@ export type {
   ApprovalRecord,
 } from './policy/safety.js';
 export { OperationManager, isTerminalOperationStatus } from './operation/operationManager.js';
+export { BoundedIdempotencyStore } from './operation/idempotencyStore.js';
+export type { IdempotencyStoreOptions, IdempotencyTombstone, IdempotencyLookup } from './operation/idempotencyStore.js';
 export type {
   OperationHandle,
   OperationRunContext,
