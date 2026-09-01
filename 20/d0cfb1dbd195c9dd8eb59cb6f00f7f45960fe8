@@ -1,0 +1,86 @@
+eslint.config.js
+  h_b8c068798e4e71 7-14
+firmware/micropython-bridge/validate.js
+  h_b8c068798e4e71 114-115,126-129,149-151,163-164,177-179
+package-lock.json
+  h_b8c068798e4e71 934-937,5720-5727
+packages/core/src/errors.ts
+  h_b8c068798e4e71 202-217
+packages/core/src/graph/deviceGraph.ts
+  h_b8c068798e4e71 53-60,89-93,96-100,103-107,123-125,160-164,169-174,192-196
+packages/core/src/halt/haltCoordinator.ts
+  h_b8c068798e4e71 25,79-83,91-95,103-110,151-155,158-162,201-210
+packages/core/src/index.ts
+  h_b8c068798e4e71 9-12,57-80,285-289
+packages/core/src/journal/journal.ts
+  h_b8c068798e4e71 17-18,120-125
+packages/core/src/lease/leaseManager.ts
+  h_b8c068798e4e71 61-72,95-102,105-109,120-124
+packages/core/src/operation/operationManager.ts
+  h_b8c068798e4e71 22-26,96-103,181-188,195-199,217-224,240-247,271-275,300-304,333-340,372-380,406-419,425-433,437-444,459-462,523-530
+packages/core/src/policy/safety.ts
+  h_b8c068798e4e71 16-20,35-39,195-200,245-247,273-279,292-293,306-307,318-319,326-331,339-344,349-354,358-366,383-384,395-400,426-439,481-483,523-530
+packages/core/src/spec/danger.ts
+  h_b8c068798e4e71 25-28
+packages/core/src/spec/types.ts
+  h_b8c068798e4e71 26-61,95,97,243,250,326
+packages/core/src/spec/units.ts
+  h_b8c068798e4e71 21,29-48,120-155
+packages/core/src/stream/streamBus.ts
+  h_b8c068798e4e71 218-224
+packages/core/src/transports/udpTransport.ts
+  h_b8c068798e4e71 108-111
+packages/core/src/transports/webSocketTransport.ts
+  h_b8c068798e4e71 128-130,141-143
+packages/core/tests/deviceGraph.test.ts
+  h_b8c068798e4e71 64-66,120-122,127-129,132-136,143-148
+packages/core/tests/deviceSafetyIntegration.test.ts
+  h_b8c068798e4e71 11-15,20-26,52-54,69-71,87,93-98,133-135
+packages/core/tests/faultInjection.test.ts
+  h_b8c068798e4e71 102-106,117-121
+packages/core/tests/halt.test.ts
+  h_b8c068798e4e71 2
+packages/core/tests/journal.test.ts
+  h_b8c068798e4e71 38-46,67-71
+packages/core/tests/leases.test.ts
+  h_b8c068798e4e71 19-22,36-45,53-57,65-67,71-75,83-87,94-98,104-107,115-118
+packages/core/tests/safetyEngine.test.ts
+  h_b8c068798e4e71 57-64,67-76,83-90,93-98,109-111,114-119,121-124,136-141,144-149,167-172,197-200,202-205,219-224,240-245,257-264,275-282,336
+packages/core/tests/spec.test.ts
+  h_b8c068798e4e71 63
+packages/core/tests/toolExport.test.ts
+  h_b8c068798e4e71 24-26
+packages/daemon/src/httpServer.ts
+  h_b8c068798e4e71 128-135,141-148,154-161,163,166-176,183-186,260-263,305-312,321-333,355-359,374-375,381-387,390-392,461-466,480-484,489-498,513-516,531-538,613-620,672-675
+packages/daemon/src/main.ts
+  h_b8c068798e4e71 23-29
+packages/daemon/src/start.ts
+  h_b8c068798e4e71 18-21
+packages/daemon/tests/api.test.ts
+  h_b8c068798e4e71 33,41,45,52,63-66,78-82,86-88,99,103,122-123,134,145,147-149,159-161,173,182,191,201-204,209-213,216-221,223-227,247-249,261,270-272
+packages/protocols-modbus/src/registerMap.ts
+  h_b8c068798e4e71 43-46,50-53,56-59,81-84,109-112,115-118,125-128,135-138
+packages/protocols-modbus/src/rtuClient.ts
+  h_b8c068798e4e71 32-39,44-52,94-97,112-120,124-132,139-142
+packages/protocols-modbus/src/tcpClient.ts
+  h_b8c068798e4e71 72-74,114-117,132-140,144-152,156-159
+packages/protocols-modbus/src/wire.ts
+  h_b8c068798e4e71 10,100,118,198-201,208-211,246-249,260-262,285-289,295-298,304-307
+packages/protocols-modbus/tests/clients.test.ts
+  h_b8c068798e4e71 4,53-54,172-174,181-183,207-209,213-215,229-231
+packages/protocols-modbus/tests/registerMap.test.ts
+  h_b8c068798e4e71 46-47,79-97,149-151,157-159
+packages/protocols-modbus/tests/wire.test.ts
+  h_b8c068798e4e71 61-64,79-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "20d0cfb1dbd195c9dd8eb59cb6f00f7f45960fe8",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
