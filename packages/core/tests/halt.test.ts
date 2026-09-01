@@ -1,8 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  HaltCoordinator,
-  safetyStateEventName,
-} from '../src/halt/haltCoordinator.js';
+import { HaltCoordinator, safetyStateEventName } from '../src/halt/haltCoordinator.js';
 
 describe('HaltCoordinator', () => {
   it('starts NORMAL and permits invocations', () => {

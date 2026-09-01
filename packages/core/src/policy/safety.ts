@@ -13,7 +13,11 @@
 import { PinoutStructuredError } from '../errors.js';
 import type { ConstraintProvenance, PolicyDecision } from '../spec/types.js';
 import type { LeaseManager } from '../lease/leaseManager.js';
-import { PolicyActionDenied, PolicyConstraintViolation, PolicyPreconditionFailed } from './errors.js';
+import {
+  PolicyActionDenied,
+  PolicyConstraintViolation,
+  PolicyPreconditionFailed,
+} from './errors.js';
 import type { PolicyContext, PolicyRule as LegacyPolicyRule } from './types.js';
 import { evaluatePolicies } from './engine.js';
 
@@ -28,7 +32,11 @@ export interface SafetyRuleBase {
 }
 
 export type SafetyRule =
-  | (Extract<LegacyPolicyRule, { kind: 'numericRange' | 'stateEquals' | 'workspaceBounds' | 'custom' }> & SafetyRuleBase)
+  | (Extract<
+      LegacyPolicyRule,
+      { kind: 'numericRange' | 'stateEquals' | 'workspaceBounds' | 'custom' }
+    > &
+      SafetyRuleBase)
   | (RateRule & SafetyRuleBase)
   | (InterlockRule & SafetyRuleBase)
   | (SequenceRule & SafetyRuleBase)
@@ -184,7 +192,12 @@ export class SafetyEngine {
 
     const now = this.nowFn();
     for (const rule of this.rules) {
-      if (rule.kind === 'numericRange' || rule.kind === 'stateEquals' || rule.kind === 'workspaceBounds' || rule.kind === 'custom') {
+      if (
+        rule.kind === 'numericRange' ||
+        rule.kind === 'stateEquals' ||
+        rule.kind === 'workspaceBounds' ||
+        rule.kind === 'custom'
+      ) {
         continue;
       }
       if (rule.kind !== 'lease' && rule.capability !== context.capability) continue;
@@ -229,7 +242,9 @@ export class SafetyEngine {
     this.sequences.set(sequence, step);
   }
 
-  recordApproval(record: Omit<ApprovalRecord, 'grantedAt'> & { grantedAt?: number }): ApprovalRecord {
+  recordApproval(
+    record: Omit<ApprovalRecord, 'grantedAt'> & { grantedAt?: number },
+  ): ApprovalRecord {
     const full: ApprovalRecord = {
       ...record,
       grantedAt: record.grantedAt ?? this.nowFn(),
@@ -255,7 +270,13 @@ export class SafetyEngine {
     const window = this.rateWindows.get(key) ?? { timestamps: [] };
     window.timestamps = window.timestamps.filter((t) => t > now - windowMs);
     if (window.timestamps.length >= rule.maxPerWindow) {
-      this.reject(rule, `Rate limit: max ${rule.maxPerWindow} '${context.capability}' per ${windowMs}ms.`, context, 'SAFETY_RATE_LIMIT', { maxPerWindow: rule.maxPerWindow, windowMs });
+      this.reject(
+        rule,
+        `Rate limit: max ${rule.maxPerWindow} '${context.capability}' per ${windowMs}ms.`,
+        context,
+        'SAFETY_RATE_LIMIT',
+        { maxPerWindow: rule.maxPerWindow, windowMs },
+      );
       return;
     }
     window.timestamps.push(now);
@@ -268,7 +289,8 @@ export class SafetyEngine {
     if (actual !== expected) {
       this.reject(
         rule,
-        rule.message ?? `Interlock '${rule.interlock}' must be ${String(expected)}, current ${String(actual)}.`,
+        rule.message ??
+          `Interlock '${rule.interlock}' must be ${String(expected)}, current ${String(actual)}.`,
         context,
         'SAFETY_INTERLOCK_NOT_SATISFIED',
         { interlock: rule.interlock, expected, actual },
@@ -281,7 +303,8 @@ export class SafetyEngine {
     if (step === undefined || step < rule.atLeastStep) {
       this.reject(
         rule,
-        rule.message ?? `Sequence '${rule.sequence}' must have reached step ${rule.atLeastStep}, current ${String(step)}.`,
+        rule.message ??
+          `Sequence '${rule.sequence}' must have reached step ${rule.atLeastStep}, current ${String(step)}.`,
         context,
         'SAFETY_SEQUENCE_NOT_SATISFIED',
         { sequence: rule.sequence, requiredStep: rule.atLeastStep, currentStep: step },
@@ -292,14 +315,20 @@ export class SafetyEngine {
   private enforceApproval(rule: ApprovalRule, context: PolicyContext, now: number): void {
     let matched: ApprovalRecord | undefined;
     for (const approval of this.approvals.values()) {
-      if (approval.deviceId !== context.deviceId || approval.capability !== context.capability) continue;
+      if (approval.deviceId !== context.deviceId || approval.capability !== context.capability)
+        continue;
       if (approval.usedAt !== undefined) continue;
       if (approval.expiresAt !== undefined && approval.expiresAt <= now) continue;
       matched = approval;
       break;
     }
     if (!matched) {
-      this.reject(rule, ` '${context.capability}' requires an operator approval that has not been granted (or is already used).`, context, 'SAFETY_APPROVAL_REQUIRED');
+      this.reject(
+        rule,
+        ` '${context.capability}' requires an operator approval that has not been granted (or is already used).`,
+        context,
+        'SAFETY_APPROVAL_REQUIRED',
+      );
       return;
     }
     matched.usedAt = now;
@@ -307,23 +336,34 @@ export class SafetyEngine {
 
   private enforceLease(rule: LeaseRule, context: PolicyContext & { owner?: string }): void {
     if (!this.leaseManager) {
-      this.reject(rule, 'No lease manager is configured; lease-gated capability is unavailable.', context, 'SAFETY_LEASE_MANAGER_MISSING');
+      this.reject(
+        rule,
+        'No lease manager is configured; lease-gated capability is unavailable.',
+        context,
+        'SAFETY_LEASE_MANAGER_MISSING',
+      );
       return;
     }
     const owner = context.owner;
     if (!owner) {
-      this.reject(rule, `'${context.capability}' requires an active lease, but no lease owner was provided.`, context, 'SAFETY_LEASE_OWNER_REQUIRED');
+      this.reject(
+        rule,
+        `'${context.capability}' requires an active lease, but no lease owner was provided.`,
+        context,
+        'SAFETY_LEASE_OWNER_REQUIRED',
+      );
       return;
     }
     // The owner must hold an active lease covering this device+capability.
-    const holding = this.leaseManager
-      .list({ owner })
-      .some((lease) => {
-        if (lease.scope.kind === 'capability') {
-          return lease.scope.deviceId === context.deviceId && lease.scope.capabilities.includes(context.capability);
-        }
-        return lease.scope.deviceId === context.deviceId;
-      });
+    const holding = this.leaseManager.list({ owner }).some((lease) => {
+      if (lease.scope.kind === 'capability') {
+        return (
+          lease.scope.deviceId === context.deviceId &&
+          lease.scope.capabilities.includes(context.capability)
+        );
+      }
+      return lease.scope.deviceId === context.deviceId;
+    });
     if (!holding) {
       this.reject(
         rule,
@@ -340,7 +380,8 @@ export class SafetyEngine {
     if (lastAlive === undefined || now - lastAlive > maxAge) {
       this.reject(
         rule,
-        rule.message ?? `Deadman heartbeat for '${context.deviceId}' is stale (${lastAlive === undefined ? 'never' : `${now - lastAlive}ms old`}).`,
+        rule.message ??
+          `Deadman heartbeat for '${context.deviceId}' is stale (${lastAlive === undefined ? 'never' : `${now - lastAlive}ms old`}).`,
         context,
         'SAFETY_DEADMAN_STALE',
         { maxAgeMs: maxAge, lastAlive },
@@ -351,7 +392,12 @@ export class SafetyEngine {
   private enforceResource(rule: ResourceRule, context: PolicyContext, now: number): void {
     const budget = this.budgets.get(rule.resource);
     if (!budget) {
-      this.reject(rule, `No budget configured for resource '${rule.resource}'.`, context, 'SAFETY_BUDGET_NOT_CONFIGURED');
+      this.reject(
+        rule,
+        `No budget configured for resource '${rule.resource}'.`,
+        context,
+        'SAFETY_BUDGET_NOT_CONFIGURED',
+      );
       return;
     }
     budget.consumed = budget.consumed.filter((entry) => entry.at > now - budget.windowMs);
@@ -377,12 +423,20 @@ export class SafetyEngine {
     code: string,
     details?: Record<string, unknown>,
   ): never {
-    const error = new PinoutStructuredError(code, 'SAFETY', `${message} (${context.deviceId}.${context.capability})`, {
-      device: context.deviceId,
-      capability: context.capability,
-      details: { ...(details ?? {}), ruleId: rule.id },
-    });
-    this.onRejection?.({ allowed: false, code, message, ...(rule.id !== undefined ? { ruleId: rule.id } : {}) }, context);
+    const error = new PinoutStructuredError(
+      code,
+      'SAFETY',
+      `${message} (${context.deviceId}.${context.capability})`,
+      {
+        device: context.deviceId,
+        capability: context.capability,
+        details: { ...(details ?? {}), ruleId: rule.id },
+      },
+    );
+    this.onRejection?.(
+      { allowed: false, code, message, ...(rule.id !== undefined ? { ruleId: rule.id } : {}) },
+      context,
+    );
     throw error;
   }
 }
@@ -424,7 +478,9 @@ export function mergeModuleAndDeploymentRules(
     if (deployment.kind === 'numericRange') {
       const moduleCounterparts = moduleRules.filter(
         (r): r is Extract<SafetyRule, { kind: 'numericRange' }> =>
-          r.kind === 'numericRange' && r.capability === deployment.capability && r.field === deployment.field,
+          r.kind === 'numericRange' &&
+          r.capability === deployment.capability &&
+          r.field === deployment.field,
       );
       let satisfied = true;
       for (const module of moduleCounterparts) {
@@ -464,7 +520,14 @@ export function mergeModuleAndDeploymentRules(
           });
         }
       }
-      if (!conflicts.some((c) => c.kind === 'state-mismatch' && c.capability === deployment.capability && c.field === deployment.field)) {
+      if (
+        !conflicts.some(
+          (c) =>
+            c.kind === 'state-mismatch' &&
+            c.capability === deployment.capability &&
+            c.field === deployment.field,
+        )
+      ) {
         merged.push({ ...deployment, provenance: deployment.provenance ?? 'CONFIGURED' });
       }
       continue;

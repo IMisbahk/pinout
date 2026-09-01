@@ -58,7 +58,10 @@ describe('PDU decode', () => {
   it('decodes read-coil responses into bit arrays', () => {
     // FC 0x01 response: byteCount=1, bits=0b101 (coils 0,2 on)
     const decoded = decodePdu(new Uint8Array([0x01, 0x01, 0x05]), 0x01);
-    expect(decoded).toEqual({ kind: 'bits', values: [true, false, true, false, false, false, false, false] });
+    expect(decoded).toEqual({
+      kind: 'bits',
+      values: [true, false, true, false, false, false, false, false],
+    });
   });
 
   it('decodes read-holding-register responses', () => {
@@ -73,7 +76,9 @@ describe('PDU decode', () => {
   });
 
   it('rejects a response whose function code does not match the request', () => {
-    expect(() => decodePdu(new Uint8Array([0x04, 0x02, 0x00, 0x00]), 0x03)).toThrowError(/does not match request/);
+    expect(() => decodePdu(new Uint8Array([0x04, 0x02, 0x00, 0x00]), 0x03)).toThrowError(
+      /does not match request/,
+    );
     expect(() => decodePdu(new Uint8Array([]), 0x03)).toThrowError(/Empty PDU/);
   });
 });

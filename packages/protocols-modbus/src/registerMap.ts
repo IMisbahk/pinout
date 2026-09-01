@@ -40,14 +40,23 @@ function validateMap(map: RegisterMapEntry[]): void {
   const seen = new Set<string>();
   for (const entry of map) {
     if (seen.has(entry.name)) {
-      throw new ModbusError('MODBUS_MAP_DUPLICATE', `Duplicate register map entry '${entry.name}'.`);
+      throw new ModbusError(
+        'MODBUS_MAP_DUPLICATE',
+        `Duplicate register map entry '${entry.name}'.`,
+      );
     }
     seen.add(entry.name);
     if (entry.access === 'write' && entry.type === 'uint16' && entry.area !== 'holding') {
-      throw new ModbusError('MODBUS_MAP_INVALID', `Write entries must use the 'holding' area ('${entry.name}').`);
+      throw new ModbusError(
+        'MODBUS_MAP_INVALID',
+        `Write entries must use the 'holding' area ('${entry.name}').`,
+      );
     }
     if (entry.access === 'write' && entry.type === 'bool' && entry.area !== 'coil') {
-      throw new ModbusError('MODBUS_MAP_INVALID', `Writable booleans must use the 'coil' area ('${entry.name}').`);
+      throw new ModbusError(
+        'MODBUS_MAP_INVALID',
+        `Writable booleans must use the 'coil' area ('${entry.name}').`,
+      );
     }
   }
 }
@@ -69,7 +78,10 @@ export function createRegisterMapDevice(options: RegisterMapOptions): RegisterMa
     async read(entryName: string): Promise<number | boolean> {
       const entry = byName.get(entryName);
       if (!entry) {
-        throw new ModbusError('MODBUS_MAP_UNKNOWN_ENTRY', `Register map has no entry '${entryName}'.`);
+        throw new ModbusError(
+          'MODBUS_MAP_UNKNOWN_ENTRY',
+          `Register map has no entry '${entryName}'.`,
+        );
       }
       switch (entry.area) {
         case 'coil': {
@@ -94,24 +106,36 @@ export function createRegisterMapDevice(options: RegisterMapOptions): RegisterMa
     async write(entryName: string, value: number | boolean): Promise<void> {
       const entry = byName.get(entryName);
       if (!entry) {
-        throw new ModbusError('MODBUS_MAP_UNKNOWN_ENTRY', `Register map has no entry '${entryName}'.`);
+        throw new ModbusError(
+          'MODBUS_MAP_UNKNOWN_ENTRY',
+          `Register map has no entry '${entryName}'.`,
+        );
       }
       if (entry.access !== 'write') {
-        throw new ModbusError('MODBUS_MAP_READ_ONLY', `Entry '${entryName}' is read-only; writes require explicit access: 'write' in the map.`);
+        throw new ModbusError(
+          'MODBUS_MAP_READ_ONLY',
+          `Entry '${entryName}' is read-only; writes require explicit access: 'write' in the map.`,
+        );
       }
       if (entry.type === 'bool') {
         await options.client.writeSingleCoil(entry.address, Boolean(value));
         return;
       }
       if (typeof value !== 'number' || !Number.isFinite(value)) {
-        throw new ModbusError('MODBUS_INVALID_VALUE', `Entry '${entryName}' expects a finite number.`);
+        throw new ModbusError(
+          'MODBUS_INVALID_VALUE',
+          `Entry '${entryName}' expects a finite number.`,
+        );
       }
       // Reverse scaling on write: raw = (physical - offset) / scale.
       const scale = entry.scale ?? 1;
       const offset = entry.offset ?? 0;
       const raw = Math.round((value - offset) / scale);
       if (raw < 0 || raw > 0xffff) {
-        throw new ModbusError('MODBUS_INVALID_VALUE', `Scaled value ${raw} exceeds the 16-bit register range.`);
+        throw new ModbusError(
+          'MODBUS_INVALID_VALUE',
+          `Scaled value ${raw} exceeds the 16-bit register range.`,
+        );
       }
       await options.client.writeSingleRegister(entry.address, raw);
     },

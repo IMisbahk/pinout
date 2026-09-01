@@ -125,40 +125,65 @@ export class DaemonContext {
 
     this.operations = new OperationManager({
       onOperationEvent: (event) => {
-        this.journal.append(event.kind as JournalEntryKind, {
-          deviceId: event.deviceId,
-          operationId: event.operationId,
-        }, event.data ?? {});
+        this.journal.append(
+          event.kind as JournalEntryKind,
+          {
+            deviceId: event.deviceId,
+            operationId: event.operationId,
+          },
+          event.data ?? {},
+        );
         this.events.publish({ kind: 'operation', at: event.at, data: { ...event } });
       },
     });
 
     this.runtime.on((envelope: RuntimeEventEnvelope) => {
-      this.journal.append('event.emitted', { deviceId: envelope.deviceId }, {
-        event: envelope.event,
-        payload: envelope.payload,
-      });
+      this.journal.append(
+        'event.emitted',
+        { deviceId: envelope.deviceId },
+        {
+          event: envelope.event,
+          payload: envelope.payload,
+        },
+      );
       this.events.publish({ kind: 'runtime.event', at: envelope.timestamp, data: { ...envelope } });
     });
   }
 
   /** Acquire a lease with journaling. */
-  acquireLease(scope: LeaseScopeInput, owner: string, ttlMs?: number, mode: LeaseMode = 'exclusive'): Lease {
-    const lease = this.leases.acquire({ scope, owner, ...(ttlMs !== undefined ? { ttlMs } : {}), mode });
-    this.journal.append('lease.acquired', { deviceId: scope.deviceId }, {
-      leaseId: lease.id,
-      owner,
-      mode,
+  acquireLease(
+    scope: LeaseScopeInput,
+    owner: string,
+    ttlMs?: number,
+    mode: LeaseMode = 'exclusive',
+  ): Lease {
+    const lease = this.leases.acquire({
       scope,
-      expiresAt: lease.expiresAt,
+      owner,
+      ...(ttlMs !== undefined ? { ttlMs } : {}),
+      mode,
     });
+    this.journal.append(
+      'lease.acquired',
+      { deviceId: scope.deviceId },
+      {
+        leaseId: lease.id,
+        owner,
+        mode,
+        scope,
+        expiresAt: lease.expiresAt,
+      },
+    );
     return lease;
   }
 
   releaseLease(leaseId: string, owner: string): void {
     const lease = this.leases.get(leaseId);
     this.leases.release(leaseId, owner);
-    this.journal.append('lease.released', lease ? { deviceId: lease.scope.deviceId } : {}, { leaseId, owner });
+    this.journal.append('lease.released', lease ? { deviceId: lease.scope.deviceId } : {}, {
+      leaseId,
+      owner,
+    });
   }
 }
 
@@ -232,7 +257,10 @@ export class DaemonHttpServer {
     this.routes.push({ method, pattern: path.split('/').filter(Boolean), handler });
   }
 
-  private match(method: string, pathname: string): { route: Route; params: Record<string, string> } | undefined {
+  private match(
+    method: string,
+    pathname: string,
+  ): { route: Route; params: Record<string, string> } | undefined {
     const segments = pathname.split('/').filter(Boolean);
     for (const route of this.routes) {
       if (route.method !== method || route.pattern.length !== segments.length) continue;
@@ -274,7 +302,14 @@ export class DaemonHttpServer {
 
       const match = this.match(req.method ?? 'GET', pathname);
       if (!match) {
-        sendJson(res, 404, { error: { code: 'NOT_FOUND', category: 'DEVICE', message: `No route for ${req.method} ${pathname}`, retryable: false } });
+        sendJson(res, 404, {
+          error: {
+            code: 'NOT_FOUND',
+            category: 'DEVICE',
+            message: `No route for ${req.method} ${pathname}`,
+            retryable: false,
+          },
+        });
         return;
       }
 
@@ -283,12 +318,19 @@ export class DaemonHttpServer {
     } catch (error) {
       const structured = toStructuredError(error);
       const status =
-        structured.code === 'DEVICE_NOT_FOUND' ? 404
-        : structured.category === 'VALIDATION' ? 400
-        : structured.code === 'UNSUPPORTED_CAPABILITY' ? 400
-        : structured.category === 'LEASE' || structured.category === 'SAFETY' || structured.category === 'POLICY' ? 409
-        : structured.category === 'AUTH' ? 401
-        : 500;
+        structured.code === 'DEVICE_NOT_FOUND'
+          ? 404
+          : structured.category === 'VALIDATION'
+            ? 400
+            : structured.code === 'UNSUPPORTED_CAPABILITY'
+              ? 400
+              : structured.category === 'LEASE' ||
+                  structured.category === 'SAFETY' ||
+                  structured.category === 'POLICY'
+                ? 409
+                : structured.category === 'AUTH'
+                  ? 401
+                  : 500;
       sendJson(res, status, { error: structured });
     }
   }
@@ -310,7 +352,11 @@ export class DaemonHttpServer {
 
     this.route('GET', '/v1/devices/:id/state', async (c, _req, res, match) => {
       const device = c.runtime.getDevice(match.params.id!);
-      sendJson(res, 200, { deviceId: device.id, state: device.getOperationalStateSnapshot(), health: device.getHealth() });
+      sendJson(res, 200, {
+        deviceId: device.id,
+        state: device.getOperationalStateSnapshot(),
+        health: device.getHealth(),
+      });
     });
 
     // -- Invoke (dry-run + operations) ---------------------------------------
@@ -325,16 +371,25 @@ export class DaemonHttpServer {
       const owner = typeof body?.owner === 'string' ? body.owner : undefined;
       const dryRun = body?.dryRun === true;
       const waitFor = body?.waitFor === 'result' ? 'result' : 'accepted';
-      const idempotencyKey = typeof body?.idempotencyKey === 'string' ? body.idempotencyKey : undefined;
+      const idempotencyKey =
+        typeof body?.idempotencyKey === 'string' ? body.idempotencyKey : undefined;
 
       // Dry-run plans without executing; the halt gate applies to execution.
       if (!dryRun) {
         c.halt.enforceGate();
       }
-      const decision = c.safety.check({ deviceId, capability, payload: args, operationalState: device.getOperationalStateSnapshot(), ...(owner !== undefined ? { owner } : {}) });
+      const decision = c.safety.check({
+        deviceId,
+        capability,
+        payload: args,
+        operationalState: device.getOperationalStateSnapshot(),
+        ...(owner !== undefined ? { owner } : {}),
+      });
       if (!decision.allowed) {
         c.journal.append('policy.rejected', { deviceId }, { capability, decision });
-        throw Object.assign(new Error(decision.message ?? 'Rejected by policy.'), { code: decision.code ?? 'POLICY_ACTION_DENIED' });
+        throw Object.assign(new Error(decision.message ?? 'Rejected by policy.'), {
+          code: decision.code ?? 'POLICY_ACTION_DENIED',
+        });
       }
 
       const validated = validateInputSchema(
@@ -403,7 +458,12 @@ export class DaemonHttpServer {
       const owner = requiredString(body, 'owner');
       const scope = body?.scope as LeaseScopeInput | undefined;
       if (!scope || (scope.kind !== 'device' && scope.kind !== 'capability')) {
-        throw Object.assign(new Error("body.scope must be { kind: 'device', deviceId } or { kind: 'capability', deviceId, capabilities }."), { code: 'VALIDATION_ERROR' });
+        throw Object.assign(
+          new Error(
+            "body.scope must be { kind: 'device', deviceId } or { kind: 'capability', deviceId, capabilities }.",
+          ),
+          { code: 'VALIDATION_ERROR' },
+        );
       }
       const mode = body?.mode === 'shared-read' ? 'shared-read' : 'exclusive';
       const lease = c.acquireLease(
@@ -417,12 +477,25 @@ export class DaemonHttpServer {
 
     this.route('POST', '/v1/leases/:id/renew', async (c, _req, res, match, body) => {
       const owner = requiredString(body, 'owner');
-      const lease = c.leases.renew(match.params.id!, owner, typeof body?.ttlMs === 'number' ? body.ttlMs : undefined);
+      const lease = c.leases.renew(
+        match.params.id!,
+        owner,
+        typeof body?.ttlMs === 'number' ? body.ttlMs : undefined,
+      );
       sendJson(res, 200, { lease });
     });
 
     this.route('DELETE', '/v1/leases/:id', async (c, req, res, match, body) => {
-      const owner = typeof body?.owner === 'string' ? body.owner : requiredString({ owner: new URL(req.url ?? '', 'http://localhost').searchParams.get('owner') ?? undefined }, 'owner');
+      const owner =
+        typeof body?.owner === 'string'
+          ? body.owner
+          : requiredString(
+              {
+                owner:
+                  new URL(req.url ?? '', 'http://localhost').searchParams.get('owner') ?? undefined,
+              },
+              'owner',
+            );
       c.releaseLease(match.params.id!, owner);
       sendJson(res, 200, { released: true });
     });
@@ -437,7 +510,10 @@ export class DaemonHttpServer {
     });
 
     this.route('POST', '/v1/halt', async (c, _req, res, _match, body) => {
-      c.halt.halt(requiredString(body, 'reason'), typeof body?.actor === 'string' ? body.actor : undefined);
+      c.halt.halt(
+        requiredString(body, 'reason'),
+        typeof body?.actor === 'string' ? body.actor : undefined,
+      );
       sendJson(res, 200, { state: c.halt.state });
     });
 
@@ -452,8 +528,14 @@ export class DaemonHttpServer {
     this.route('POST', '/v1/estop', async (c, _req, res, _match, body) => {
       // Software estop: coordinates runtime response. NOT a certified
       // emergency stop; hardware safeguards remain mandatory.
-      c.halt.requestEstop(requiredString(body, 'reason'), typeof body?.actor === 'string' ? body.actor : undefined);
-      sendJson(res, 200, { state: c.halt.state, note: 'Software estop only. Independent hardware e-stop is still required for any safety-critical deployment.' });
+      c.halt.requestEstop(
+        requiredString(body, 'reason'),
+        typeof body?.actor === 'string' ? body.actor : undefined,
+      );
+      sendJson(res, 200, {
+        state: c.halt.state,
+        note: 'Software estop only. Independent hardware e-stop is still required for any safety-critical deployment.',
+      });
     });
 
     this.route('POST', '/v1/estop/clear', async (c, _req, res, _match, body) => {
@@ -528,7 +610,14 @@ export class DaemonHttpServer {
       if (token && url.pathname.startsWith('/v1/') && url.pathname !== '/v1/health') {
         const provided = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
         if (provided !== token) {
-          sendJson(res, 401, { error: { code: 'AUTH_REQUIRED', category: 'AUTH', message: 'Missing or invalid bearer token.', retryable: false } });
+          sendJson(res, 401, {
+            error: {
+              code: 'AUTH_REQUIRED',
+              category: 'AUTH',
+              message: 'Missing or invalid bearer token.',
+              retryable: false,
+            },
+          });
           return;
         }
       }
@@ -580,7 +669,10 @@ function deviceSummary(device: ReturnType<PinoutRuntime['getDevice']>): Record<s
 function requiredString(body: Record<string, unknown> | undefined, field: string): string {
   const value = body?.[field];
   if (typeof value !== 'string' || value.length === 0) {
-    throw Object.assign(new Error(`Body field '${field}' is required and must be a non-empty string.`), { code: 'VALIDATION_ERROR' });
+    throw Object.assign(
+      new Error(`Body field '${field}' is required and must be a non-empty string.`),
+      { code: 'VALIDATION_ERROR' },
+    );
   }
   return value;
 }

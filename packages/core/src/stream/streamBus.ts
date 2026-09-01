@@ -215,7 +215,13 @@ export class StreamBus {
         return out;
       },
       [Symbol.asyncIterator]() {
-        return { next, return: () => { finish(); return Promise.resolve({ done: true, value: undefined as never }); } };
+        return {
+          next,
+          return: () => {
+            finish();
+            return Promise.resolve({ done: true, value: undefined as never });
+          },
+        };
       },
     };
   }

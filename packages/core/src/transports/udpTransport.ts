@@ -105,13 +105,10 @@ export class UdpTransport implements Transport {
 
       socket.once('error', fail);
 
-      socket.bind(
-        { port: this.options.port ?? 0, address: this.options.host ?? '0.0.0.0' },
-        () => {
-          clearTimeout(timeout);
-          resolve();
-        },
-      );
+      socket.bind({ port: this.options.port ?? 0, address: this.options.host ?? '0.0.0.0' }, () => {
+        clearTimeout(timeout);
+        resolve();
+      });
     }).catch((error: unknown) => {
       // Release the socket so a failed open does not leak it.
       this.socket = undefined;

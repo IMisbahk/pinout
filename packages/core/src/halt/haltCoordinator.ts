@@ -22,12 +22,7 @@
  */
 import { PinoutStructuredError } from '../errors.js';
 
-export type SafetyStateName =
-  | 'NORMAL'
-  | 'RESTRICTED'
-  | 'HALTED'
-  | 'ESTOP_REQUESTED'
-  | 'FAULTED';
+export type SafetyStateName = 'NORMAL' | 'RESTRICTED' | 'HALTED' | 'ESTOP_REQUESTED' | 'FAULTED';
 
 export interface SafetyStateChange {
   from: SafetyStateName;
@@ -81,7 +76,11 @@ export class HaltCoordinator {
       case 'RESTRICTED':
         return { allowed: true };
       case 'HALTED':
-        return { allowed: false, code: 'SAFETY_HALTED', message: this.currentReason || 'Runtime is halted.' };
+        return {
+          allowed: false,
+          code: 'SAFETY_HALTED',
+          message: this.currentReason || 'Runtime is halted.',
+        };
       case 'ESTOP_REQUESTED':
         return {
           allowed: false,
@@ -89,7 +88,11 @@ export class HaltCoordinator {
           message: this.currentReason || 'Emergency stop requested.',
         };
       case 'FAULTED':
-        return { allowed: false, code: 'SAFETY_FAULTED', message: this.currentReason || 'Runtime is faulted.' };
+        return {
+          allowed: false,
+          code: 'SAFETY_FAULTED',
+          message: this.currentReason || 'Runtime is faulted.',
+        };
     }
   }
 
@@ -97,9 +100,14 @@ export class HaltCoordinator {
   enforceGate(): void {
     const verdict = this.gate();
     if (!verdict.allowed) {
-      throw new PinoutStructuredError(verdict.code ?? 'SAFETY_HALTED', 'SAFETY', verdict.message ?? 'Physical action rejected by safety state.', {
-        details: { state: this.currentState },
-      });
+      throw new PinoutStructuredError(
+        verdict.code ?? 'SAFETY_HALTED',
+        'SAFETY',
+        verdict.message ?? 'Physical action rejected by safety state.',
+        {
+          details: { state: this.currentState },
+        },
+      );
     }
   }
 
@@ -140,10 +148,18 @@ export class HaltCoordinator {
 
   resume(reason = 'Resume requested', actor?: string): void {
     if (this.estopRequested) {
-      throw new PinoutStructuredError('SAFETY_ESTOP_STILL_ACTIVE', 'SAFETY', 'Emergency stop has not been cleared; call clearEstop() first.');
+      throw new PinoutStructuredError(
+        'SAFETY_ESTOP_STILL_ACTIVE',
+        'SAFETY',
+        'Emergency stop has not been cleared; call clearEstop() first.',
+      );
     }
     if (this.faulted) {
-      throw new PinoutStructuredError('SAFETY_FAULT_STILL_ACTIVE', 'SAFETY', 'Fault has not been cleared; call clearFault() first.');
+      throw new PinoutStructuredError(
+        'SAFETY_FAULT_STILL_ACTIVE',
+        'SAFETY',
+        'Fault has not been cleared; call clearFault() first.',
+      );
     }
     if (this.currentState === 'HALTED' || this.currentState === 'RESTRICTED') {
       this.transition('NORMAL', reason, actor);
@@ -182,10 +198,15 @@ export class HaltCoordinator {
 /** Audit-friendly event name for a state change, e.g. `safety.halted`. */
 export function safetyStateEventName(to: SafetyStateName): string {
   switch (to) {
-    case 'NORMAL': return 'safety.resumed';
-    case 'RESTRICTED': return 'safety.restricted';
-    case 'HALTED': return 'safety.halted';
-    case 'ESTOP_REQUESTED': return 'safety.estop_requested';
-    case 'FAULTED': return 'safety.faulted';
+    case 'NORMAL':
+      return 'safety.resumed';
+    case 'RESTRICTED':
+      return 'safety.restricted';
+    case 'HALTED':
+      return 'safety.halted';
+    case 'ESTOP_REQUESTED':
+      return 'safety.estop_requested';
+    case 'FAULTED':
+      return 'safety.faulted';
   }
 }

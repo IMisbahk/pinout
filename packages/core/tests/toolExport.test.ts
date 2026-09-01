@@ -21,7 +21,9 @@ describe('runtimeToToolDefinitions', () => {
 
   it('classifies danger from safety metadata', () => {
     expect(classifyToolDanger({ physicalOutput: true, reversible: false })).toBe('HIGH_RISK');
-    expect(classifyToolDanger({ physicalOutput: true, reversible: true })).toBe('PHYSICAL_SIDE_EFFECT');
+    expect(classifyToolDanger({ physicalOutput: true, reversible: true })).toBe(
+      'PHYSICAL_SIDE_EFFECT',
+    );
     expect(classifyToolDanger({ physicalOutput: false, reversible: true })).toBe('READ_ONLY');
   });
 });

@@ -14,7 +14,8 @@
 import { promises as fs } from 'node:fs';
 import { dirname } from 'node:path';
 
-const SECRET_KEY_PATTERN = /pass(word)?|secret|token|credential|authorization|api[-_]?key|private[-_]?key/i;
+const SECRET_KEY_PATTERN =
+  /pass(word)?|secret|token|credential|authorization|api[-_]?key|private[-_]?key/i;
 
 /** Keys that look secret-sensitive are dropped from journaled payloads. */
 export function redactPayload(
@@ -116,7 +117,12 @@ export class Journal {
       ...(context.deviceId !== undefined ? { deviceId: context.deviceId } : {}),
       ...(context.operationId !== undefined ? { operationId: context.operationId } : {}),
       ...(payload && Object.keys(payload).length > 0
-        ? { payload: truncatePayload(redactPayload(payload), this.maxPayloadChars) as Record<string, unknown> }
+        ? {
+            payload: truncatePayload(redactPayload(payload), this.maxPayloadChars) as Record<
+              string,
+              unknown
+            >,
+          }
         : {}),
     };
     // Journal writes are serialized off the control path: callers never wait

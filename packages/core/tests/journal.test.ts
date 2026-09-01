@@ -35,8 +35,15 @@ describe('redactPayload', () => {
 describe('Journal', () => {
   it('appends entries with monotonically increasing sequence numbers', () => {
     const journal = new Journal();
-    const a = journal.append('invocation.requested', { deviceId: 'arm-01' }, { capability: 'motion.home' });
-    const b = journal.append('operation.started', { deviceId: 'arm-01', operationId: a.payload?.capability as string });
+    const a = journal.append(
+      'invocation.requested',
+      { deviceId: 'arm-01' },
+      { capability: 'motion.home' },
+    );
+    const b = journal.append('operation.started', {
+      deviceId: 'arm-01',
+      operationId: a.payload?.capability as string,
+    });
     expect(a.sequence).toBe(1);
     expect(b.sequence).toBe(2);
   });
@@ -57,7 +64,11 @@ describe('Journal', () => {
   it('redacts secrets before they reach storage', async () => {
     const storage = new MemoryJournalStorage();
     const journal = new Journal({ storage });
-    journal.append('invocation.requested', { deviceId: 'd' }, { token: 'super-secret', timeoutMs: 5 });
+    journal.append(
+      'invocation.requested',
+      { deviceId: 'd' },
+      { token: 'super-secret', timeoutMs: 5 },
+    );
     const stored = storage.readAll()[0];
     expect(JSON.stringify(stored)).not.toContain('super-secret');
     expect(stored.payload?.token).toBe('[REDACTED]');

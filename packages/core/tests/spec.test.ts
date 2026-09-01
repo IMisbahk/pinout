@@ -60,9 +60,7 @@ describe('unit conversions', () => {
 
 describe('danger classification', () => {
   it('orders danger levels by rank', () => {
-    expect(DANGER_LEVELS).toEqual([
-      'READ_ONLY', 'LOW_RISK', 'PHYSICAL_SIDE_EFFECT', 'HIGH_RISK',
-    ]);
+    expect(DANGER_LEVELS).toEqual(['READ_ONLY', 'LOW_RISK', 'PHYSICAL_SIDE_EFFECT', 'HIGH_RISK']);
     expect(requiresLease('READ_ONLY')).toBe(false);
     expect(requiresLease('HIGH_RISK')).toBe(true);
     expect(requiresLease('LOW_RISK', 'LOW_RISK')).toBe(true);

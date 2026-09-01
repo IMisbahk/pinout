@@ -19,7 +19,11 @@ import type { OperationProgress, OperationSnapshot, OperationStatus } from '../s
 export type { OperationSnapshot, OperationStatus, OperationProgress };
 
 const TERMINAL_STATUSES: readonly OperationStatus[] = [
-  'completed', 'failed', 'cancelled', 'timed_out', 'rejected',
+  'completed',
+  'failed',
+  'cancelled',
+  'timed_out',
+  'rejected',
 ];
 
 export function isTerminalOperationStatus(status: OperationStatus): boolean {
@@ -89,8 +93,14 @@ export interface OperationHandle {
 export class OperationManager {
   private readonly operations = new Map<string, OperationSnapshot & { abort?: AbortController }>();
   private readonly idempotency = new Map<string, string>();
-  private readonly waiters = new Map<string, Array<(err: unknown, result?: Record<string, unknown>) => void>>();
-  private readonly progressListeners = new Map<string, Set<(progress: OperationProgress) => void>>();
+  private readonly waiters = new Map<
+    string,
+    Array<(err: unknown, result?: Record<string, unknown>) => void>
+  >();
+  private readonly progressListeners = new Map<
+    string,
+    Set<(progress: OperationProgress) => void>
+  >();
   private readonly events: OperationManagerEvents;
   private sequence = 0;
 
@@ -168,16 +178,25 @@ export class OperationManager {
   cancel(operationId: string, reason?: string): Promise<OperationSnapshot> {
     const op = this.operations.get(operationId);
     if (!op) {
-      throw new PinoutStructuredError('OPERATION_NOT_FOUND', 'OPERATION', `Unknown operation '${operationId}'.`, {
-        operation: operationId,
-      });
+      throw new PinoutStructuredError(
+        'OPERATION_NOT_FOUND',
+        'OPERATION',
+        `Unknown operation '${operationId}'.`,
+        {
+          operation: operationId,
+        },
+      );
     }
     if (isTerminalOperationStatus(op.status)) {
       return Promise.resolve(this.publicSnapshot(op));
     }
     if (op.status === 'queued') {
       this.transition(op, 'cancelled', {
-        error: { code: 'OPERATION_CANCELLED', message: reason ?? 'Cancelled before start.', retryable: false },
+        error: {
+          code: 'OPERATION_CANCELLED',
+          message: reason ?? 'Cancelled before start.',
+          retryable: false,
+        },
       });
       this.emit('operation.cancelled', op.id, op.deviceId, op.capability, Date.now(), { reason });
       return Promise.resolve(this.publicSnapshot(op));
@@ -195,9 +214,14 @@ export class OperationManager {
   waitFor(operationId: string): Promise<OperationSnapshot> {
     const op = this.operations.get(operationId);
     if (!op) {
-      throw new PinoutStructuredError('OPERATION_NOT_FOUND', 'OPERATION', `Unknown operation '${operationId}'.`, {
-        operation: operationId,
-      });
+      throw new PinoutStructuredError(
+        'OPERATION_NOT_FOUND',
+        'OPERATION',
+        `Unknown operation '${operationId}'.`,
+        {
+          operation: operationId,
+        },
+      );
     }
     if (isTerminalOperationStatus(op.status)) {
       return Promise.resolve(this.publicSnapshot(op));
@@ -213,9 +237,14 @@ export class OperationManager {
   getHandle(operationId: string): OperationHandle {
     const op = this.operations.get(operationId);
     if (!op) {
-      throw new PinoutStructuredError('OPERATION_NOT_FOUND', 'OPERATION', `Unknown operation '${operationId}'.`, {
-        operation: operationId,
-      });
+      throw new PinoutStructuredError(
+        'OPERATION_NOT_FOUND',
+        'OPERATION',
+        `Unknown operation '${operationId}'.`,
+        {
+          operation: operationId,
+        },
+      );
     }
     return {
       id: operationId,
@@ -239,7 +268,11 @@ export class OperationManager {
       reportProgress: (fraction, message) => {
         if (isTerminalOperationStatus(op.status)) return;
         if (fraction !== null && (fraction < 0 || fraction > 1 || !Number.isFinite(fraction))) {
-          throw new PinoutStructuredError('OPERATION_INVALID_PROGRESS', 'OPERATION', 'Progress fraction must be within [0, 1] or null.');
+          throw new PinoutStructuredError(
+            'OPERATION_INVALID_PROGRESS',
+            'OPERATION',
+            'Progress fraction must be within [0, 1] or null.',
+          );
         }
         op.progress = { fraction, ...(message !== undefined ? { message } : {}), at: Date.now() };
         this.emit('operation.progress', op.id, op.deviceId, op.capability, op.progress.at, {
@@ -264,7 +297,11 @@ export class OperationManager {
       deadlineTimer = setTimeout(() => {
         if (!isTerminalOperationStatus(op.status) && op.status === 'running') {
           this.transition(op, 'timed_out', {
-            error: { code: 'OPERATION_TIMEOUT', message: 'Operation exceeded its deadline.', retryable: true },
+            error: {
+              code: 'OPERATION_TIMEOUT',
+              message: 'Operation exceeded its deadline.',
+              retryable: true,
+            },
           });
           this.emit('operation.timed_out', op.id, op.deviceId, op.capability, Date.now());
           this.settle(op.id);
@@ -293,9 +330,15 @@ export class OperationManager {
         clearTimeout(deadlineTimer);
         if (abort.signal.aborted && (error instanceof AbortedError || isAbortError(error))) {
           this.transition(op, 'cancelled', {
-            error: { code: 'OPERATION_CANCELLED', message: 'Operation cancelled.', retryable: true },
+            error: {
+              code: 'OPERATION_CANCELLED',
+              message: 'Operation cancelled.',
+              retryable: true,
+            },
           });
-          this.emit('operation.cancelled', op.id, op.deviceId, op.capability, Date.now(), { reason: String(error instanceof Error ? error.message : error) });
+          this.emit('operation.cancelled', op.id, op.deviceId, op.capability, Date.now(), {
+            reason: String(error instanceof Error ? error.message : error),
+          });
         } else {
           const structured = toStructuredError(error, {
             device: op.deviceId,
@@ -326,7 +369,15 @@ export class OperationManager {
   private transition(
     op: OperationSnapshot & { abort?: AbortController },
     status: OperationStatus,
-    extra: { result?: Record<string, unknown>; error?: { code: string; message: string; retryable: boolean; details?: Record<string, unknown> } },
+    extra: {
+      result?: Record<string, unknown>;
+      error?: {
+        code: string;
+        message: string;
+        retryable: boolean;
+        details?: Record<string, unknown>;
+      };
+    },
   ): void {
     op.status = status;
     op.finishedAt = Date.now();
@@ -352,28 +403,45 @@ export class OperationManager {
         if (snapshot.status === 'completed') resolve(snapshot.result ?? {});
         else if (snapshot.status === 'failed') {
           reject(
-            new PinoutStructuredError(snapshot.error?.code ?? 'OPERATION_FAILED', 'OPERATION', snapshot.error?.message ?? 'Operation failed.', {
-              operation: operationId,
-              device: snapshot.deviceId,
-              capability: snapshot.capability,
-              ...(snapshot.error?.details ? { details: snapshot.error.details } : {}),
-              ...(snapshot.error?.retryable !== undefined ? { retryable: snapshot.error.retryable } : {}),
-            }),
+            new PinoutStructuredError(
+              snapshot.error?.code ?? 'OPERATION_FAILED',
+              'OPERATION',
+              snapshot.error?.message ?? 'Operation failed.',
+              {
+                operation: operationId,
+                device: snapshot.deviceId,
+                capability: snapshot.capability,
+                ...(snapshot.error?.details ? { details: snapshot.error.details } : {}),
+                ...(snapshot.error?.retryable !== undefined
+                  ? { retryable: snapshot.error.retryable }
+                  : {}),
+              },
+            ),
           );
         } else if (snapshot.status === 'cancelled') {
           reject(new AbortedError('Operation cancelled.'));
         } else if (snapshot.status === 'timed_out') {
           reject(
-            new PinoutStructuredError('OPERATION_TIMEOUT', 'TIMEOUT', 'Operation exceeded its deadline.', {
-              operation: operationId,
-              retryable: true,
-            }),
+            new PinoutStructuredError(
+              'OPERATION_TIMEOUT',
+              'TIMEOUT',
+              'Operation exceeded its deadline.',
+              {
+                operation: operationId,
+                retryable: true,
+              },
+            ),
           );
         } else {
           reject(
-            new PinoutStructuredError('OPERATION_REJECTED', 'OPERATION', snapshot.error?.message ?? 'Operation was rejected before start.', {
-              operation: operationId,
-            }),
+            new PinoutStructuredError(
+              'OPERATION_REJECTED',
+              'OPERATION',
+              snapshot.error?.message ?? 'Operation was rejected before start.',
+              {
+                operation: operationId,
+              },
+            ),
           );
         }
       };
@@ -388,7 +456,10 @@ export class OperationManager {
     });
   }
 
-  subscribeProgress(operationId: string, listener: (progress: OperationProgress) => void): () => void {
+  subscribeProgress(
+    operationId: string,
+    listener: (progress: OperationProgress) => void,
+  ): () => void {
     let set = this.progressListeners.get(operationId);
     if (!set) {
       set = new Set();
@@ -449,7 +520,14 @@ export class OperationManager {
     at: number,
     data?: Record<string, unknown>,
   ): void {
-    this.events.onOperationEvent?.({ kind, operationId, deviceId, capability, at, ...(data ? { data } : {}) });
+    this.events.onOperationEvent?.({
+      kind,
+      operationId,
+      deviceId,
+      capability,
+      at,
+      ...(data ? { data } : {}),
+    });
   }
 
   private publicSnapshot(op: OperationSnapshot & { abort?: AbortController }): OperationSnapshot {

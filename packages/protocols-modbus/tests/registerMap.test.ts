@@ -43,7 +43,8 @@ function startEchoServer(): Promise<{ server: Server; port: number }> {
           bytes[0] = 0x01;
           bytes[1] = Math.ceil(quantity / 8);
           for (let i = 0; i < quantity; i += 1) {
-            if (coils.get(address + i)) bytes[2 + (i >> 3)] = (bytes[2 + (i >> 3)] ?? 0) | (1 << (i % 8));
+            if (coils.get(address + i))
+              bytes[2 + (i >> 3)] = (bytes[2 + (i >> 3)] ?? 0) | (1 << (i % 8));
           }
           responsePdu = bytes;
         } else if (fc === 0x02) {
@@ -75,8 +76,25 @@ describe('createRegisterMapDevice', () => {
   let device: ReturnType<typeof createRegisterMapDevice>;
 
   const map: RegisterMapEntry[] = [
-    { name: 'temperature', area: 'input', address: 0, access: 'read', type: 'uint16', scale: 0.1, offset: -50, unit: 'C' },
-    { name: 'setpoint', area: 'holding', address: 10, access: 'write', type: 'uint16', scale: 0.5, unit: 'C' },
+    {
+      name: 'temperature',
+      area: 'input',
+      address: 0,
+      access: 'read',
+      type: 'uint16',
+      scale: 0.1,
+      offset: -50,
+      unit: 'C',
+    },
+    {
+      name: 'setpoint',
+      area: 'holding',
+      address: 10,
+      access: 'write',
+      type: 'uint16',
+      scale: 0.5,
+      unit: 'C',
+    },
     { name: 'pump.status', area: 'discrete', address: 20, access: 'read', type: 'bool' },
     { name: 'pump.start', area: 'coil', address: 30, access: 'write', type: 'bool' },
     { name: 'serial', area: 'holding', address: 40, access: 'read', type: 'uint16' },
@@ -128,13 +146,17 @@ describe('createRegisterMapDevice', () => {
   });
 
   it('refuses to write read-only entries', async () => {
-    await expect(device.write('temperature', 100)).rejects.toMatchObject({ code: 'MODBUS_MAP_READ_ONLY' });
+    await expect(device.write('temperature', 100)).rejects.toMatchObject({
+      code: 'MODBUS_MAP_READ_ONLY',
+    });
     await expect(device.write('serial', 5)).rejects.toMatchObject({ code: 'MODBUS_MAP_READ_ONLY' });
   });
 
   it('refuses unknown entries', async () => {
     await expect(device.read('ghost')).rejects.toMatchObject({ code: 'MODBUS_MAP_UNKNOWN_ENTRY' });
-    await expect(device.write('ghost', 1)).rejects.toMatchObject({ code: 'MODBUS_MAP_UNKNOWN_ENTRY' });
+    await expect(device.write('ghost', 1)).rejects.toMatchObject({
+      code: 'MODBUS_MAP_UNKNOWN_ENTRY',
+    });
   });
 
   it('rejects invalid maps at construction', async () => {

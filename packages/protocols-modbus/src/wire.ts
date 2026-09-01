@@ -7,8 +7,7 @@
  * codes. No external dependencies.
  */
 
-export type ModbusFunctionCode =
-  | 0x01 | 0x02 | 0x03 | 0x04 | 0x05 | 0x06 | 0x0f | 0x10;
+export type ModbusFunctionCode = 0x01 | 0x02 | 0x03 | 0x04 | 0x05 | 0x06 | 0x0f | 0x10;
 
 export interface ModbusException {
   kind: 'exception';
@@ -98,10 +97,7 @@ export function encodeWriteSingle(
   return pdu;
 }
 
-export function encodeWriteMultipleCoils(
-  address: number,
-  values: boolean[],
-): Uint8Array {
+export function encodeWriteMultipleCoils(address: number, values: boolean[]): Uint8Array {
   const byteCount = Math.ceil(values.length / 8);
   const pdu = new Uint8Array(6 + byteCount);
   pdu[0] = 0x0f;
@@ -119,10 +115,7 @@ export function encodeWriteMultipleCoils(
   return pdu;
 }
 
-export function encodeWriteMultipleRegisters(
-  address: number,
-  values: number[],
-): Uint8Array {
+export function encodeWriteMultipleRegisters(address: number, values: number[]): Uint8Array {
   const byteCount = values.length * 2;
   const pdu = new Uint8Array(6 + byteCount);
   pdu[0] = 0x10;
@@ -202,14 +195,20 @@ export function decodePdu(pdu: Uint8Array, requestFunctionCode: number): PduDeco
         value: (pdu[3]! << 8) | pdu[4]!,
       };
     default:
-      throw new ModbusError('MODBUS_PROTOCOL_ERROR', `Unsupported function code 0x${functionCode.toString(16)}.`);
+      throw new ModbusError(
+        'MODBUS_PROTOCOL_ERROR',
+        `Unsupported function code 0x${functionCode.toString(16)}.`,
+      );
   }
 }
 
 function assertQuantity(functionCode: number, quantity: number): void {
   const max = functionCode === 0x01 || functionCode === 0x02 ? 2000 : 125;
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > max) {
-    throw new ModbusError('MODBUS_INVALID_QUANTITY', `Quantity must be an integer in [1, ${max}] for function 0x${functionCode.toString(16)}.`);
+    throw new ModbusError(
+      'MODBUS_INVALID_QUANTITY',
+      `Quantity must be an integer in [1, ${max}] for function 0x${functionCode.toString(16)}.`,
+    );
   }
 }
 
@@ -244,7 +243,10 @@ export function decodeMbap(frame: Uint8Array): MbapFrame {
   const length = (frame[4]! << 8) | frame[5]!;
   const expected = length + 6;
   if (frame.length < expected) {
-    throw new ModbusError('MODBUS_PROTOCOL_ERROR', `MBAP length field ${length} exceeds available bytes.`);
+    throw new ModbusError(
+      'MODBUS_PROTOCOL_ERROR',
+      `MBAP length field ${length} exceeds available bytes.`,
+    );
   }
   return {
     transactionId: (frame[0]! << 8) | frame[1]!,
@@ -255,7 +257,9 @@ export function decodeMbap(frame: Uint8Array): MbapFrame {
 }
 
 /** Extract one complete MBAP frame from the head of `buffer`; returns how many bytes it consumed. */
-export function tryDecodeMbap(buffer: Uint8Array): { frame: MbapFrame; consumed: number } | undefined {
+export function tryDecodeMbap(
+  buffer: Uint8Array,
+): { frame: MbapFrame; consumed: number } | undefined {
   if (buffer.length < 7) return undefined;
   const length = (buffer[4]! << 8) | buffer[5]!;
   const total = length + 6;
@@ -278,19 +282,29 @@ export function encodeRtu(slaveAddress: number, pdu: Uint8Array): Uint8Array {
   return frame;
 }
 
-export function decodeRtu(frame: Uint8Array, requestFunctionCode: number, expectedAddress: number): PduDecodeResult {
+export function decodeRtu(
+  frame: Uint8Array,
+  requestFunctionCode: number,
+  expectedAddress: number,
+): PduDecodeResult {
   if (frame.length < 4) {
     throw new ModbusError('MODBUS_PROTOCOL_ERROR', 'RTU frame too short.');
   }
   const address = frame[0]!;
   if (address !== expectedAddress) {
-    throw new ModbusError('MODBUS_PROTOCOL_ERROR', `Response from slave ${address}, expected ${expectedAddress}.`);
+    throw new ModbusError(
+      'MODBUS_PROTOCOL_ERROR',
+      `Response from slave ${address}, expected ${expectedAddress}.`,
+    );
   }
   const pdu = frame.subarray(1, frame.length - 2);
   const receivedCrc = frame[frame.length - 2]! | (frame[frame.length - 1]! << 8);
   const computedCrc = crc16(frame.subarray(0, frame.length - 2));
   if (receivedCrc !== computedCrc) {
-    throw new ModbusError('MODBUS_CRC_ERROR', `CRC mismatch: received 0x${receivedCrc.toString(16)}, computed 0x${computedCrc.toString(16)}.`);
+    throw new ModbusError(
+      'MODBUS_CRC_ERROR',
+      `CRC mismatch: received 0x${receivedCrc.toString(16)}, computed 0x${computedCrc.toString(16)}.`,
+    );
   }
   return decodePdu(pdu, requestFunctionCode);
 }

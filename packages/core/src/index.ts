@@ -6,7 +6,10 @@ export { listSerialPorts, serialPort } from './serial.js';
 export { loopbackTransport, LoopbackTransport } from './transports/loopbackTransport.js';
 export { tcpTransport } from './transports/tcpTransport.js';
 export { udpTransport, UdpTransport, type UdpTransportOptions } from './transports/udpTransport.js';
-export { webSocketTransport, type WebSocketTransportOptions } from './transports/webSocketTransport.js';
+export {
+  webSocketTransport,
+  type WebSocketTransportOptions,
+} from './transports/webSocketTransport.js';
 export {
   capabilityCatalog,
   describeCapabilities,
@@ -51,8 +54,30 @@ export {
   RETRYABLE_CODES,
 } from './errors.js';
 export type { StructuredError, ErrorCategory } from './errors.js';
-export type { Capability, ActionCapability, SensorCapability, StreamCapability, StateCapability, EventCapability, DangerLevel, OperationSnapshot, OperationStatus, Lease, LeaseMode, SupportStatus, DeviceClass as SpecDeviceClass, DeviceHealthStatus, Unit as SpecUnit } from './spec/types.js';
-export { SPEC_VERSION, isCompatibleSpecVersion, convert as convertUnit, toCanonical as toCanonicalUnit, requiresLease } from './spec/index.js';
+export type {
+  Capability,
+  ActionCapability,
+  SensorCapability,
+  StreamCapability,
+  StateCapability,
+  EventCapability,
+  DangerLevel,
+  OperationSnapshot,
+  OperationStatus,
+  Lease,
+  LeaseMode,
+  SupportStatus,
+  DeviceClass as SpecDeviceClass,
+  DeviceHealthStatus,
+  Unit as SpecUnit,
+} from './spec/types.js';
+export {
+  SPEC_VERSION,
+  isCompatibleSpecVersion,
+  convert as convertUnit,
+  toCanonical as toCanonicalUnit,
+  requiresLease,
+} from './spec/index.js';
 export {
   PolicyError,
   PolicyConstraintViolation,
@@ -257,7 +282,11 @@ export type {
   OperationBeginResult,
 } from './operation/operationManager.js';
 export { LeaseManager } from './lease/leaseManager.js';
-export type { LeaseScopeInput, AcquireLeaseOptions, LeaseConflictDetails } from './lease/leaseManager.js';
+export type {
+  LeaseScopeInput,
+  AcquireLeaseOptions,
+  LeaseConflictDetails,
+} from './lease/leaseManager.js';
 export { HaltCoordinator, safetyStateEventName } from './halt/haltCoordinator.js';
 export type { SafetyStateName, SafetyStateChange, HaltVerdict } from './halt/haltCoordinator.js';
 export { DeviceGraph } from './graph/deviceGraph.js';

@@ -58,13 +58,18 @@ export class LeaseManager {
     for (const lease of this.leases.values()) {
       if (!this.scopesOverlap(lease, options.scope)) continue;
       if (lease.mode === 'exclusive' || mode === 'exclusive') {
-        throw new PinoutStructuredError('LEASE_CONFLICT', 'LEASE', `Resource is leased by '${lease.owner}' until lease expiry.`, {
-          details: {
-            conflictingLeaseId: lease.id,
-            owner: lease.owner,
-            expiresAt: lease.expiresAt,
-          } as Record<string, unknown>,
-        });
+        throw new PinoutStructuredError(
+          'LEASE_CONFLICT',
+          'LEASE',
+          `Resource is leased by '${lease.owner}' until lease expiry.`,
+          {
+            details: {
+              conflictingLeaseId: lease.id,
+              owner: lease.owner,
+              expiresAt: lease.expiresAt,
+            } as Record<string, unknown>,
+          },
+        );
       }
     }
 
@@ -87,12 +92,21 @@ export class LeaseManager {
     const lease = this.leases.get(leaseId);
     if (!lease || this.isExpired(lease)) {
       this.leases.delete(leaseId);
-      throw new PinoutStructuredError('LEASE_EXPIRED', 'LEASE', `Lease '${leaseId}' is expired or unknown.`, {
-        retryable: true,
-      });
+      throw new PinoutStructuredError(
+        'LEASE_EXPIRED',
+        'LEASE',
+        `Lease '${leaseId}' is expired or unknown.`,
+        {
+          retryable: true,
+        },
+      );
     }
     if (lease.owner !== owner) {
-      throw new PinoutStructuredError('LEASE_NOT_OWNER', 'AUTH', `Lease '${leaseId}' belongs to '${lease.owner}'.`);
+      throw new PinoutStructuredError(
+        'LEASE_NOT_OWNER',
+        'AUTH',
+        `Lease '${leaseId}' belongs to '${lease.owner}'.`,
+      );
     }
     lease.expiresAt = this.nowFn() + ttlMs;
     return { ...lease };
@@ -103,7 +117,11 @@ export class LeaseManager {
     const lease = this.leases.get(leaseId);
     if (!lease) return;
     if (lease.owner !== owner) {
-      throw new PinoutStructuredError('LEASE_NOT_OWNER', 'AUTH', `Lease '${leaseId}' belongs to '${lease.owner}'.`);
+      throw new PinoutStructuredError(
+        'LEASE_NOT_OWNER',
+        'AUTH',
+        `Lease '${leaseId}' belongs to '${lease.owner}'.`,
+      );
     }
     this.leases.delete(leaseId);
   }

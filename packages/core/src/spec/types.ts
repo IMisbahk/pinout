@@ -23,15 +23,42 @@ export type Quality = 'good' | 'degraded' | 'bad' | 'unknown';
 
 /** An explicit unit. Canonical SI-ish spellings; conversions live in `units.ts`. */
 export type Unit =
-  | 'm' | 'mm' | 'cm' | 'km'
-  | 'rad' | 'deg' | 'rev'
-  | 'm/s' | 'mm/s' | 'rad/s' | 'deg/s' | 'rpm'
-  | 'm/s2' | 'rad/s2'
-  | 'N' | 'N.m' | 'kg' | 'g'
-  | 'C' | 'F' | 'K'
-  | 'V' | 'mV' | 'A' | 'mA' | 'W'
-  | 'Pa' | 'kPa' | 'bar' | 'psi'
-  | 'Hz' | 'percent' | 'lux' | 'counts' | 'bool' | 'string';
+  | 'm'
+  | 'mm'
+  | 'cm'
+  | 'km'
+  | 'rad'
+  | 'deg'
+  | 'rev'
+  | 'm/s'
+  | 'mm/s'
+  | 'rad/s'
+  | 'deg/s'
+  | 'rpm'
+  | 'm/s2'
+  | 'rad/s2'
+  | 'N'
+  | 'N.m'
+  | 'kg'
+  | 'g'
+  | 'C'
+  | 'F'
+  | 'K'
+  | 'V'
+  | 'mV'
+  | 'A'
+  | 'mA'
+  | 'W'
+  | 'Pa'
+  | 'kPa'
+  | 'bar'
+  | 'psi'
+  | 'Hz'
+  | 'percent'
+  | 'lux'
+  | 'counts'
+  | 'bool'
+  | 'string';
 
 export interface Measurement {
   /** Numeric value, or `null` when the measurement is genuinely unknown. */
@@ -65,10 +92,9 @@ export interface DeviceIdentity {
 }
 
 export type DeviceLifecycleStatus =
-  | 'connecting' | 'ready' | 'busy' | 'faulted' | 'stopped' | 'disconnected';
+  'connecting' | 'ready' | 'busy' | 'faulted' | 'stopped' | 'disconnected';
 
-export type DeviceHealthStatus =
-  | 'CONNECTED' | 'DEGRADED' | 'FAULTED' | 'DISCONNECTED' | 'UNKNOWN';
+export type DeviceHealthStatus = 'CONNECTED' | 'DEGRADED' | 'FAULTED' | 'DISCONNECTED' | 'UNKNOWN';
 
 export interface DeviceHealth {
   status: DeviceHealthStatus;
@@ -214,18 +240,14 @@ export interface EventCapability extends CapabilityBase {
 }
 
 export type Capability =
-  | ActionCapability
-  | SensorCapability
-  | StreamCapability
-  | StateCapability
-  | EventCapability;
+  ActionCapability | SensorCapability | StreamCapability | StateCapability | EventCapability;
 
 // ---------------------------------------------------------------------------
 // Operations
 // ---------------------------------------------------------------------------
 
 export type OperationStatus =
-  | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'timed_out' | 'rejected';
+  'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'timed_out' | 'rejected';
 
 export interface OperationProgress {
   /** 0..1, or `null` when the device cannot report determinate progress. */
@@ -301,8 +323,7 @@ export interface Pose {
 }
 
 export type CoordinateFrame =
-  | 'world' | 'base' | 'tool0' | 'tcp' | 'camera' | 'workpiece'
-  | (string & {});
+  'world' | 'base' | 'tool0' | 'tcp' | 'camera' | 'workpiece' | (string & {});
 
 /**
  * A pose qualified by its frame. Coordinates in different frames are NEVER

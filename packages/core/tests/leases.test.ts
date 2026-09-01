@@ -16,7 +16,10 @@ describe('LeaseManager', () => {
   });
 
   it('acquires an exclusive lease and reports ownership', () => {
-    const lease = manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a' });
+    const lease = manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+    });
     expect(lease.mode).toBe('exclusive');
     expect(lease.expiresAt).toBe(now + 60_000);
     expect(manager.permits('agent-a', 'arm-01', 'motion.move_to').permitted).toBe(true);
@@ -30,8 +33,16 @@ describe('LeaseManager', () => {
   });
 
   it('allows concurrent shared-read leases but blocks exclusive over them', () => {
-    manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'reader-a', mode: 'shared-read' });
-    manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'reader-b', mode: 'shared-read' });
+    manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'reader-a',
+      mode: 'shared-read',
+    });
+    manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'reader-b',
+      mode: 'shared-read',
+    });
     expect(() =>
       manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'writer' }),
     ).toThrowError(/leased by 'reader-a'/);
@@ -39,7 +50,11 @@ describe('LeaseManager', () => {
 
   it('scopes leases to capabilities, not the whole device', () => {
     manager.acquire({
-      scope: { kind: 'capability', deviceId: 'arm-01', capabilities: ['motion.move_to', 'motion.home'] },
+      scope: {
+        kind: 'capability',
+        deviceId: 'arm-01',
+        capabilities: ['motion.move_to', 'motion.home'],
+      },
       owner: 'agent-a',
     });
     // Motion is locked for others…
@@ -47,11 +62,17 @@ describe('LeaseManager', () => {
     // …but unrelated capabilities stay free.
     expect(manager.permits('agent-b', 'arm-01', 'gripper.close').permitted).toBe(true);
     // Readers can still observe motion state.
-    expect(manager.permits('agent-b', 'arm-01', 'motion.move_to', 'shared-read').permitted).toBe(false);
+    expect(manager.permits('agent-b', 'arm-01', 'motion.move_to', 'shared-read').permitted).toBe(
+      false,
+    );
   });
 
   it('renews only for the owner and extends expiry', () => {
-    const lease = manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a', ttlMs: 1000 });
+    const lease = manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+      ttlMs: 1000,
+    });
     now += 500;
     const renewed = manager.renew(lease.id, 'agent-a', 1000);
     expect(renewed.expiresAt).toBe(now + 1000);
@@ -59,20 +80,31 @@ describe('LeaseManager', () => {
   });
 
   it('expires leases after TTL so crashed agents cannot hold machines', () => {
-    manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a', ttlMs: 1000 });
+    manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+      ttlMs: 1000,
+    });
     now += 1500;
     expect(manager.permits('agent-b', 'arm-01', 'motion.move_to').permitted).toBe(true);
     expect(manager.list()).toHaveLength(0);
   });
 
   it('refuses to renew an expired lease', () => {
-    const lease = manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a', ttlMs: 1000 });
+    const lease = manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+      ttlMs: 1000,
+    });
     now += 2000;
     expect(() => manager.renew(lease.id, 'agent-a')).toThrowError(/expired or unknown/);
   });
 
   it('releases on demand and enforces ownership on release', () => {
-    const lease = manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a' });
+    const lease = manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+    });
     expect(() => manager.release(lease.id, 'agent-b')).toThrowError(/belongs to/);
     manager.release(lease.id, 'agent-a');
     expect(manager.get(lease.id)).toBeUndefined();
@@ -80,7 +112,10 @@ describe('LeaseManager', () => {
   });
 
   it('force-releases without ownership checks', () => {
-    const lease = manager.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a' });
+    const lease = manager.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+    });
     manager.forceRelease(lease.id);
     expect(manager.get(lease.id)).toBeUndefined();
   });

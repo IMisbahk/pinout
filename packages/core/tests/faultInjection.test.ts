@@ -99,7 +99,11 @@ describe('fault injection: operations', () => {
     expect(snapshot.status).toBe('cancelled');
     // The journal records cancellation deterministically.
     const journal = new Journal();
-    journal.append('operation.cancelled', { deviceId: 'arm-01', operationId: handle.id }, { reason: 'halt requested' });
+    journal.append(
+      'operation.cancelled',
+      { deviceId: 'arm-01', operationId: handle.id },
+      { reason: 'halt requested' },
+    );
     const entries = await journal.query({ kinds: ['operation.cancelled'] });
     expect(entries[0].operationId).toBe(handle.id);
   });
@@ -110,7 +114,11 @@ describe('fault injection: operations', () => {
     void journal;
     const manager = new OperationManager({
       onOperationEvent: (event) => {
-        storage.append(event.kind, { deviceId: event.deviceId, operationId: event.operationId }, event.data ?? {});
+        storage.append(
+          event.kind,
+          { deviceId: event.deviceId, operationId: event.operationId },
+          event.data ?? {},
+        );
       },
     });
     const { handle } = manager.begin({

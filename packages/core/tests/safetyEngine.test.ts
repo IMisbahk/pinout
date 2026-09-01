@@ -54,21 +54,48 @@ describe('SafetyEngine: rate', () => {
 describe('SafetyEngine: interlocks', () => {
   it('blocks until the interlock is satisfied', () => {
     const engine = new SafetyEngine({
-      rules: [{ kind: 'interlock', capability: 'experiment.start', interlock: 'door.closed', mustBe: true }],
+      rules: [
+        {
+          kind: 'interlock',
+          capability: 'experiment.start',
+          interlock: 'door.closed',
+          mustBe: true,
+        },
+      ],
       now: clock,
     });
-    const ctx = { deviceId: 'chamber-01', capability: 'experiment.start', payload: {}, operationalState: {} };
-    expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_INTERLOCK_NOT_SATISFIED' });
+    const ctx = {
+      deviceId: 'chamber-01',
+      capability: 'experiment.start',
+      payload: {},
+      operationalState: {},
+    };
+    expect(engine.check(ctx)).toMatchObject({
+      allowed: false,
+      code: 'SAFETY_INTERLOCK_NOT_SATISFIED',
+    });
     engine.setInterlock('door.closed', true);
     expect(engine.check(ctx).allowed).toBe(true);
   });
 
   it('supports non-boolean interlock values', () => {
     const engine = new SafetyEngine({
-      rules: [{ kind: 'interlock', capability: 'pump.start', interlock: 'valve.position', mustBe: 'open' }],
+      rules: [
+        {
+          kind: 'interlock',
+          capability: 'pump.start',
+          interlock: 'valve.position',
+          mustBe: 'open',
+        },
+      ],
       now: clock,
     });
-    const ctx = { deviceId: 'plant-01', capability: 'pump.start', payload: {}, operationalState: {} };
+    const ctx = {
+      deviceId: 'plant-01',
+      capability: 'pump.start',
+      payload: {},
+      operationalState: {},
+    };
     engine.setInterlock('valve.position', 'closed');
     expect(engine.check(ctx).allowed).toBe(false);
     engine.setInterlock('valve.position', 'open');
@@ -79,12 +106,22 @@ describe('SafetyEngine: interlocks', () => {
 describe('SafetyEngine: sequences', () => {
   it('requires the sequence to have reached a step', () => {
     const engine = new SafetyEngine({
-      rules: [{ kind: 'sequence', capability: 'experiment.start', sequence: 'startup', atLeastStep: 2 }],
+      rules: [
+        { kind: 'sequence', capability: 'experiment.start', sequence: 'startup', atLeastStep: 2 },
+      ],
       now: clock,
     });
-    const ctx = { deviceId: 'chamber-01', capability: 'experiment.start', payload: {}, operationalState: {} };
+    const ctx = {
+      deviceId: 'chamber-01',
+      capability: 'experiment.start',
+      payload: {},
+      operationalState: {},
+    };
     engine.setSequenceStep('startup', 1);
-    expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_SEQUENCE_NOT_SATISFIED' });
+    expect(engine.check(ctx)).toMatchObject({
+      allowed: false,
+      code: 'SAFETY_SEQUENCE_NOT_SATISFIED',
+    });
     engine.setSequenceStep('startup', 2);
     expect(engine.check(ctx).allowed).toBe(true);
   });
@@ -96,10 +133,20 @@ describe('SafetyEngine: approvals', () => {
       rules: [{ kind: 'approval', capability: 'gripper.close' }],
       now: clock,
     });
-    const ctx = { deviceId: 'arm-01', capability: 'gripper.close', payload: {}, operationalState: {} };
+    const ctx = {
+      deviceId: 'arm-01',
+      capability: 'gripper.close',
+      payload: {},
+      operationalState: {},
+    };
     expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_APPROVAL_REQUIRED' });
 
-    engine.recordApproval({ id: 'appr-1', deviceId: 'arm-01', capability: 'gripper.close', grantedBy: 'operator' });
+    engine.recordApproval({
+      id: 'appr-1',
+      deviceId: 'arm-01',
+      capability: 'gripper.close',
+      grantedBy: 'operator',
+    });
     expect(engine.check(ctx).allowed).toBe(true);
     // Approval was consumed: second call is rejected.
     expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_APPROVAL_REQUIRED' });
@@ -117,7 +164,12 @@ describe('SafetyEngine: approvals', () => {
       grantedBy: 'operator',
       expiresAt: now + 100,
     });
-    const ctx = { deviceId: 'arm-01', capability: 'gripper.close', payload: {}, operationalState: {} };
+    const ctx = {
+      deviceId: 'arm-01',
+      capability: 'gripper.close',
+      payload: {},
+      operationalState: {},
+    };
     expect(engine.check(ctx).allowed).toBe(true);
     now += 200;
     expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_APPROVAL_REQUIRED' });
@@ -142,9 +194,15 @@ describe('SafetyEngine: leases', () => {
 
     expect(engine.check(ctx()).allowed).toBe(false);
     expect(engine.check(ctx('agent-a')).allowed).toBe(false);
-    const lease = leases.acquire({ scope: { kind: 'device', deviceId: 'arm-01' }, owner: 'agent-a' });
+    const lease = leases.acquire({
+      scope: { kind: 'device', deviceId: 'arm-01' },
+      owner: 'agent-a',
+    });
     expect(engine.check(ctx('agent-a')).allowed).toBe(true);
-    expect(engine.check(ctx('agent-b'))).toMatchObject({ allowed: false, code: 'SAFETY_LEASE_REQUIRED' });
+    expect(engine.check(ctx('agent-b'))).toMatchObject({
+      allowed: false,
+      code: 'SAFETY_LEASE_REQUIRED',
+    });
 
     now += 120_000;
     expect(engine.check(ctx('agent-a')).allowed).toBe(false);
@@ -158,7 +216,12 @@ describe('SafetyEngine: deadman', () => {
       rules: [{ kind: 'deadman', capability: 'base.move', maxAgeMs: 500 }],
       now: clock,
     });
-    const ctx = { deviceId: 'rover-01', capability: 'base.move', payload: {}, operationalState: {} };
+    const ctx = {
+      deviceId: 'rover-01',
+      capability: 'base.move',
+      payload: {},
+      operationalState: {},
+    };
     expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_DEADMAN_STALE' });
     engine.heartbeatDeadman('rover-01');
     expect(engine.check(ctx).allowed).toBe(true);
@@ -174,7 +237,12 @@ describe('SafetyEngine: resource budgets', () => {
       now: clock,
     });
     engine.configureBudget('motion-seconds', 5, 1000);
-    const ctx = { deviceId: 'rover-01', capability: 'base.move', payload: {}, operationalState: {} };
+    const ctx = {
+      deviceId: 'rover-01',
+      capability: 'base.move',
+      payload: {},
+      operationalState: {},
+    };
     expect(engine.check(ctx).allowed).toBe(true);
     expect(engine.check(ctx).allowed).toBe(true);
     expect(engine.check(ctx)).toMatchObject({ allowed: false, code: 'SAFETY_BUDGET_EXHAUSTED' });
@@ -186,7 +254,14 @@ describe('SafetyEngine: resource budgets', () => {
 describe('SafetyEngine: legacy rule compatibility', () => {
   it('still enforces numericRange and stateEquals', () => {
     const rules: SafetyRule[] = [
-      { kind: 'numericRange', capability: 'temperature.set', field: 'target', min: 0, max: 80, provenance: 'DOCUMENTED' },
+      {
+        kind: 'numericRange',
+        capability: 'temperature.set',
+        field: 'target',
+        min: 0,
+        max: 80,
+        provenance: 'DOCUMENTED',
+      },
       { kind: 'stateEquals', capability: 'temperature.set', field: 'door', equals: 'closed' },
     ];
     const engine = new SafetyEngine({ rules, now: clock });
@@ -197,8 +272,14 @@ describe('SafetyEngine: legacy rule compatibility', () => {
       operationalState: { door },
     });
     expect(engine.check(ctx(50, 'closed')).allowed).toBe(true);
-    expect(engine.check(ctx(90, 'closed'))).toMatchObject({ allowed: false, code: 'POLICY_CONSTRAINT_VIOLATION' });
-    expect(engine.check(ctx(50, 'open'))).toMatchObject({ allowed: false, code: 'POLICY_PRECONDITION_FAILED' });
+    expect(engine.check(ctx(90, 'closed'))).toMatchObject({
+      allowed: false,
+      code: 'POLICY_CONSTRAINT_VIOLATION',
+    });
+    expect(engine.check(ctx(50, 'open'))).toMatchObject({
+      allowed: false,
+      code: 'POLICY_PRECONDITION_FAILED',
+    });
   });
 });
 
@@ -252,9 +333,7 @@ describe('mergeModuleAndDeploymentRules', () => {
     const moduleRules: SafetyRule[] = [
       { kind: 'numericRange', capability: 'temperature.set', field: 'target', min: 0, max: 80 },
     ];
-    const deployment: SafetyRule[] = [
-      { kind: 'rate', capability: 'gpio.write', maxPerWindow: 5 },
-    ];
+    const deployment: SafetyRule[] = [{ kind: 'rate', capability: 'gpio.write', maxPerWindow: 5 }];
     const { rules, conflicts } = mergeModuleAndDeploymentRules(moduleRules, deployment);
     expect(conflicts).toHaveLength(0);
     expect(rules).toHaveLength(2);

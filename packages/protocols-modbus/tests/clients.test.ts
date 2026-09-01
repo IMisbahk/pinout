@@ -1,13 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createServer, type Server } from 'node:net';
 import { ModbusTcpClient } from '../src/tcpClient.js';
-import {
-  ModbusError,
-  crc16,
-  decodeMbap,
-  encodeMbap,
-  encodeRtu,
-} from '../src/wire.js';
+import { ModbusError, crc16, decodeMbap, encodeMbap, encodeRtu } from '../src/wire.js';
 import { ModbusRtuClient } from '../src/rtuClient.js';
 import type { Transport } from '@pinout/core';
 
@@ -56,7 +50,8 @@ function startMockServer(): Promise<{ server: Server; port: number }> {
           bytes[0] = 0x01;
           bytes[1] = Math.ceil(quantity / 8);
           for (let i = 0; i < quantity; i += 1) {
-            if (coils.get(address + i)) bytes[2 + (i >> 3)] = (bytes[2 + (i >> 3)] ?? 0) | (1 << (i % 8));
+            if (coils.get(address + i))
+              bytes[2 + (i >> 3)] = (bytes[2 + (i >> 3)] ?? 0) | (1 << (i % 8));
           }
           responsePdu = bytes;
         } else {
@@ -174,14 +169,18 @@ describe('ModbusTcpClient', () => {
     const silentPort = (silentServer.address() as { port: number }).port;
     const silent = new ModbusTcpClient({ host: '127.0.0.1', port: silentPort, timeoutMs: 50 });
     await silent.connect();
-    await expect(silent.readHoldingRegisters(0, 1)).rejects.toMatchObject({ code: 'MODBUS_TIMEOUT' });
+    await expect(silent.readHoldingRegisters(0, 1)).rejects.toMatchObject({
+      code: 'MODBUS_TIMEOUT',
+    });
     await silent.close();
     silentServer.close();
   });
 
   it('rejects requests when not connected', async () => {
     const disconnected = new ModbusTcpClient({ host: '127.0.0.1', port: 1, timeoutMs: 50 });
-    await expect(disconnected.readHoldingRegisters(0, 1)).rejects.toMatchObject({ code: 'MODBUS_NOT_CONNECTED' });
+    await expect(disconnected.readHoldingRegisters(0, 1)).rejects.toMatchObject({
+      code: 'MODBUS_NOT_CONNECTED',
+    });
   });
 });
 
@@ -205,11 +204,15 @@ describe('ModbusRtuClient', () => {
   });
 
   it('rejects an inflight second request', async () => {
-    const transport = new ScriptedBinaryTransport(() => encodeRtu(3, new Uint8Array([0x03, 0x02, 0, 0])));
+    const transport = new ScriptedBinaryTransport(() =>
+      encodeRtu(3, new Uint8Array([0x03, 0x02, 0, 0])),
+    );
     const client = new ModbusRtuClient({ transport, slaveAddress: 3, timeoutMs: 500 });
     await client.start();
     void client.readHoldingRegisters(0, 1); // intentionally unawaited
-    await expect(client.readHoldingRegisters(2, 1)).rejects.toMatchObject({ code: 'MODBUS_INFLIGHT' });
+    await expect(client.readHoldingRegisters(2, 1)).rejects.toMatchObject({
+      code: 'MODBUS_INFLIGHT',
+    });
     await client.close();
   });
 
@@ -223,7 +226,9 @@ describe('ModbusRtuClient', () => {
     const transport = new ScriptedBinaryTransport(() => []);
     const client = new ModbusRtuClient({ transport, slaveAddress: 1, timeoutMs: 40 });
     await client.start();
-    await expect(client.readHoldingRegisters(0, 1)).rejects.toMatchObject({ code: 'MODBUS_TIMEOUT' });
+    await expect(client.readHoldingRegisters(0, 1)).rejects.toMatchObject({
+      code: 'MODBUS_TIMEOUT',
+    });
     await client.close();
   });
 });

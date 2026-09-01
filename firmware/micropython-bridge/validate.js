@@ -111,7 +111,8 @@ const expectations = [
     payload: {},
     assert(response) {
       if (response.ok !== false) throw new Error('unknown actions must fail');
-      if (response.error.code !== 'UNSUPPORTED_ACTION') throw new Error('expected UNSUPPORTED_ACTION');
+      if (response.error.code !== 'UNSUPPORTED_ACTION')
+        throw new Error('expected UNSUPPORTED_ACTION');
     },
   },
 ];
@@ -122,7 +123,10 @@ function main() {
     process.exit(0);
   }
 
-  const input = expectations.map((item, index) => request(String(index + 1), item.action, item.payload)).join('\n') + '\n';
+  const input =
+    expectations
+      .map((item, index) => request(String(index + 1), item.action, item.payload))
+      .join('\n') + '\n';
   const run = spawnSync(python, ['-u', 'main.py'], {
     input,
     encoding: 'utf8',
@@ -142,7 +146,9 @@ function main() {
 
   const lines = toLines(run.stdout);
   if (lines.length !== expectations.length) {
-    console.error(`FAIL: expected ${expectations.length} responses, got ${lines.length}\nstdout:\n${run.stdout}`);
+    console.error(
+      `FAIL: expected ${expectations.length} responses, got ${lines.length}\nstdout:\n${run.stdout}`,
+    );
     process.exit(1);
   }
 
@@ -154,7 +160,8 @@ function main() {
       if (response.v !== 1) throw new Error('missing v=1');
       if (response.id !== String(index + 1)) throw new Error(`id mismatch: ${response.id}`);
       if (response.ok !== true && response.ok !== false) throw new Error('ok must be boolean');
-      if (response.ok === true && typeof response.result !== 'object') throw new Error('success needs result object');
+      if (response.ok === true && typeof response.result !== 'object')
+        throw new Error('success needs result object');
       item.assert(response, response.ok ? response.result : undefined);
       console.log(`  ok  ${label}`);
     } catch (error) {
@@ -167,7 +174,9 @@ function main() {
     console.error(`${failures}/${expectations.length} bridge protocol checks failed`);
     process.exit(1);
   }
-  console.log(`PASS: ${expectations.length}/${expectations.length} bridge protocol checks match the v1 wire contract`);
+  console.log(
+    `PASS: ${expectations.length}/${expectations.length} bridge protocol checks match the v1 wire contract`,
+  );
   process.exit(0);
 }
 

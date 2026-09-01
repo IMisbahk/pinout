@@ -69,7 +69,9 @@ export class ModbusTcpClient {
     });
     socket.on('data', (chunk: Buffer) => this.onData(chunk));
     socket.on('error', (error: Error) => this.failAll(error));
-    socket.on('close', () => this.failAll(new ModbusError('MODBUS_CONNECTION_CLOSED', 'TCP connection closed.')));
+    socket.on('close', () =>
+      this.failAll(new ModbusError('MODBUS_CONNECTION_CLOSED', 'TCP connection closed.')),
+    );
     this.socket = socket;
   }
 
@@ -109,7 +111,10 @@ export class ModbusTcpClient {
 
   async writeSingleRegister(address: number, value: number): Promise<void> {
     if (!Number.isInteger(value) || value < 0 || value > 0xffff) {
-      throw new ModbusError('MODBUS_INVALID_VALUE', 'Register value must be an integer in [0, 65535].');
+      throw new ModbusError(
+        'MODBUS_INVALID_VALUE',
+        'Register value must be an integer in [0, 65535].',
+      );
     }
     await this.request(0x06, encodeWriteSingle(0x06, address, value));
   }
@@ -124,17 +129,34 @@ export class ModbusTcpClient {
 
   // ---------------------------------------------------------------------------
 
-  private async readBits(functionCode: 0x01 | 0x02, startAddress: number, quantity: number): Promise<boolean[]> {
-    const decoded = await this.request(functionCode, encodeReadRequest(functionCode, startAddress, quantity));
+  private async readBits(
+    functionCode: 0x01 | 0x02,
+    startAddress: number,
+    quantity: number,
+  ): Promise<boolean[]> {
+    const decoded = await this.request(
+      functionCode,
+      encodeReadRequest(functionCode, startAddress, quantity),
+    );
     return decoded.kind === 'bits' ? decoded.values : [];
   }
 
-  private async readRegisters(functionCode: 0x03 | 0x04, startAddress: number, quantity: number): Promise<number[]> {
-    const decoded = await this.request(functionCode, encodeReadRequest(functionCode, startAddress, quantity));
+  private async readRegisters(
+    functionCode: 0x03 | 0x04,
+    startAddress: number,
+    quantity: number,
+  ): Promise<number[]> {
+    const decoded = await this.request(
+      functionCode,
+      encodeReadRequest(functionCode, startAddress, quantity),
+    );
     return decoded.kind === 'registers' ? decoded.values : [];
   }
 
-  private async request(functionCode: ModbusFunctionCode, pdu: Uint8Array): Promise<PduDecodeResult> {
+  private async request(
+    functionCode: ModbusFunctionCode,
+    pdu: Uint8Array,
+  ): Promise<PduDecodeResult> {
     if (this.closed || !this.socket) {
       throw new ModbusError('MODBUS_NOT_CONNECTED', 'TCP client is not connected.');
     }

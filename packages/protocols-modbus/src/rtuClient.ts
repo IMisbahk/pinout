@@ -29,18 +29,27 @@ export class ModbusRtuClient {
   private readonly transport: Transport;
   private readonly slaveAddress: number;
   private readonly timeoutMs: number;
-  private inflight: {
-    requestFunctionCode: number;
-    resolve: (frame: Uint8Array) => void;
-    reject: (error: Error) => void;
-    timer: ReturnType<typeof setTimeout>;
-  } | undefined;
+  private inflight:
+    | {
+        requestFunctionCode: number;
+        resolve: (frame: Uint8Array) => void;
+        reject: (error: Error) => void;
+        timer: ReturnType<typeof setTimeout>;
+      }
+    | undefined;
   private started = false;
   private closed = false;
 
   constructor(options: ModbusRtuOptions) {
-    if (!Number.isInteger(options.slaveAddress) || options.slaveAddress < 1 || options.slaveAddress > 247) {
-      throw new ModbusError('MODBUS_INVALID_SLAVE', 'Slave address must be an integer in [1, 247].');
+    if (
+      !Number.isInteger(options.slaveAddress) ||
+      options.slaveAddress < 1 ||
+      options.slaveAddress > 247
+    ) {
+      throw new ModbusError(
+        'MODBUS_INVALID_SLAVE',
+        'Slave address must be an integer in [1, 247].',
+      );
     }
     this.transport = options.transport;
     this.slaveAddress = options.slaveAddress;
@@ -82,7 +91,10 @@ export class ModbusRtuClient {
 
   async writeSingleRegister(address: number, value: number): Promise<void> {
     if (!Number.isInteger(value) || value < 0 || value > 0xffff) {
-      throw new ModbusError('MODBUS_INVALID_VALUE', 'Register value must be an integer in [0, 65535].');
+      throw new ModbusError(
+        'MODBUS_INVALID_VALUE',
+        'Register value must be an integer in [0, 65535].',
+      );
     }
     await this.request(0x06, encodeWriteSingle(0x06, address, value));
   }
@@ -97,20 +109,37 @@ export class ModbusRtuClient {
 
   // ---------------------------------------------------------------------------
 
-  private async readBits(functionCode: 0x01 | 0x02, startAddress: number, quantity: number): Promise<boolean[]> {
-    const decoded = await this.request(functionCode, encodeReadRequest(functionCode, startAddress, quantity));
+  private async readBits(
+    functionCode: 0x01 | 0x02,
+    startAddress: number,
+    quantity: number,
+  ): Promise<boolean[]> {
+    const decoded = await this.request(
+      functionCode,
+      encodeReadRequest(functionCode, startAddress, quantity),
+    );
     return decoded.kind === 'bits' ? decoded.values : [];
   }
 
-  private async readRegisters(functionCode: 0x03 | 0x04, startAddress: number, quantity: number): Promise<number[]> {
-    const decoded = await this.request(functionCode, encodeReadRequest(functionCode, startAddress, quantity));
+  private async readRegisters(
+    functionCode: 0x03 | 0x04,
+    startAddress: number,
+    quantity: number,
+  ): Promise<number[]> {
+    const decoded = await this.request(
+      functionCode,
+      encodeReadRequest(functionCode, startAddress, quantity),
+    );
     return decoded.kind === 'registers' ? decoded.values : [];
   }
 
   private async request(functionCode: number, pdu: Uint8Array): Promise<PduDecodeResult> {
     if (this.closed) throw new ModbusError('MODBUS_NOT_CONNECTED', 'RTU client is closed.');
     if (this.inflight) {
-      throw new ModbusError('MODBUS_INFLIGHT', 'An RTU request is already in flight; the bus is single-master half-duplex.');
+      throw new ModbusError(
+        'MODBUS_INFLIGHT',
+        'An RTU request is already in flight; the bus is single-master half-duplex.',
+      );
     }
 
     const frame = encodeRtu(this.slaveAddress, pdu);

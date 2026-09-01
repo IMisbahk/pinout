@@ -125,7 +125,9 @@ class NodeWebSocketTransport implements Transport {
       const timeoutMs = this.options.timeoutMs ?? 5000;
       const timer = setTimeout(() => {
         socket.terminate();
-        reject(new TransportError(`Timed out connecting to ${this.options.url} in ${timeoutMs}ms.`));
+        reject(
+          new TransportError(`Timed out connecting to ${this.options.url} in ${timeoutMs}ms.`),
+        );
       }, timeoutMs);
       timer.unref();
 
@@ -136,10 +138,9 @@ class NodeWebSocketTransport implements Transport {
       socket.once('error', (error: Error) => {
         clearTimeout(timer);
         reject(
-          new TransportError(
-            `Failed to connect to ${this.options.url}: ${error.message}`,
-            { cause: error },
-          ),
+          new TransportError(`Failed to connect to ${this.options.url}: ${error.message}`, {
+            cause: error,
+          }),
         );
       });
     });

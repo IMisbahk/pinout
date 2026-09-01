@@ -15,7 +15,10 @@ export interface RunningDaemon {
  * Start a daemon around an existing runtime. This is the programmatic entry
  * point used by tests, the CLI (`pinout daemon start`), and the `pinoutd` bin.
  */
-export async function startDaemon(runtime: PinoutRuntime, config: DaemonConfig = {}): Promise<RunningDaemon> {
+export async function startDaemon(
+  runtime: PinoutRuntime,
+  config: DaemonConfig = {},
+): Promise<RunningDaemon> {
   const context = new DaemonContext(runtime, config);
   const server = new DaemonHttpServer(context);
   const address = await server.listen(config);

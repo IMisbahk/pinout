@@ -50,9 +50,14 @@ export class DeviceGraph {
 
   register(input: DeviceGraphNodeInput): DeviceDescriptor {
     if (this.nodes.has(input.id)) {
-      throw new PinoutStructuredError('DEVICE_ALREADY_REGISTERED', 'DEVICE', `Device '${input.id}' is already registered.`, {
-        device: input.id,
-      });
+      throw new PinoutStructuredError(
+        'DEVICE_ALREADY_REGISTERED',
+        'DEVICE',
+        `Device '${input.id}' is already registered.`,
+        {
+          device: input.id,
+        },
+      );
     }
     const descriptor: DeviceDescriptor = {
       identity: {
@@ -81,13 +86,25 @@ export class DeviceGraph {
     const parent = this.nodes.get(parentId);
     const child = this.nodes.get(childId);
     if (!parent || !child) {
-      throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown device in link('${parentId}', '${childId}').`);
+      throw new PinoutStructuredError(
+        'DEVICE_NOT_FOUND',
+        'DEVICE',
+        `Unknown device in link('${parentId}', '${childId}').`,
+      );
     }
     if (childId === parentId) {
-      throw new PinoutStructuredError('GRAPH_CYCLE', 'CONFIG', `Device '${parentId}' cannot be its own child.`);
+      throw new PinoutStructuredError(
+        'GRAPH_CYCLE',
+        'CONFIG',
+        `Device '${parentId}' cannot be its own child.`,
+      );
     }
     if (this.descendsFrom(parentId, childId)) {
-      throw new PinoutStructuredError('GRAPH_CYCLE', 'CONFIG', `Linking '${parentId}' under '${childId}' would create a cycle.`);
+      throw new PinoutStructuredError(
+        'GRAPH_CYCLE',
+        'CONFIG',
+        `Linking '${parentId}' under '${childId}' would create a cycle.`,
+      );
     }
     if (!parent.children.includes(childId)) {
       parent.children.push(childId);
@@ -103,7 +120,9 @@ export class DeviceGraph {
   require(id: string): DeviceDescriptor {
     const node = this.get(id);
     if (!node) {
-      throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown device '${id}'.`, { device: id });
+      throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown device '${id}'.`, {
+        device: id,
+      });
     }
     return node;
   }
@@ -138,12 +157,21 @@ export class DeviceGraph {
   resolve(address: string): ResolvedAddress {
     const segments = address.split('.').filter((s) => s.length > 0);
     if (segments.length < 2) {
-      throw new PinoutStructuredError('VALIDATION_ERROR', 'VALIDATION', `Address '${address}' must include a device and a capability.`);
+      throw new PinoutStructuredError(
+        'VALIDATION_ERROR',
+        'VALIDATION',
+        `Address '${address}' must include a device and a capability.`,
+      );
     }
 
     const rootId = segments[0]!;
     if (!this.nodes.has(rootId)) {
-      throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown root device '${rootId}' in address '${address}'.`, { device: rootId });
+      throw new PinoutStructuredError(
+        'DEVICE_NOT_FOUND',
+        'DEVICE',
+        `Unknown root device '${rootId}' in address '${address}'.`,
+        { device: rootId },
+      );
     }
 
     let currentId = rootId;
@@ -161,7 +189,11 @@ export class DeviceGraph {
 
     const capability = segments.slice(index).join('.');
     if (!capability) {
-      throw new PinoutStructuredError('VALIDATION_ERROR', 'VALIDATION', `Address '${address}' ends at device '${currentId}' with no capability.`);
+      throw new PinoutStructuredError(
+        'VALIDATION_ERROR',
+        'VALIDATION',
+        `Address '${address}' ends at device '${currentId}' with no capability.`,
+      );
     }
 
     return { deviceId: currentId, capability, path };

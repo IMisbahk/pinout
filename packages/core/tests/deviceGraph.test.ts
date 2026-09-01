@@ -61,7 +61,9 @@ describe('DeviceGraph', () => {
   it('rejects duplicate registration', () => {
     const graph = new DeviceGraph();
     graph.register({ id: 'a', deviceClass: 'x', moduleId: 'm', capabilities: [] });
-    expect(() => graph.register({ id: 'a', deviceClass: 'x', moduleId: 'm', capabilities: [] })).toThrowError(/already registered/);
+    expect(() =>
+      graph.register({ id: 'a', deviceClass: 'x', moduleId: 'm', capabilities: [] }),
+    ).toThrowError(/already registered/);
   });
 
   it('rejects cycles', () => {
@@ -115,22 +117,35 @@ describe('DeviceGraph', () => {
   it('throws for unknown roots and capability-less addresses', () => {
     const graph = buildRobotCell();
     expect(() => graph.resolve('ghost.gpio.write')).toThrowError(/Unknown root device 'ghost'/);
-    expect(() => graph.resolve('robot-cell-01')).toThrowError(/must include a device and a capability/);
+    expect(() => graph.resolve('robot-cell-01')).toThrowError(
+      /must include a device and a capability/,
+    );
   });
 
   it('queries by class, capability, module, tag, parent, and simulation', () => {
     const graph = buildRobotCell();
-    expect(graph.query({ deviceClass: 'robot.manipulator' }).map((d) => d.identity.id)).toEqual(['arm']);
+    expect(graph.query({ deviceClass: 'robot.manipulator' }).map((d) => d.identity.id)).toEqual([
+      'arm',
+    ]);
     expect(graph.query({ capability: 'motion.move_to' })).toHaveLength(1);
     expect(graph.query({ tag: 'bay-3' }).map((d) => d.identity.id)).toEqual(['robot-cell-01']);
-    expect(graph.query({ parent: 'robot-cell-01' }).map((d) => d.identity.id)).toEqual(['arm', 'gripper', 'wrist-camera']);
+    expect(graph.query({ parent: 'robot-cell-01' }).map((d) => d.identity.id)).toEqual([
+      'arm',
+      'gripper',
+      'wrist-camera',
+    ]);
     expect(graph.query({ parent: undefined }).length).toBeGreaterThan(0);
     expect(graph.query({ moduleId: 'pinout/force' })).toHaveLength(1);
   });
 
   it('computes subtrees breadth-first', () => {
     const graph = buildRobotCell();
-    expect(graph.subtree('robot-cell-01')).toEqual(['arm', 'gripper', 'wrist-camera', 'force-sensor']);
+    expect(graph.subtree('robot-cell-01')).toEqual([
+      'arm',
+      'gripper',
+      'wrist-camera',
+      'force-sensor',
+    ]);
     expect(graph.subtree('force-sensor')).toEqual([]);
   });
 

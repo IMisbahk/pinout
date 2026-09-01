@@ -8,16 +8,22 @@ import type { DeviceIdentity } from '../src/runtime/types.js';
 const gpioWrite: CapabilityDescriptor = {
   name: 'gpio.write',
   description: 'Write a pin level',
-  inputSchema: { type: 'object', required: ['pin', 'value'], properties: { pin: { type: 'number' }, value: { type: 'number' } } },
+  inputSchema: {
+    type: 'object',
+    required: ['pin', 'value'],
+    properties: { pin: { type: 'number' }, value: { type: 'number' } },
+  },
   outputSchema: { type: 'object', properties: { ok: { type: 'boolean' } } },
   safety: { physicalOutput: true, reversible: true },
 };
 
-function makeDevice(overrides: {
-  halt?: HaltCoordinator;
-  safetyEngine?: SafetyEngine;
-  backend?: DeviceBackend;
-} = {}): DeviceInstance {
+function makeDevice(
+  overrides: {
+    halt?: HaltCoordinator;
+    safetyEngine?: SafetyEngine;
+    backend?: DeviceBackend;
+  } = {},
+): DeviceInstance {
   const identity: DeviceIdentity = { id: 'esp-01', moduleId: 'pinout/esp32', deviceClass: 'gpio' };
   const backend: DeviceBackend = overrides.backend ?? {
     kind: 'simulated',
@@ -43,7 +49,9 @@ describe('DeviceInstance safety integration', () => {
     const halt = new HaltCoordinator();
     halt.halt('maintenance');
     const device = makeDevice({ halt });
-    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(/maintenance|halted/i);
+    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(
+      /maintenance|halted/i,
+    );
   });
 
   it('allows invocation when halt is normal', async () => {
@@ -58,7 +66,9 @@ describe('DeviceInstance safety integration', () => {
     });
     const device = makeDevice({ safetyEngine: engine });
     await device.invoke('gpio.write', { pin: 2, value: 1 });
-    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(/Rate limit/);
+    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(
+      /Rate limit/,
+    );
   });
 
   it('enforces lease-gated capabilities when an owner is passed', async () => {
@@ -74,15 +84,18 @@ describe('DeviceInstance safety integration', () => {
     const engine = new SafetyEngine({
       rules: [{ kind: 'lease', capability: 'gpio.write' }],
       leaseManager: {
-        list: (filter: { owner?: string }) =>
-          filter.owner === 'agent-a' ? [heldLease] : [],
+        list: (filter: { owner?: string }) => (filter.owner === 'agent-a' ? [heldLease] : []),
         permits: () => ({ permitted: true }),
       } as never,
     });
     const device = makeDevice({ safetyEngine: engine });
     // With the lease held, the invocation passes; without an owner it fails.
-    await expect(device.invoke('gpio.write', { pin: 2, value: 1 }, { owner: 'agent-a' })).resolves.toBeTruthy();
-    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(/requires an active lease/);
+    await expect(
+      device.invoke('gpio.write', { pin: 2, value: 1 }, { owner: 'agent-a' }),
+    ).resolves.toBeTruthy();
+    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(
+      /requires an active lease/,
+    );
   });
 
   it('dry-run resolves and policy-checks without calling the backend', async () => {
@@ -117,7 +130,9 @@ describe('DeviceInstance safety integration', () => {
     });
     const device = makeDevice({ backend, safetyEngine: engine });
 
-    await expect(device.invoke('gpio.write', { pin: 999, value: 1 }, { dryRun: true })).rejects.toThrowError(/between 0 and 27/);
+    await expect(
+      device.invoke('gpio.write', { pin: 999, value: 1 }, { dryRun: true }),
+    ).rejects.toThrowError(/between 0 and 27/);
     expect(backend.invoke).not.toHaveBeenCalled();
   });
 });

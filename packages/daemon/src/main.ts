@@ -20,7 +20,13 @@ interface ParsedArgs {
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
-  const args: ParsedArgs = { port: DEFAULT_DAEMON_PORT, host: undefined, token: undefined, journalPath: undefined, demo: false };
+  const args: ParsedArgs = {
+    port: DEFAULT_DAEMON_PORT,
+    host: undefined,
+    token: undefined,
+    journalPath: undefined,
+    demo: false,
+  };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     const next = argv[i + 1];

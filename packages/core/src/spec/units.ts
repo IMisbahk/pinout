@@ -18,7 +18,7 @@ const CANONICAL: Partial<Record<Unit, Unit>> = {
   'mm/s': 'm/s',
   'deg/s': 'rad/s',
   rpm: 'rad/s',
-  'g': 'kg',
+  g: 'kg',
   C: 'K',
   F: 'K',
   mA: 'A',
@@ -26,16 +26,26 @@ const CANONICAL: Partial<Record<Unit, Unit>> = {
 
 export function toCanonical(value: number, unit: Unit): { value: number; unit: Unit } {
   switch (unit) {
-    case 'mm': return { value: value / 1000, unit: 'm' };
-    case 'cm': return { value: value / 100, unit: 'm' };
-    case 'km': return { value: value * 1000, unit: 'm' };
-    case 'mm/s': return { value: value / 1000, unit: 'm/s' };
-    case 'deg': return { value: (value * Math.PI) / 180, unit: 'rad' };
-    case 'deg/s': return { value: (value * Math.PI) / 180, unit: 'rad/s' };
-    case 'rev': return { value: value * 2 * Math.PI, unit: 'rad' };
-    case 'rpm': return { value: (value * 2 * Math.PI) / 60, unit: 'rad/s' };
-    case 'g': return { value: value / 1000, unit: 'kg' };
-    case 'mA': return { value: value / 1000, unit: 'A' };
+    case 'mm':
+      return { value: value / 1000, unit: 'm' };
+    case 'cm':
+      return { value: value / 100, unit: 'm' };
+    case 'km':
+      return { value: value * 1000, unit: 'm' };
+    case 'mm/s':
+      return { value: value / 1000, unit: 'm/s' };
+    case 'deg':
+      return { value: (value * Math.PI) / 180, unit: 'rad' };
+    case 'deg/s':
+      return { value: (value * Math.PI) / 180, unit: 'rad/s' };
+    case 'rev':
+      return { value: value * 2 * Math.PI, unit: 'rad' };
+    case 'rpm':
+      return { value: (value * 2 * Math.PI) / 60, unit: 'rad/s' };
+    case 'g':
+      return { value: value / 1000, unit: 'kg' };
+    case 'mA':
+      return { value: value / 1000, unit: 'A' };
     default:
       if (CANONICAL[unit]) return { value, unit: CANONICAL[unit] as Unit };
       return { value, unit };
@@ -107,9 +117,42 @@ export function convert(value: number, from: Unit, to: Unit): number {
 
 export function isKnownUnit(unit: string): unit is Unit {
   const known: readonly Unit[] = [
-    'm', 'mm', 'cm', 'km', 'rad', 'deg', 'rev', 'm/s', 'mm/s', 'rad/s', 'deg/s', 'rpm',
-    'm/s2', 'rad/s2', 'N', 'N.m', 'kg', 'g', 'C', 'F', 'K', 'V', 'mV', 'A', 'mA', 'W',
-    'Pa', 'kPa', 'bar', 'psi', 'Hz', 'percent', 'lux', 'counts', 'bool', 'string',
+    'm',
+    'mm',
+    'cm',
+    'km',
+    'rad',
+    'deg',
+    'rev',
+    'm/s',
+    'mm/s',
+    'rad/s',
+    'deg/s',
+    'rpm',
+    'm/s2',
+    'rad/s2',
+    'N',
+    'N.m',
+    'kg',
+    'g',
+    'C',
+    'F',
+    'K',
+    'V',
+    'mV',
+    'A',
+    'mA',
+    'W',
+    'Pa',
+    'kPa',
+    'bar',
+    'psi',
+    'Hz',
+    'percent',
+    'lux',
+    'counts',
+    'bool',
+    'string',
   ];
   return known.includes(unit as Unit);
 }

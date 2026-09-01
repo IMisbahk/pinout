@@ -199,13 +199,22 @@ function classifyCode(code: string): ErrorCategory {
   if (code.startsWith('CONFIG_')) return 'CONFIG';
   if (code.startsWith('AUTH_')) return 'AUTH';
   switch (code) {
-    case 'VALIDATION_ERROR': return 'VALIDATION';
-    case 'UNSUPPORTED_CAPABILITY': return 'UNSUPPORTED';
-    case 'PROTOCOL_ERROR': return 'PROTOCOL';
-    case 'TIMEOUT': case 'OPERATION_TIMEOUT': return 'TIMEOUT';
-    case 'DISCONNECTED': case 'TRANSPORT_ERROR': return 'TRANSPORT';
-    case 'ABORTED': return 'OPERATION';
-    default: return 'DEVICE';
+    case 'VALIDATION_ERROR':
+      return 'VALIDATION';
+    case 'UNSUPPORTED_CAPABILITY':
+      return 'UNSUPPORTED';
+    case 'PROTOCOL_ERROR':
+      return 'PROTOCOL';
+    case 'TIMEOUT':
+    case 'OPERATION_TIMEOUT':
+      return 'TIMEOUT';
+    case 'DISCONNECTED':
+    case 'TRANSPORT_ERROR':
+      return 'TRANSPORT';
+    case 'ABORTED':
+      return 'OPERATION';
+    default:
+      return 'DEVICE';
   }
 }
 

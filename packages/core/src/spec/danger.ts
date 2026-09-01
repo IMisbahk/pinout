@@ -22,6 +22,9 @@ export function dangerRank(level: DangerLevel): number {
 }
 
 /** True when a capability above `threshold` (inclusive) should demand a lease. */
-export function requiresLease(level: DangerLevel, threshold: DangerLevel = 'PHYSICAL_SIDE_EFFECT'): boolean {
+export function requiresLease(
+  level: DangerLevel,
+  threshold: DangerLevel = 'PHYSICAL_SIDE_EFFECT',
+): boolean {
   return dangerRank(level) >= dangerRank(threshold);
 }

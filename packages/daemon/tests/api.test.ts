@@ -30,7 +30,7 @@ describe('pinoutd HTTP API', () => {
   it('reports health', async () => {
     const res = await fetch(`${base}/v1/health`);
     expect(res.status).toBe(200);
-    const body = await res.json() as { ok: boolean; devices: number; safety: string };
+    const body = (await res.json()) as { ok: boolean; devices: number; safety: string };
     expect(body.ok).toBe(true);
     expect(body.devices).toBe(1);
     expect(body.safety).toBe('NORMAL');
@@ -38,18 +38,18 @@ describe('pinoutd HTTP API', () => {
 
   it('lists devices and their state', async () => {
     const res = await fetch(`${base}/v1/devices`);
-    const { devices } = await res.json() as { devices: Array<{ id: string }> };
+    const { devices } = (await res.json()) as { devices: Array<{ id: string }> };
     expect(devices.map((d) => d.id)).toContain('relay-01');
 
     const state = await fetch(`${base}/v1/devices/relay-01/state`);
-    const body = await state.json() as { state: Record<string, unknown> };
+    const body = (await state.json()) as { state: Record<string, unknown> };
     expect(body.state).toBeDefined();
   });
 
   it('404s for unknown devices with a structured error', async () => {
     const res = await fetch(`${base}/v1/devices/ghost`);
     expect(res.status).toBe(404);
-    const body = await res.json() as { error: { code: string } };
+    const body = (await res.json()) as { error: { code: string } };
     expect(body.error.code).toBe('DEVICE_NOT_FOUND');
   });
 
@@ -60,7 +60,10 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ capability: 'relay.set', args: { on: true }, waitFor: 'result' }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json() as { result: Record<string, unknown>; operation: { status: string } };
+    const body = (await res.json()) as {
+      result: Record<string, unknown>;
+      operation: { status: string };
+    };
     expect(body.operation.status).toBe('completed');
     expect(body.result).toBeDefined();
   });
@@ -72,11 +75,17 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ capability: 'relay.set', args: { on: false }, dryRun: true }),
     });
     expect(res.status).toBe(200);
-    const body = await res.json() as { dryRun: boolean; capability: string; resolvedArgs: Record<string, unknown> };
+    const body = (await res.json()) as {
+      dryRun: boolean;
+      capability: string;
+      resolvedArgs: Record<string, unknown>;
+    };
     expect(body.dryRun).toBe(true);
     expect(body.resolvedArgs).toEqual({ on: false });
     // Nothing executed: state remains as set by the previous test.
-    const state = await (await fetch(`${base}/v1/devices/relay-01/state`)).json() as { state: Record<string, unknown> };
+    const state = (await (await fetch(`${base}/v1/devices/relay-01/state`)).json()) as {
+      state: Record<string, unknown>;
+    };
     expect(JSON.stringify(state.state)).not.toContain('"on":false');
   });
 
@@ -87,11 +96,11 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ capability: 'relay.set', args: { on: true } }),
     });
     expect(res.status).toBe(202);
-    const { operation } = await res.json() as { operation: { id: string; status: string } };
+    const { operation } = (await res.json()) as { operation: { id: string; status: string } };
     expect(operation.id).toMatch(/^op_/);
 
     const polled = await fetch(`${base}/v1/operations/${operation.id}`);
-    const body = await polled.json() as { operation: { id: string } };
+    const body = (await polled.json()) as { operation: { id: string } };
     expect(body.operation.id).toBe(operation.id);
   });
 
@@ -110,8 +119,8 @@ describe('pinoutd HTTP API', () => {
 
     const first = await makeCall();
     const second = await makeCall();
-    const firstOp = (await first.json() as { operation: { id: string } }).operation;
-    const secondOp = (await second.json() as { operation: { id: string } }).operation;
+    const firstOp = ((await first.json()) as { operation: { id: string } }).operation;
+    const secondOp = ((await second.json()) as { operation: { id: string } }).operation;
     expect(secondOp.id).toBe(firstOp.id);
   });
 
@@ -122,7 +131,7 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ capability: 'motion.move_to', args: {} }),
     });
     expect(res.status).toBe(400);
-    const body = await res.json() as { error: { code: string } };
+    const body = (await res.json()) as { error: { code: string } };
     expect(body.error.code).toBe('UNSUPPORTED_CAPABILITY');
   });
 
@@ -133,9 +142,11 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ owner: 'agent-a', scope: { kind: 'device', deviceId: 'relay-01' } }),
     });
     expect(acquired.status).toBe(201);
-    const { lease } = await acquired.json() as { lease: { id: string } };
+    const { lease } = (await acquired.json()) as { lease: { id: string } };
 
-    const listed = await (await fetch(`${base}/v1/leases`)).json() as { leases: Array<{ id: string }> };
+    const listed = (await (await fetch(`${base}/v1/leases`)).json()) as {
+      leases: Array<{ id: string }>;
+    };
     expect(listed.leases.map((l) => l.id)).toContain(lease.id);
 
     const renewed = await fetch(`${base}/v1/leases/${lease.id}/renew`, {
@@ -145,7 +156,9 @@ describe('pinoutd HTTP API', () => {
     });
     expect(renewed.status).toBe(200);
 
-    const released = await fetch(`${base}/v1/leases/${lease.id}?owner=agent-a`, { method: 'DELETE' });
+    const released = await fetch(`${base}/v1/leases/${lease.id}?owner=agent-a`, {
+      method: 'DELETE',
+    });
     expect(released.status).toBe(200);
   });
 
@@ -157,7 +170,7 @@ describe('pinoutd HTTP API', () => {
     });
     expect(halt.status).toBe(200);
 
-    const safety = await (await fetch(`${base}/v1/safety`)).json() as { state: string };
+    const safety = (await (await fetch(`${base}/v1/safety`)).json()) as { state: string };
     expect(safety.state).toBe('HALTED');
 
     const rejected = await fetch(`${base}/v1/devices/relay-01/invoke`, {
@@ -166,7 +179,7 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ capability: 'relay.set', args: { on: true } }),
     });
     expect(rejected.status).toBe(409);
-    const err = await rejected.json() as { error: { code: string } };
+    const err = (await rejected.json()) as { error: { code: string } };
     expect(err.error.code).toBe('SAFETY_HALTED');
 
     const resumed = await fetch(`${base}/v1/resume`, {
@@ -175,7 +188,7 @@ describe('pinoutd HTTP API', () => {
       body: JSON.stringify({ reason: 'all clear' }),
     });
     expect(resumed.status).toBe(200);
-    const after = await (await fetch(`${base}/v1/safety`)).json() as { state: string };
+    const after = (await (await fetch(`${base}/v1/safety`)).json()) as { state: string };
     expect(after.state).toBe('NORMAL');
   });
 
@@ -185,18 +198,33 @@ describe('pinoutd HTTP API', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ reason: 'emergency drill' }),
     });
-    let safety = await (await fetch(`${base}/v1/safety`)).json() as { state: string; estopRequested: boolean };
+    let safety = (await (await fetch(`${base}/v1/safety`)).json()) as {
+      state: string;
+      estopRequested: boolean;
+    };
     expect(safety.state).toBe('ESTOP_REQUESTED');
     expect(safety.estopRequested).toBe(true);
 
     // resume is refused while estop is active
-    const refused = await fetch(`${base}/v1/resume`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    const refused = await fetch(`${base}/v1/resume`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
     expect(refused.status).toBe(409);
 
-    await fetch(`${base}/v1/estop/clear`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
-    safety = await (await fetch(`${base}/v1/safety`)).json() as { state: string };
+    await fetch(`${base}/v1/estop/clear`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
+    safety = (await (await fetch(`${base}/v1/safety`)).json()) as { state: string };
     expect(safety.state).toBe('HALTED');
-    await fetch(`${base}/v1/resume`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    await fetch(`${base}/v1/resume`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
   });
 
   it('streams events over SSE', async () => {
@@ -216,7 +244,9 @@ describe('pinoutd HTTP API', () => {
     let collected = '';
     const deadline = Date.now() + 3000;
     while (Date.now() < deadline && !collected.includes('operation')) {
-      const timeout = new Promise<{ value?: undefined; done: true }>((resolve) => setTimeout(() => resolve({ done: true }), 150));
+      const timeout = new Promise<{ value?: undefined; done: true }>((resolve) =>
+        setTimeout(() => resolve({ done: true }), 150),
+      );
       const result = await Promise.race([reader.read(), timeout]);
       if (result.done) break;
       collected += decoder.decode(result.value!);
@@ -228,7 +258,7 @@ describe('pinoutd HTTP API', () => {
 
   it('serves the journal', async () => {
     const res = await fetch(`${base}/v1/journal?deviceId=relay-01&limit=5`);
-    const { entries } = await res.json() as { entries: Array<{ kind: string }> };
+    const { entries } = (await res.json()) as { entries: Array<{ kind: string }> };
     expect(entries.length).toBeGreaterThan(0);
     expect(entries.some((e) => e.kind.startsWith('operation.'))).toBe(true);
   });
@@ -237,9 +267,9 @@ describe('pinoutd HTTP API', () => {
 describe('remote binding protection', () => {
   it('refuses non-loopback binding without allowRemote+token', async () => {
     const runtime = new PinoutRuntime();
-    await expect(
-      startDaemon(runtime, { host: '0.0.0.0', port: 0 }),
-    ).rejects.toThrowError(/Refusing to bind non-loopback/);
+    await expect(startDaemon(runtime, { host: '0.0.0.0', port: 0 })).rejects.toThrowError(
+      /Refusing to bind non-loopback/,
+    );
     await expect(
       startDaemon(runtime, { host: '0.0.0.0', port: 0, allowRemote: true }),
     ).rejects.toThrowError(/auth token/);
