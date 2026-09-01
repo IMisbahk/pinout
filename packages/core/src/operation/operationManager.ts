@@ -218,14 +218,13 @@ export class OperationManager {
         operation: operationId,
       });
     }
-    const manager = this;
     return {
       id: operationId,
-      snapshot: () => manager.publicSnapshot(manager.operations.get(operationId)!),
-      waitForResult: () => manager.waitForResult(operationId),
-      cancel: (reason?: string) => manager.cancel(operationId, reason),
-      subscribe: (listener) => manager.subscribeProgress(operationId, listener),
-      progress: () => manager.progressIterable(operationId),
+      snapshot: () => this.publicSnapshot(this.operations.get(operationId)!),
+      waitForResult: () => this.waitForResult(operationId),
+      cancel: (reason?: string) => this.cancel(operationId, reason),
+      subscribe: (listener) => this.subscribeProgress(operationId, listener),
+      progress: () => this.progressIterable(operationId),
     };
   }
 

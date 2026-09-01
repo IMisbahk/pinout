@@ -185,8 +185,9 @@ export class LeaseManager {
   private scopesOverlap(a: Lease, b: LeaseScopeInput): boolean {
     if (!leaseCoversDevice(a, b.deviceId)) return false;
     if (b.kind === 'device') return true;
-    if (a.scope.kind === 'device') return true;
-    return b.capabilities.some((capability) => a.scope.capabilities.includes(capability));
+    const scope = a.scope;
+    if (scope.kind === 'device') return true;
+    return b.capabilities.some((capability) => scope.capabilities.includes(capability));
   }
 }
 

@@ -14,7 +14,7 @@ import { PinoutStructuredError } from '../errors.js';
 import type { ConstraintProvenance, PolicyDecision } from '../spec/types.js';
 import type { LeaseManager } from '../lease/leaseManager.js';
 import { PolicyActionDenied, PolicyConstraintViolation, PolicyPreconditionFailed } from './errors.js';
-import type { PolicyContext } from './types.js';
+import type { PolicyContext, PolicyRule as LegacyPolicyRule } from './types.js';
 import { evaluatePolicies } from './engine.js';
 
 // ---------------------------------------------------------------------------
@@ -28,10 +28,7 @@ export interface SafetyRuleBase {
 }
 
 export type SafetyRule =
-  | (Extract<
-      import('./types.js').PolicyRule,
-      { kind: 'numericRange' | 'stateEquals' | 'workspaceBounds' | 'custom' }
-    > & SafetyRuleBase)
+  | (Extract<LegacyPolicyRule, { kind: 'numericRange' | 'stateEquals' | 'workspaceBounds' | 'custom' }> & SafetyRuleBase)
   | (RateRule & SafetyRuleBase)
   | (InterlockRule & SafetyRuleBase)
   | (SequenceRule & SafetyRuleBase)
@@ -183,7 +180,7 @@ export class SafetyEngine {
   /** Throwing evaluation; rejects with typed policy errors. */
   enforce(context: PolicyContext & { owner?: string }): void {
     // Legacy kinds first, unchanged semantics.
-    evaluatePolicies(this.rules as import('./types.js').PolicyRule[], context);
+    evaluatePolicies(this.rules as LegacyPolicyRule[], context);
 
     const now = this.nowFn();
     for (const rule of this.rules) {
