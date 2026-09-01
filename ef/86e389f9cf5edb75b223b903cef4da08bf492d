@@ -1,0 +1,16 @@
+packages/core/src/graph/deviceGraph.ts
+  h_b8c068798e4e71 1-189
+packages/core/tests/deviceGraph.test.ts
+  h_b8c068798e4e71 1-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ef86e389f9cf5edb75b223b903cef4da08bf492d",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
