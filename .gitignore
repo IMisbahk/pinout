@@ -75,3 +75,6 @@ MEGA_SPRINT_STATE.local.md
 *.local
 *.pid
 *.sock
+
+# Cursor
+.cursor/
