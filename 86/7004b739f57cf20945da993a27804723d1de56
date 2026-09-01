@@ -1,0 +1,16 @@
+packages/core/src/lease/leaseManager.ts
+  h_b8c068798e4e71 1-197
+packages/core/tests/leases.test.ts
+  h_b8c068798e4e71 1-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "867004b739f57cf20945da993a27804723d1de56",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
