@@ -1,0 +1,16 @@
+packages/core/src/journal/journal.ts
+  h_b8c068798e4e71 1-227
+packages/core/tests/journal.test.ts
+  h_b8c068798e4e71 1-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a38ec397a28599da91e8c2774298809765c436e7",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
