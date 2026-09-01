@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PinoutRuntime, relayModule, registerModule } from '../src/index.js';
 import { runtimeToToolDefinitions, classifyToolDanger } from '../src/runtime/toolExport.js';
-import type { CapabilitySafety } from '../src/types.js';
 
 describe('runtimeToToolDefinitions', () => {
   it('exports protocol-neutral tool definitions per device capability', async () => {

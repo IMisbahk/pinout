@@ -35,6 +35,7 @@
   "dependencies": {
     "@pinout/core": "*",
     "@pinout/generator": "*",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "@pinout/daemon": "*"
   }
 }
