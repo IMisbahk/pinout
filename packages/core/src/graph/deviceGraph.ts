@@ -142,6 +142,9 @@ export class DeviceGraph {
     }
 
     const rootId = segments[0];
+    if (rootId === undefined) {
+      throw new PinoutStructuredError('VALIDATION_ERROR', 'VALIDATION', `Address '${address}' has no root device.`);
+    }
     if (!this.nodes.has(rootId)) {
       throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown root device '${rootId}' in address '${address}'.`, { device: rootId });
     }
