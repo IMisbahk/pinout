@@ -1,0 +1,20 @@
+packages/core/src/index.ts
+  h_b8c068798e4e71 278-279
+packages/core/src/operation/idempotencyStore.ts
+  h_b8c068798e4e71 1-124
+packages/core/src/operation/operationManager.ts
+  h_b8c068798e4e71 18,48-49,97,109-114,116,127-137,139,147,153,162-172,394,557
+packages/core/tests/idempotencyAdversarial.test.ts
+  h_b8c068798e4e71 1-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c50bc33026ad6751b891c30547c4d2f883e39091",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
