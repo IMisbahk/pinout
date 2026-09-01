@@ -1,0 +1,18 @@
+package-lock.json
+  h_b8c068798e4e71 938-941,5733-5743
+packages/cli/src/daemonCommands.ts
+  h_b8c068798e4e71 19-24,32-34,54-57,130-134
+packages/cli/tests/daemonCommands.test.ts
+  h_b8c068798e4e71 23-24,71-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "39a10fb38f3781aa5280209653ba00416739e3ca",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
