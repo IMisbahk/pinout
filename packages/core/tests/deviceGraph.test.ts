@@ -32,6 +32,12 @@ function buildRobotCell(): DeviceGraph {
     capabilities: ['stream.rgb', 'snapshot'],
   });
   graph.register({
+    id: 'esp-01',
+    deviceClass: 'gpio',
+    moduleId: 'pinout/esp32',
+    capabilities: ['gpio.write', 'gpio.read'],
+  });
+  graph.register({
     id: 'force-sensor',
     deviceClass: 'sensor.force',
     moduleId: 'pinout/force',

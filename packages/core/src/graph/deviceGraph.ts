@@ -77,12 +77,16 @@ export class DeviceGraph {
 
   /** Attach `childId` as a component of `parentId`. */
   link(parentId: string, childId: string): void {
-    const parent = this.require(parentId);
-    const child = this.require(childId);
+    // Operate on internal storage: get()/require() return defensive copies.
+    const parent = this.nodes.get(parentId);
+    const child = this.nodes.get(childId);
+    if (!parent || !child) {
+      throw new PinoutStructuredError('DEVICE_NOT_FOUND', 'DEVICE', `Unknown device in link('${parentId}', '${childId}').`);
+    }
     if (childId === parentId) {
       throw new PinoutStructuredError('GRAPH_CYCLE', 'CONFIG', `Device '${parentId}' cannot be its own child.`);
     }
-    if (this.descendsFrom(childId, parentId)) {
+    if (this.descendsFrom(parentId, childId)) {
       throw new PinoutStructuredError('GRAPH_CYCLE', 'CONFIG', `Linking '${parentId}' under '${childId}' would create a cycle.`);
     }
     if (!parent.children.includes(childId)) {
