@@ -80,9 +80,11 @@ const REPAIR_RULES: RepairRule[] = [
     applies: (error) => error.code === 'TS2724' || error.code === 'TS2305',
     describe: () => 'remove import of a symbol the emitter did not generate',
     apply: (filePath, error) => {
-      const symbolMatch = /'([^']+)'/.exec(error.message);
-      if (!symbolMatch) return false;
-      const symbol = symbolMatch[1]!;
+      // The symbol is the LAST quoted string in the message ('./types.js' is
+      // the module for TS2305).
+      const quotes = [...error.message.matchAll(/'([^']+)'/g)];
+      if (quotes.length === 0) return false;
+      const symbol = quotes[quotes.length - 1]![1]!;
       if (!existsSync(filePath)) return false;
       const content = readFileSync(filePath, 'utf8');
       const lines = content.split('\n');
@@ -107,7 +109,11 @@ const REPAIR_RULES: RepairRule[] = [
       const symbol = symbolMatch[1]!;
       if (!existsSync(filePath)) return false;
       const content = readFileSync(filePath, 'utf8');
-      if (new RegExp(`\\b${symbol}\\b\\s*[=(]`).test(content)) return false;
+      // Guard against double-definition: match DEFINITIONS only, not call sites.
+      const definitionPattern = new RegExp(
+        `(function\\s+${symbol}\\s*\\(|const\\s+${symbol}\\s*=|let\\s+${symbol}\\s*=|class\\s+${symbol}\\b)`,
+      );
+      if (definitionPattern.test(content)) return false;
       const stub = `\n\nfunction ${symbol}(payload: Record<string, unknown>): never {\n  throw new Error('GENERATION_GAP: helper ${symbol} was not fully generated; refusing to fabricate hardware behavior.');\n}\n`;
       writeFileSync(filePath, content + stub);
       return true;
