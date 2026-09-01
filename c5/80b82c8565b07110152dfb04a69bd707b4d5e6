@@ -1,0 +1,22 @@
+firmware/micropython-bridge/README.md
+  h_b8c068798e4e71 1-48
+firmware/micropython-bridge/board-descriptor.json
+  h_b8c068798e4e71 1-38
+firmware/micropython-bridge/config.py
+  h_b8c068798e4e71 1-29
+firmware/micropython-bridge/main.py
+  h_b8c068798e4e71 1-450
+firmware/micropython-bridge/validate.js
+  h_b8c068798e4e71 1-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c580b82c8565b07110152dfb04a69bd707b4d5e6",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
