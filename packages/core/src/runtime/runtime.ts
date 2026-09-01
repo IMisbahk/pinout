@@ -1,7 +1,7 @@
 import { PinoutError } from '../errors.js';
 import { mergeModulePolicies } from '../module/policies.js';
 import { getModule } from '../modules/registry.js';
-import { DeviceInstance } from './deviceInstance.js';
+import { DeviceInstance, type InvokeOptions } from './deviceInstance.js';
 import { ProtocolDeviceBackend } from './protocolBackend.js';
 import { createRuntimeFromConfig, type FromConfigOptions } from './fromConfig.js';
 import type {
@@ -172,8 +172,9 @@ export class PinoutRuntime {
     deviceId: string,
     capability: string,
     input: Record<string, unknown> = {},
+    options: InvokeOptions = {},
   ): Promise<Record<string, unknown>> {
-    return this.getDevice(deviceId).invoke(capability, input);
+    return this.getDevice(deviceId).invoke(capability, input, options);
   }
 
   async close(): Promise<void> {

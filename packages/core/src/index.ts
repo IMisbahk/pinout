@@ -188,6 +188,9 @@ export {
   buildMcpToolName,
   type RuntimeAgentTool,
 } from './runtime/agentTools.js';
+export { runtimeToToolDefinitions, classifyToolDanger } from './runtime/toolExport.js';
+export type { ToolDefinition, ToolDanger } from './runtime/toolExport.js';
+export type { InvokeOptions } from './runtime/deviceInstance.js';
 export { getModule, listModules, registerModule } from './modules/registry.js';
 export {
   esp32Module,
