@@ -1,0 +1,24 @@
+packages/core/src/spec/danger.ts
+  h_b8c068798e4e71 1-27
+packages/core/src/spec/index.ts
+  h_b8c068798e4e71 1-4
+packages/core/src/spec/types.ts
+  h_b8c068798e4e71 1-408
+packages/core/src/spec/units.ts
+  h_b8c068798e4e71 1-115
+packages/core/src/spec/version.ts
+  h_b8c068798e4e71 1-18
+packages/core/tests/spec.test.ts
+  h_b8c068798e4e71 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3846c016bbe21646d7e6d924457c3740e1617c42",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
