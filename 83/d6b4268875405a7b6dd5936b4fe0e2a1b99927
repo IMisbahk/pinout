@@ -1,0 +1,44 @@
+fixtures/eval/ambiguous-sdk/README.md
+  h_b8c068798e4e71 1-10
+fixtures/eval/ambiguous-sdk/manual.md
+  h_b8c068798e4e71 1-16
+fixtures/eval/ground-truth.json
+  h_b8c068798e4e71 1-266
+fixtures/eval/heldout-envsensor/README.md
+  h_b8c068798e4e71 1-13
+fixtures/eval/industrial-modbus/register-map.md
+  h_b8c068798e4e71 1-20
+fixtures/eval/lab-instrument/manual.md
+  h_b8c068798e4e71 1-20
+fixtures/eval/microcontroller/manual.md
+  h_b8c068798e4e71 1-26
+fixtures/eval/microcontroller/nx32.h
+  h_b8c068798e4e71 1-7
+fixtures/eval/robot-arm/armlink.py
+  h_b8c068798e4e71 1-23
+fixtures/eval/robot-arm/manual.md
+  h_b8c068798e4e71 1-10
+fixtures/eval/sensor/datasheet.md
+  h_b8c068798e4e71 1-13
+packages/generator/src/eval/realityCheck.ts
+  h_b8c068798e4e71 1-329
+packages/generator/src/extract/heuristicExtractor.ts
+  h_b8c068798e4e71 2,7,20,22,26-46,68-70,165,190,207-287,377,383-385,393-483
+packages/generator/src/semantic/capabilityMapper.ts
+  h_b8c068798e4e71 104,107-171
+packages/generator/src/types/ir.ts
+  h_b8c068798e4e71 95-108
+packages/generator/tests/realityCheck.test.ts
+  h_b8c068798e4e71 1-105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "83d6b4268875405a7b6dd5936b4fe0e2a1b99927",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
