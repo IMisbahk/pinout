@@ -1,0 +1,46 @@
+packages/protocols-scpi/README.md
+  h_b8c068798e4e71 1-185
+packages/protocols-scpi/package.json
+  h_b8c068798e4e71 1-31
+packages/protocols-scpi/src/client.ts
+  h_b8c068798e4e71 1-346
+packages/protocols-scpi/src/errors.ts
+  h_b8c068798e4e71 1-60
+packages/protocols-scpi/src/index.ts
+  h_b8c068798e4e71 1-36
+packages/protocols-scpi/src/instruments/digitalMultimeter.ts
+  h_b8c068798e4e71 1-25
+packages/protocols-scpi/src/instruments/functionGenerator.ts
+  h_b8c068798e4e71 1-54
+packages/protocols-scpi/src/instruments/oscilloscope.ts
+  h_b8c068798e4e71 1-136
+packages/protocols-scpi/src/instruments/powerSupply.ts
+  h_b8c068798e4e71 1-56
+packages/protocols-scpi/src/instruments/scpiInstrument.ts
+  h_b8c068798e4e71 1-64
+packages/protocols-scpi/src/parser.ts
+  h_b8c068798e4e71 1-383
+packages/protocols-scpi/tests/client.test.ts
+  h_b8c068798e4e71 1-204
+packages/protocols-scpi/tests/helpers.ts
+  h_b8c068798e4e71 1-55
+packages/protocols-scpi/tests/instruments.test.ts
+  h_b8c068798e4e71 1-213
+packages/protocols-scpi/tests/parser.test.ts
+  h_b8c068798e4e71 1-167
+packages/protocols-scpi/tsconfig.json
+  h_b8c068798e4e71 1-10
+tsconfig.json
+  h_b8c068798e4e71 21-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c191abcd259b381d8a12bce9486cbe52375fe585",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
