@@ -1,0 +1,16 @@
+packages/core/tests/udpTransport.test.ts
+  h_b8c068798e4e71 1-169
+packages/core/tests/webSocketTransport.test.ts
+  h_b8c068798e4e71 1-257
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6f8599218969327a5b8ffae82315b11f306bf852",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
