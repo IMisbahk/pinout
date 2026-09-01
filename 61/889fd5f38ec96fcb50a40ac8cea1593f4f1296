@@ -1,0 +1,20 @@
+packages/core/src/graph/deviceGraph.ts
+  h_b8c068798e4e71 145-147
+packages/core/src/halt/haltCoordinator.ts
+  h_b8c068798e4e71 58
+packages/core/src/journal/journal.ts
+  h_b8c068798e4e71 118
+packages/core/src/stream/streamBus.ts
+  h_b8c068798e4e71 162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "61889fd5f38ec96fcb50a40ac8cea1593f4f1296",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
