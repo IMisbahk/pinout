@@ -108,11 +108,10 @@ export class OperationManager {
     if (options.idempotencyKey) {
       const key = idempotencyKeyFor(options.deviceId, options.capability, options.idempotencyKey);
       const existingId = this.idempotency.get(key);
-      if (existingId) {
-        const existing = this.operations.get(existingId);
-        if (existing && !isTerminalOperationStatus(existing.status)) {
-          return { deduped: true, handle: this.getHandle(existingId) };
-        }
+      if (existingId && this.operations.has(existingId)) {
+        // The key resolves to the original outcome forever, so a client retry
+        // can never re-trigger a physical side effect.
+        return { deduped: true, handle: this.getHandle(existingId) };
       }
     }
 

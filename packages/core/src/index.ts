@@ -231,6 +231,55 @@ export { createSimulatedLimitSwitchBackend } from './modules/limitSwitch/simulat
 export { createSimulatedForceBackend } from './modules/force/simulator.js';
 export { createSimulatedMobileBaseBackend } from './modules/mobileBase/simulator.js';
 export { evaluatePolicies } from './policy/engine.js';
+export { SafetyEngine, mergeModuleAndDeploymentRules } from './policy/safety.js';
+export type {
+  SafetyRule,
+  RateRule,
+  InterlockRule,
+  SequenceRule,
+  ApprovalRule,
+  LeaseRule,
+  DeadmanRule,
+  ResourceRule,
+  ConstraintConflict,
+  ApprovalRecord,
+} from './policy/safety.js';
+export { OperationManager, isTerminalOperationStatus } from './operation/operationManager.js';
+export type {
+  OperationHandle,
+  OperationRunContext,
+  BeginOperationOptions,
+  OperationBeginResult,
+} from './operation/operationManager.js';
+export { LeaseManager } from './lease/leaseManager.js';
+export type { LeaseScopeInput, AcquireLeaseOptions, LeaseConflictDetails } from './lease/leaseManager.js';
+export { HaltCoordinator, safetyStateEventName } from './halt/haltCoordinator.js';
+export type { SafetyStateName, SafetyStateChange, HaltVerdict } from './halt/haltCoordinator.js';
+export { DeviceGraph } from './graph/deviceGraph.js';
+export type { DeviceGraphNodeInput, GraphQuery, ResolvedAddress } from './graph/deviceGraph.js';
+export {
+  Journal,
+  MemoryJournalStorage,
+  FileJournalStorage,
+  loadJournalEntries,
+  redactPayload,
+} from './journal/journal.js';
+export type {
+  JournalEntry,
+  JournalEntryKind,
+  JournalQuery,
+  JournalStorage,
+  JournalOptions,
+} from './journal/journal.js';
+export { StreamBus } from './stream/streamBus.js';
+export type {
+  StreamDescriptor,
+  StreamFrame,
+  StreamHandle,
+  StreamStats,
+  BackpressurePolicy,
+  SubscribeOptions,
+} from './stream/streamBus.js';
 
 export type {
   Transport,

@@ -1,0 +1,28 @@
+{
+  "name": "@pinout/daemon",
+  "version": "0.1.0",
+  "description": "pinoutd — the local physical execution service for Pinout.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinoutlabs/pinout.git"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "pinoutd": "./dist/main.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pinout/core": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1"
+  }
+}

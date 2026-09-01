@@ -159,7 +159,6 @@ export class StreamBus {
     }
     subs.add(sub);
 
-    const bus = this;
     let endedResolve: () => void;
     const ended = new Promise<void>((resolve) => {
       endedResolve = resolve;
