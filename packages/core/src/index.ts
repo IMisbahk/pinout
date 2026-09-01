@@ -5,6 +5,8 @@ export { simulatedEsp32 } from './drivers/esp32/simulatedTransport.js';
 export { listSerialPorts, serialPort } from './serial.js';
 export { loopbackTransport, LoopbackTransport } from './transports/loopbackTransport.js';
 export { tcpTransport } from './transports/tcpTransport.js';
+export { udpTransport, UdpTransport, type UdpTransportOptions } from './transports/udpTransport.js';
+export { webSocketTransport, type WebSocketTransportOptions } from './transports/webSocketTransport.js';
 export {
   capabilityCatalog,
   describeCapabilities,
