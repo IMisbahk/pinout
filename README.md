@@ -25,7 +25,7 @@ The unit of integration is a semantic capability—`distance.read`, `motion.move
 Node 20+ is required.
 
 ```bash
-git clone https://github.com/imisbahk/pinout.git
+git clone https://github.com/pinoutlabs/pinout.git
 cd pinout
 npm install
 npm test
