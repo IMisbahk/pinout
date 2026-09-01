@@ -18,6 +18,9 @@
     },
     {
       "path": "packages/protocols-modbus"
+    },
+    {
+      "path": "packages/protocols-scpi"
     }
   ]
 }
