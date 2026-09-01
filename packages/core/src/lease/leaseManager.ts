@@ -191,7 +191,5 @@ export class LeaseManager {
 }
 
 function leaseCoversDevice(lease: Lease, deviceId: string): boolean {
-  return lease.scope.kind === 'device'
-    ? lease.scope.deviceId === deviceId
-    : lease.scope.deviceId === deviceId;
+  return lease.scope.deviceId === deviceId;
 }

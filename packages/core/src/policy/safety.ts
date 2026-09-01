@@ -121,7 +121,7 @@ export interface SafetyEngineOptions {
   now?: () => number;
   leaseManager?: LeaseManager;
   /** Called for every rejection with the machine-readable decision. */
-  onRejection?: (decision: Required<Pick<PolicyDecision, 'allowed'>> & PolicyDecision, context: PolicyContext) => void;
+  onRejection?: (decision: PolicyDecision, context: PolicyContext) => void;
 }
 
 interface RateWindow {
@@ -137,7 +137,7 @@ interface ResourceBudget {
 export class SafetyEngine {
   private readonly rules: SafetyRule[];
   private readonly nowFn: () => number;
-  private readonly leaseManager?: LeaseManager;
+  private readonly leaseManager: LeaseManager | undefined;
   private readonly onRejection?: SafetyEngineOptions['onRejection'];
 
   private readonly rateWindows = new Map<string, RateWindow>();
@@ -166,13 +166,14 @@ export class SafetyEngine {
         error instanceof PolicyActionDenied ||
         error instanceof PinoutStructuredError
       ) {
+        const ruleId = (error as { ruleId?: string }).ruleId;
         const decision: PolicyDecision = {
           allowed: false,
-          code: error instanceof PinoutStructuredError ? error.code : error.code,
+          code: error.code,
           message: error.message,
-          ruleId: (error as { ruleId?: string }).ruleId,
+          ...(ruleId !== undefined ? { ruleId } : {}),
         };
-        this.onRejection?.({ allowed: false, ...decision }, context);
+        this.onRejection?.(decision, context);
         return decision;
       }
       throw error;
@@ -384,7 +385,7 @@ export class SafetyEngine {
       capability: context.capability,
       details: { ...(details ?? {}), ruleId: rule.id },
     });
-    this.onRejection?.({ allowed: false, code, message, ruleId: rule.id }, context);
+    this.onRejection?.({ allowed: false, code, message, ...(rule.id !== undefined ? { ruleId: rule.id } : {}) }, context);
     throw error;
   }
 }
