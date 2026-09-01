@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1",
+  "bridgeId": "pinout/micropython-bridge",
+  "family": "micropython",
+  "mcu": "generic",
+  "firmware": {
+    "entry": "main.py",
+    "config": "config.py",
+    "version": "0.1.0",
+    "protocol": 1
+  },
+  "transport": {
+    "kind": "uart",
+    "baudRate": 115200
+  },
+  "capabilities": [
+    "sys.ping",
+    "sys.info",
+    "gpio.mode",
+    "gpio.read",
+    "gpio.write",
+    "gpio.toggle",
+    "gpio.watch",
+    "adc.read",
+    "pwm.configure",
+    "pwm.write",
+    "i2c.scan",
+    "i2c.read",
+    "i2c.write",
+    "spi.transfer"
+  ],
+  "pinPolicy": {
+    "reservedPins": [],
+    "note": "Board-agnostic: per-board reservations are set in config.py at deployment time. The bridge never assumes a pin map it was not given."
+  },
+  "support": "EXPERIMENTAL",
+  "notes": "Runtime capability detection guards machine.* usage; unsupported peripherals return protocol failures rather than fabricating values. Not hardware-verified."
+}
