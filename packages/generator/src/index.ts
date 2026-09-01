@@ -21,3 +21,22 @@ export type { HardwareInterfaceIR, CandidateCapability, Uncertainty } from './ty
 export type { SourceDocument } from './types/source.js';
 export type { GeneratorModel, GeneratorProvider } from './providers/types.js';
 export { confidenceBand } from './types/ir.js';
+export { ingestPdf, pdfPagesToEvidence, extractTextFromContentStream } from './ingest/pdfIngest.js';
+export type { PdfIngestResult, PdfPageText } from './ingest/pdfIngest.js';
+export {
+  classifyProvenance,
+  detectContradictions,
+  applyProvenancePolicy,
+  scanForPromptInjection,
+  classifyImplementationState,
+} from './safety/provenance.js';
+export type {
+  SafetyProvenance,
+  ProvenancedConstraint,
+  Contradiction,
+  DocumentedClaim,
+  InjectionFinding,
+  ImplementationState,
+} from './safety/provenance.js';
+export { repairGeneratedModule, parseCompilerErrors } from './pipeline/repair.js';
+export type { CompilerError, RepairAttempt, RepairResult, RepairOptions } from './pipeline/repair.js';
