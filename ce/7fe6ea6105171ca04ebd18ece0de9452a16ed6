@@ -1,0 +1,16 @@
+packages/generator/src/ingest/pdfIngest.ts
+  h_b8c068798e4e71 1-339
+packages/generator/tests/pdfIngest.test.ts
+  h_b8c068798e4e71 1-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ce7fe6ea6105171ca04ebd18ece0de9452a16ed6",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
