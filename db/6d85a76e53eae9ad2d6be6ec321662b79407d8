@@ -1,0 +1,28 @@
+docs/spec/capabilities.md
+  h_b8c068798e4e71 1-52
+docs/spec/device.md
+  h_b8c068798e4e71 1-57
+docs/spec/errors.md
+  h_b8c068798e4e71 1-49
+docs/spec/journal.md
+  h_b8c068798e4e71 1-36
+docs/spec/leases.md
+  h_b8c068798e4e71 1-33
+docs/spec/operations.md
+  h_b8c068798e4e71 1-66
+docs/spec/overview.md
+  h_b8c068798e4e71 1-51
+docs/spec/safety.md
+  h_b8c068798e4e71 1-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "db6d85a76e53eae9ad2d6be6ec321662b79407d8",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
