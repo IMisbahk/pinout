@@ -12,3 +12,6 @@ coverage/
 .idea/
 *.pyc
 .cache/
+
+
+.cursor
