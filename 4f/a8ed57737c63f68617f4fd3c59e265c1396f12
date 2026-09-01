@@ -1,0 +1,14 @@
+packages/core/tests/faultInjection.test.ts
+  h_b8c068798e4e71 1-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4fa8ed57737c63f68617f4fd3c59e265c1396f12",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
