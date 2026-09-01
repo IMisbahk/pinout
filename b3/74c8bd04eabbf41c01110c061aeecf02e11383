@@ -1,0 +1,16 @@
+packages/core/src/lease/leaseManager.ts
+  h_b8c068798e4e71 194
+packages/core/src/policy/safety.ts
+  h_b8c068798e4e71 124,140,169,172,174,176,388
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b374c8bd04eabbf41c01110c061aeecf02e11383",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
