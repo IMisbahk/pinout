@@ -58,7 +58,7 @@ export class HaltCoordinator {
   private readonly externalOnStateChange?: (change: SafetyStateChange) => void;
 
   constructor(options: HaltCoordinatorOptions = {}) {
-    this.nowFn = options.now ?? Date.now();
+    this.nowFn = options.now ?? Date.now;
     this.externalOnStateChange = options.onStateChange;
   }
 
