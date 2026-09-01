@@ -1,0 +1,14 @@
+packages/generator/src/pipeline/repair.ts
+  h_b8c068798e4e71 83-87,112-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6d5adcf3023027fa1ea5fceb04f4000ace5de361",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
