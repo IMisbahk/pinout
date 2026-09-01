@@ -1,0 +1,16 @@
+packages/core/src/stream/streamBus.ts
+  h_b8c068798e4e71 1-256
+packages/core/tests/streamBus.test.ts
+  h_b8c068798e4e71 1-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a655cba254ba78ce3efcbbfdd2c7e6e19acd5b99",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
