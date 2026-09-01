@@ -1,0 +1,266 @@
+{
+  "schemaVersion": "1",
+  "note": "Human-authored ground truth for the Reality Check evaluation corpus. All fixture content is original text authored for Pinout; no copyrighted vendor manuals are committed.",
+  "targets": [
+    {
+      "id": "microcontroller",
+      "sourceDir": "microcontroller",
+      "device": {
+        "vendor": "NexCore",
+        "model": "NX-32",
+        "deviceClass": "microcontroller"
+      },
+      "capabilities": [
+        "gpio.write",
+        "gpio.read",
+        "i2c.write",
+        "i2c.read",
+        "pwm.write"
+      ],
+      "vendorNamesExpected": [
+        "gpio_write",
+        "gpio_read",
+        "i2c_write",
+        "i2c_read"
+      ],
+      "documentedSafety": [
+        {
+          "capability": "gpio.write",
+          "argument": "value",
+          "note": "max 40 mA per pin (electrical limit; not a numeric argument bound in the API)"
+        }
+      ],
+      "mustHaveUncertainties": false,
+      "mustNotInvent": [
+        "pwm.write (documented in header but outside truth scope)",
+        "usb capabilities",
+        "bluetooth capabilities"
+      ],
+      "expectedInterfaces": [
+        "serial"
+      ],
+      "contradictionsExpected": 0
+    },
+    {
+      "id": "robot-arm",
+      "sourceDir": "robot-arm",
+      "device": {
+        "vendor": "Motion Robotics",
+        "model": "MA-6",
+        "deviceClass": "robot.manipulator"
+      },
+      "capabilities": [
+        "motion.move_joint",
+        "motion.move_to",
+        "motion.home",
+        "motion.stop",
+        "pose.read",
+        "gripper.close",
+        "payload.set"
+      ],
+      "vendorNamesExpected": [
+        "move_joint",
+        "move_to",
+        "home",
+        "stop",
+        "get_pose",
+        "gripper_close",
+        "set_payload"
+      ],
+      "documentedSafety": [
+        {
+          "capability": "gripper.close",
+          "argument": "force_newtons",
+          "minimum": 20,
+          "maximum": 100,
+          "unit": "N"
+        }
+      ],
+      "mustHaveUncertainties": false,
+      "mustNotInvent": [
+        "payload.set as hard safety rule (payload is configuration, not a safety limit)"
+      ],
+      "expectedInterfaces": [
+        "sdk"
+      ],
+      "contradictionsExpected": 0
+    },
+    {
+      "id": "lab-instrument",
+      "sourceDir": "lab-instrument",
+      "device": {
+        "vendor": "VoltMaster Instruments",
+        "model": "PX-3",
+        "deviceClass": "instrument.power-supply"
+      },
+      "capabilities": [
+        "voltage.set",
+        "voltage.read",
+        "current.set",
+        "current.read",
+        "power.output.enable"
+      ],
+      "vendorNamesExpected": [
+        "VOLT",
+        "MEAS:VOLT",
+        "CURR",
+        "MEAS:CURR",
+        "OUTP"
+      ],
+      "documentedSafety": [
+        {
+          "capability": "voltage.set",
+          "argument": "voltage",
+          "minimum": 0,
+          "maximum": 30,
+          "unit": "V"
+        },
+        {
+          "capability": "current.set",
+          "argument": "current",
+          "minimum": 0,
+          "maximum": 5,
+          "unit": "A"
+        }
+      ],
+      "mustHaveUncertainties": false,
+      "mustNotInvent": [
+        "30 V output limit (never raised)",
+        "frequency.set (function generator capabilities do not apply to a PSU)"
+      ],
+      "expectedInterfaces": [
+        "serial",
+        "tcp"
+      ],
+      "contradictionsExpected": 0
+    },
+    {
+      "id": "industrial-modbus",
+      "sourceDir": "industrial-modbus",
+      "device": {
+        "vendor": "ThermoPlant",
+        "model": "TP-9",
+        "deviceClass": "industrial.process-controller"
+      },
+      "capabilities": [
+        "temperature.read",
+        "temperature.set",
+        "pump.run"
+      ],
+      "vendorNamesExpected": [
+        "temperature(read)",
+        "setpoint(write)",
+        "pump.run(write)"
+      ],
+      "documentedSafety": [
+        {
+          "capability": "temperature.set",
+          "argument": "setpoint",
+          "minimum": 5,
+          "maximum": 95,
+          "unit": "C"
+        }
+      ],
+      "mustHaveUncertainties": true,
+      "mustNotInvent": [
+        "writable pressure register (pressure is read-only)",
+        "writing holding register 40020 (maintenance flag) as a capability"
+      ],
+      "expectedInterfaces": [
+        "tcp"
+      ],
+      "contradictionsExpected": 0
+    },
+    {
+      "id": "sensor",
+      "sourceDir": "sensor",
+      "device": {
+        "vendor": "LidarOne",
+        "model": "L4",
+        "deviceClass": "sensor.distance"
+      },
+      "capabilities": [
+        "distance.read"
+      ],
+      "vendorNamesExpected": [
+        "distance_read"
+      ],
+      "documentedSafety": [
+        {
+          "capability": "distance.read",
+          "argument": null,
+          "note": "measurement range 0.15-12 m; sensor returns errors out of range rather than clamping"
+        }
+      ],
+      "mustHaveUncertainties": false,
+      "mustNotInvent": [
+        "distance.set (sensors do not actuate)",
+        "clamped out-of-range values"
+      ],
+      "expectedInterfaces": [
+        "serial"
+      ],
+      "contradictionsExpected": 0
+    },
+    {
+      "id": "ambiguous-sdk",
+      "sourceDir": "ambiguous-sdk",
+      "device": {
+        "vendor": "ThermalBox",
+        "model": "TB-1",
+        "deviceClass": "lab.environmental_chamber"
+      },
+      "capabilities": [
+        "temperature.set",
+        "temperature.read",
+        "cycle.start"
+      ],
+      "vendorNamesExpected": [
+        "set_temp",
+        "get_temp"
+      ],
+      "documentedSafety": [
+        {
+          "capability": "temperature.set",
+          "argument": "temperature",
+          "maximum": 60,
+          "unit": "C"
+        }
+      ],
+      "mustHaveUncertainties": true,
+      "mustNotInvent": [
+        "maximum 85 C from the example call as a hard limit",
+        "any hard numeric rule from the contradictory example"
+      ],
+      "expectedInterfaces": [
+        "sdk"
+      ],
+      "contradictionsExpected": 1
+    },
+    {
+      "id": "heldout-envsensor",
+      "sourceDir": "heldout-envsensor",
+      "device": {
+        "vendor": "AeroSense",
+        "model": "Q7",
+        "deviceClass": "sensor.environment"
+      },
+      "capabilities": [
+        "humidity.read"
+      ],
+      "vendorNamesExpected": [
+        "humidity_read"
+      ],
+      "documentedSafety": [],
+      "mustHaveUncertainties": false,
+      "mustNotInvent": [
+        "humidity.set (sensors do not actuate)"
+      ],
+      "expectedInterfaces": [
+        "serial"
+      ],
+      "contradictionsExpected": 0,
+      "note": "HELD-OUT: authored after extractor tuning to check generalization. Report scores honestly."
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 import { evidenceFromMatch, findLineEvidence } from '../ingest/evidence.js';
+import { detectContradictions } from '../safety/provenance.js';
 import { inferDeviceClass, mapVendorSymbol } from '../semantic/capabilityMapper.js';
 import type {
   CandidateCapability,
   CandidateSafetyConstraint,
+  DocumentedNumericClaim,
   HardwareInterface,
   HardwareInterfaceIR,
   HardwareDeviceInference,
@@ -15,10 +17,32 @@ export function extractHardwareIr(documents: SourceDocument[]): HardwareInterfac
   const uncertainties: Uncertainty[] = [];
   const capabilities = new Map<string, CandidateCapability>();
   const safety: CandidateSafetyConstraint[] = [];
+  const claims: DocumentedNumericClaim[] = [];
 
-  extractCapabilities(documents, capabilities, uncertainties);
+  extractCapabilities(documents, capabilities, uncertainties, claims);
   extractSafety(documents, text, safety, uncertainties, capabilities);
   detectAmbiguities(documents, text, uncertainties, safety);
+
+  // Contradiction pass: examples vs documented bounds are DATA-vs-DATA
+  // conflicts that must be surfaced for human review, never auto-resolved.
+  {
+    const provenancedSafety = safety.map((constraint) => ({
+      ...constraint,
+      provenance: (constraint.documented && constraint.confidence >= 0.8
+        ? 'DOCUMENTED'
+        : 'INFERRED') as 'DOCUMENTED' | 'INFERRED',
+      hardEligible: false,
+    }));
+    const contradictions = detectContradictions(provenancedSafety, claims);
+    if (contradictions.length > 0) {
+      uncertainties.push({
+        id: 'source-contradictions',
+        message: `${contradictions.length} contradiction(s) between sources detected; hard policies suppressed pending human review.`,
+        severity: 'critical',
+        confidence: 0.99,
+      });
+    }
+  }
 
   if (/TCP|port\s*\d+/i.test(text) && !/timeout/i.test(text)) {
     uncertainties.push({
@@ -40,6 +64,9 @@ export function extractHardwareIr(documents: SourceDocument[]): HardwareInterfac
   };
   if (state) {
     ir.state = state;
+  }
+  if (claims.length > 0) {
+    ir.claims = claims;
   }
   return ir;
 }
@@ -135,6 +162,7 @@ function extractCapabilities(
   documents: SourceDocument[],
   capabilities: Map<string, CandidateCapability>,
   uncertainties: Uncertainty[],
+  claims: DocumentedNumericClaim[],
 ): void {
   const symbolPattern =
     /\b(function|def|void|int|float|bool|async)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(|^\s*([A-Z_]{3,}[A-Z0-9_]*)\s*$/gm;
@@ -159,6 +187,7 @@ function extractCapabilities(
       );
     }
 
+    const isProse = doc.type === 'md' || doc.type === 'txt' || doc.type === 'yaml';
     for (const line of doc.content.split('\n')) {
       const cmdMatch = line.match(/^(SET TEMP|GET TEMP|OPEN DOOR|CLOSE DOOR|LED:ON|LED:OFF)/i);
       if (cmdMatch) {
@@ -171,6 +200,87 @@ function extractCapabilities(
             cmdMatch[1]!,
             evidenceFromMatch(doc, doc.content.indexOf(line), line),
           );
+        }
+        continue;
+      }
+
+      // SCPI-style command reference lines, e.g. "VOLT <value>" or "MEAS:VOLT?".
+      if (isProse) {
+        const scpiMatch = line.match(/^\s*([A-Z][A-Z:]*\??)\s*(?:<|ON\b|OFF\b|\?|$)/);
+        if (scpiMatch) {
+          const mapping = mapVendorSymbol(scpiMatch[1]!);
+          if (mapping) {
+            mergeCapability(
+              capabilities,
+              mapping.capabilityId,
+              Math.min(mapping.confidence, 0.85),
+              scpiMatch[1]!,
+              evidenceFromMatch(doc, doc.content.indexOf(line), line),
+            );
+          }
+          continue;
+        }
+
+        // Modbus register-map table rows:
+        // | 40010 | holding | setpoint | write | 0.1 | C |
+        const registerRow = line.match(
+          /^\|\s*\d+\s*\|\s*(holding|input|coil|discrete)\s*\|\s*([a-zA-Z0-9_.-]+)\s*\|\s*(read|write)\s*\|/,
+        );
+        if (registerRow) {
+          const name = registerRow[2]!;
+          const access = registerRow[3]!;
+          const mapping = mapVendorSymbol(name);
+          if (mapping) {
+            mergeCapability(
+              capabilities,
+              mapping.capabilityId,
+              Math.min(mapping.confidence + 0.05, 0.9),
+              `${name}(${access})`,
+              evidenceFromMatch(doc, doc.content.indexOf(line), line),
+            );
+            if (access === 'read') {
+              const readMapping = mapVendorSymbol(`read_${name.split('.').pop()}`);
+              if (readMapping && !capabilities.has(readMapping.capabilityId)) {
+                mergeCapability(
+                  capabilities,
+                  readMapping.capabilityId,
+                  0.7,
+                  name,
+                  evidenceFromMatch(doc, doc.content.indexOf(line), line),
+                );
+              }
+            }
+          }
+        }
+
+        // Bare SDK calls in prose: set_temp(85), distance_read(), gpio_write(pin, value).
+        const bareCall = line.match(/(?:^|\s|`)\s*([a-z][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
+        if (bareCall) {
+          const symbol = bareCall[1]!;
+          const mapping = mapVendorSymbol(symbol);
+          if (mapping) {
+            mergeCapability(
+              capabilities,
+              mapping.capabilityId,
+              Math.min(mapping.confidence, 0.82),
+              symbol,
+              evidenceFromMatch(doc, doc.content.indexOf(line), line),
+            );
+            // Record numeric example calls as claims (data for contradiction
+            // detection, never hard rules).
+            const numericArg = bareCall[2]!.split(',').map((part) => part.trim()).find((part) => /^-?\d+(?:\.\d+)?$/.test(part));
+            if (numericArg !== undefined && !mapping.capabilityId.startsWith('vendor.')) {
+              const value = Number.parseFloat(numericArg);
+              if (!claims.some((claim) => claim.capability === mapping.capabilityId && claim.value === value)) {
+                claims.push({
+                  claim: `${symbol}(${numericArg}) in ${doc.path}`,
+                  capability: mapping.capabilityId,
+                  value,
+                  evidence: [evidenceFromMatch(doc, doc.content.indexOf(line), line)],
+                });
+              }
+            }
+          }
         }
         continue;
       }
@@ -264,20 +374,111 @@ function extractSafety(
   for (const doc of documents) {
     const explicitRange = findLineEvidence(
       doc,
-      /(?:operating|safe|allowed)?\s*temperature\s*:?\s*(\d+)\s*°?\s*C?\s*(?:to|–|-)\s*(\d+)\s*°?\s*C?/i,
+      /(?:temperature|setpoint)[^.\n]{0,40}?(\d+(?:\.\d+)?)\s*°?\s*(?:C\b)?\s*(?:to|–|-)\s*(\d+(?:\.\d+)?)\s*°?\s*C\b/i,
     );
     if (explicitRange && capabilities.has('temperature.set')) {
       safety.push({
         type: 'range',
         capability: 'temperature.set',
-        argument: 'temperature',
-        minimum: Number.parseInt(explicitRange.match[1]!, 10),
-        maximum: Number.parseInt(explicitRange.match[2]!, 10),
+        argument: /setpoint/i.test(explicitRange.match[0]) ? 'setpoint' : 'temperature',
+        minimum: Number.parseFloat(explicitRange.match[1]!),
+        maximum: Number.parseFloat(explicitRange.match[2]!),
         confidence: 0.99,
         evidence: [explicitRange.evidence],
         requiresHumanReview: false,
         documented: true,
       });
+    }
+
+    // "Measurement range: 0.15 m to 12 m" (sensor operating envelope).
+    const distanceRange = findLineEvidence(
+      doc,
+      /(?:measurement|operating)\s*range[^.\n]{0,40}?(\d+(?:\.\d+)?)\s*(?:m\b)?\s*(?:to|-)\s*(\d+(?:\.\d+)?)\s*m\b/i,
+    );
+    if (distanceRange && capabilities.has('distance.read')) {
+      safety.push({
+        type: 'range',
+        capability: 'distance.read',
+        minimum: Number.parseFloat(distanceRange.match[1]!),
+        maximum: Number.parseFloat(distanceRange.match[2]!),
+        confidence: 0.95,
+        evidence: [distanceRange.evidence],
+        requiresHumanReview: false,
+        documented: true,
+      });
+    }
+
+    // "Gripper force must stay between 20 and 100 N."
+    const forceBetween = findLineEvidence(
+      doc,
+      /gripper[^.\n]{0,60}?between\s*(\d+(?:\.\d+)?)\s*(?:and|to)\s*(\d+(?:\.\d+)?)\s*N\b/i,
+    );
+    if (forceBetween && capabilities.has('gripper.close')) {
+      safety.push({
+        type: 'range',
+        capability: 'gripper.close',
+        argument: 'force_newtons',
+        minimum: Number.parseFloat(forceBetween.match[1]!),
+        maximum: Number.parseFloat(forceBetween.match[2]!),
+        confidence: 0.95,
+        evidence: [forceBetween.evidence],
+        requiresHumanReview: false,
+        documented: true,
+      });
+    }
+
+    // "X must not exceed N <unit>" and "maximum N <unit>" documented limits
+    // mapped by unit to capability families.
+    const unitLimits: Array<{ pattern: RegExp; capability: string; argument: string; unit: string }> = [
+      { pattern: /(joint[^.\n]{0,30}?)?speed[^.\n]{0,40}?must not exceed\s*(\d+(?:\.\d+)?)\s*rad\/s/i, capability: 'motion.move_joint', argument: 'speed_rad_s', unit: 'rad/s' },
+      { pattern: /(tool[^.\n]{0,30}?)?speed[^.\n]{0,40}?must not exceed\s*(\d+(?:\.\d+)?)\s*mm\/s/i, capability: 'motion.move_to', argument: 'speed_mm_s', unit: 'mm/s' },
+      { pattern: /maximum\s*(\d+(?:\.\d+)?)\s*mA\s*per\s*pin/i, capability: 'gpio.write', argument: 'current', unit: 'mA' },
+      { pattern: /payload\s*maximum\s*(\d+(?:\.\d+)?)\s*kg/i, capability: 'payload.set', argument: 'kg', unit: 'kg' },
+    ];
+    for (const limit of unitLimits) {
+      const limitMatch = findLineEvidence(doc, limit.pattern);
+      if (limitMatch && (capabilities.has(limit.capability) || limit.capability === 'gpio.write')) {
+        const value = Number.parseFloat(limitMatch.match[1] ?? limitMatch.match[2] ?? '');
+        if (!Number.isFinite(value)) continue;
+        safety.push({
+          type: 'range',
+          capability: limit.capability,
+          argument: limit.argument,
+          maximum: value,
+          confidence: 0.95,
+          evidence: [limitMatch.evidence],
+          requiresHumanReview: false,
+          documented: true,
+        });
+      }
+    }
+
+    // Voltage/current ranges (instrument-style documentation):
+    // "Output voltage range: 0 to 30 V" / "Current limit range: 0 to 5 A".
+    for (const quantity of ['voltage', 'current'] as const) {
+      const unit = quantity === 'voltage' ? 'V' : 'A';
+      const argName = quantity === 'voltage' ? 'voltage' : 'current';
+      const capabilityId = quantity === 'voltage' ? 'voltage.set' : 'current.set';
+      const rangeMatch = findLineEvidence(
+        doc,
+        new RegExp(`${quantity}[^.\\n]{0,40}?(\\d+(?:\\.\\d+)?)\\s*(?:${unit}\\b)?\\s*(?:to|–|-)\\s*(\\d+(?:\\.\\d+)?)\\s*${unit}\\b`, 'i'),
+      );
+      if (
+        rangeMatch &&
+        (capabilities.has(capabilityId) || capabilities.has(quantity === 'voltage' ? 'voltage.read' : 'current.read'))
+      ) {
+        safety.push({
+          type: 'range',
+          capability: capabilityId,
+          argument: argName,
+          minimum: Number.parseFloat(rangeMatch.match[1]!),
+          maximum: Number.parseFloat(rangeMatch.match[2]!),
+          confidence: 0.95,
+          evidence: [rangeMatch.evidence],
+          requiresHumanReview: false,
+          documented: true,
+        });
+      }
     }
 
     const inferredRange = findLineEvidence(doc, /(?:max(?:imum)?|up to)\s*(\d+)\s*°?\s*C/i);
