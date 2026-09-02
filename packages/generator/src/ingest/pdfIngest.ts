@@ -111,7 +111,7 @@ function parseObjects(raw: Buffer): PdfObject[] {
   const objectRegex = /(\d+)\s+(\d+)\s+obj\b/g;
   let match: RegExpExecArray | null;
 
-  while (match = objectRegex.exec(latin)) {
+  while ((match = objectRegex.exec(latin)) !== null) {
     const objectNumber = Number.parseInt(match[1]!, 10);
     const bodyStart = match.index + match[0].length;
     const streamMarker = latin.indexOf('stream', bodyStart);

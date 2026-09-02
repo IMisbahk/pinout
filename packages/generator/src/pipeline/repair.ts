@@ -12,7 +12,7 @@
  *   as failed with the compiler errors intact — never shipped half-fixed.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { buildCandidateModule } from '../emit/buildModule.js';
 
 export interface CompilerError {
@@ -123,7 +123,6 @@ const REPAIR_RULES: RepairRule[] = [
 
 export function repairGeneratedModule(options: RepairOptions): RepairResult {
   const maxAttempts = options.maxAttempts ?? 3;
-  const entryPath = join(options.outputPath, options.entryFile ?? 'src/index.ts');
   const attempts: RepairAttempt[] = [];
   const repairsApplied: string[] = [];
 
@@ -150,9 +149,7 @@ export function repairGeneratedModule(options: RepairOptions): RepairResult {
     for (const error of errors) {
       for (const rule of REPAIR_RULES) {
         if (!rule.applies(error)) continue;
-        const target = error.file.startsWith('/')
-          ? error.file
-          : join(options.outputPath, error.file);
+        const target = isAbsolute(error.file) ? error.file : join(options.outputPath, error.file);
         if (rule.apply(target, error)) {
           const description = rule.describe();
           attemptRepairs.push(`[${error.code}] ${description}`);
