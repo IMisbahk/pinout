@@ -1,0 +1,28 @@
+packages/protocols-grbl/package.json
+  h_b8c068798e4e71 1-20
+packages/protocols-grbl/src/errors.ts
+  h_b8c068798e4e71 1-21
+packages/protocols-grbl/src/grblClient.ts
+  h_b8c068798e4e71 1-203
+packages/protocols-grbl/src/index.ts
+  h_b8c068798e4e71 1-3
+packages/protocols-grbl/tests/grbl.test.ts
+  h_b8c068798e4e71 1-84
+packages/protocols-grbl/tests/grblSimulator.ts
+  h_b8c068798e4e71 1-185
+packages/protocols-grbl/tsconfig.json
+  h_b8c068798e4e71 1-9
+tsconfig.json
+  h_b8c068798e4e71 30-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c824024910f3047daad6b8ec68387fcbc7b4eb05",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
