@@ -1,0 +1,14 @@
+packages/core/tests/streamStress.test.ts
+  h_b8c068798e4e71 1-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "da17e2ed84620529985c4adfb868ad92e689cc95",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
