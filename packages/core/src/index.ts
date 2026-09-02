@@ -300,6 +300,12 @@ export {
   loadJournalEntries,
   redactPayload,
 } from './journal/journal.js';
+export {
+  buildReplaySession,
+  replayJournal,
+  formatReplaySession,
+} from './journal/replay.js';
+export type { ReplaySession, ReplayTimelineEntry, ReplayHandler } from './journal/replay.js';
 export type {
   JournalEntry,
   JournalEntryKind,
