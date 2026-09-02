@@ -1,0 +1,14 @@
+packages/core/tests/replay.test.ts
+  h_b8c068798e4e71 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f7a679cabad465a1909b82789d366fa7f78bfccf",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
