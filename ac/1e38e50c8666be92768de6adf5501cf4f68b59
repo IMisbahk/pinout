@@ -1,0 +1,16 @@
+packages/generator/src/ingest/pdfIngest.ts
+  h_b8c068798e4e71 114
+packages/generator/src/pipeline/repair.ts
+  h_b8c068798e4e71 15,152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ac1e38e50c8666be92768de6adf5501cf4f68b59",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
