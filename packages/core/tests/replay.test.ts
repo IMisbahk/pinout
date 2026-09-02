@@ -59,7 +59,7 @@ describe('replay session', () => {
     const lines = formatReplaySession(buildReplaySession(entries));
     const text = lines.join('\n');
     expect(text).toContain('REPLAY: 4 entries over 200ms');
-    expect(text).toContain('policy.rejected ×1');
+    expect(text).toContain('policy.rejected×1');
     expect(text).toContain('[bench-psu]');
   });
 
