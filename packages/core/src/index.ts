@@ -216,6 +216,13 @@ export {
   type RuntimeAgentTool,
 } from './runtime/agentTools.js';
 export { runtimeToToolDefinitions, classifyToolDanger } from './runtime/toolExport.js';
+export {
+  validateBoardDescriptor,
+  loadBoardDescriptors,
+  pinRole,
+  BoardDescriptorError,
+} from './boards/descriptors.js';
+export type { BoardDescriptor } from './boards/descriptors.js';
 export type { ToolDefinition, ToolDanger } from './runtime/toolExport.js';
 export type { InvokeOptions } from './runtime/deviceInstance.js';
 export { getModule, listModules, registerModule } from './modules/registry.js';
