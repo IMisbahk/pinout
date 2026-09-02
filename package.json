@@ -1,7 +1,7 @@
 {
   "name": "pinout",
   "private": true,
-  "description": "Hardware abstraction layer for programmable devices — SDK, CLI, firmware, and MCP adapter.",
+  "description": "Hardware abstraction layer for programmable devices \u2014 SDK, CLI, firmware, and MCP adapter.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pinoutlabs/pinout.git"
@@ -36,7 +36,9 @@
     "eval:generator:live": "PINOUT_GENERATOR_PROVIDER=http npm run build --silent && vitest run packages/generator/tests/generator.test.ts",
     "example:mcp-heterogeneous": "npm run build --silent && tsx examples/mcp-heterogeneous.ts",
     "mcp": "npm run build --silent && node scripts/mcp-bootstrap.js",
-    "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js"
+    "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js",
+    "demo:physical-intelligence": "npm run build --silent && tsx examples/physical-intelligence.ts",
+    "demo:generate-device": "npm run build --silent && tsx examples/generate-device.ts"
   },
   "engines": {
     "node": ">=20"
