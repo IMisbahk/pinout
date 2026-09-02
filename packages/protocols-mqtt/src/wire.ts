@@ -146,12 +146,17 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
       break;
     }
     case 'PUBLISH': {
+      // Bounds-check every read: truncated/hostile packets must yield
+      // undefined (treated as garbage), never a RangeError.
+      if (body.length < 2) return undefined;
       const qos = (buffer[0]! >> 1) & 0x03;
       packet.qos = qos;
       const topicLength = body.readUInt16BE(0);
+      if (2 + topicLength > body.length) return undefined;
       packet.topic = body.subarray(2, 2 + topicLength).toString('utf8');
       let payloadOffset = 2 + topicLength;
       if (qos > 0) {
+        if (payloadOffset + 2 > body.length) return undefined;
         packet.packetId = body.readUInt16BE(payloadOffset);
         payloadOffset += 2;
       }
@@ -161,6 +166,7 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
     case 'PUBACK':
     case 'SUBACK':
     case 'SUBSCRIBE': {
+      if (body.length < 2) return undefined;
       packet.packetId = body.readUInt16BE(0);
       if (type === 'SUBACK') {
         packet.returnCodes = [...body.subarray(2)];
@@ -171,6 +177,7 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
         while (offset + 2 <= body.length) {
           const length = body.readUInt16BE(offset);
           offset += 2;
+          if (offset + length > body.length) return undefined;
           filters.push(body.subarray(offset, offset + length).toString('utf8'));
           offset += length + 1; // trailing qos byte
         }
