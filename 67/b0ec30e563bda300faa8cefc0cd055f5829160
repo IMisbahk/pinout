@@ -1,0 +1,18 @@
+examples/generate-device.ts
+  h_b8c068798e4e71 1-161
+examples/physical-intelligence.ts
+  h_b8c068798e4e71 1-186
+package.json
+  h_b8c068798e4e71 4,39-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "67b0ec30e563bda300faa8cefc0cd055f5829160",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
