@@ -1,0 +1,18 @@
+packages/core/src/policy/engine.ts
+  h_b8c068798e4e71 58-62
+packages/core/tests/fuzz.test.ts
+  h_b8c068798e4e71 1-215
+packages/protocols-mqtt/src/wire.ts
+  h_b8c068798e4e71 149-151,155,159,169,180
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b1673be2c0f872c29de6ae8aeb720dcb24325034",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
