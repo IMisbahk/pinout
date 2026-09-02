@@ -1,7 +1,16 @@
 {
   "schemaVersion": "1",
   "note": "Hardware support catalog. Statuses are TRUTHFUL and must never be inflated. HARDWARE_VERIFIED requires a dated hardware test record. SIMULATED means the contract runs against a fake backend. Nothing in this repository has been verified against physical industrial equipment or robots.",
-  "statuses": ["PLANNED", "SPEC_ONLY", "IMPLEMENTED", "COMPILE_TESTED", "SIMULATED", "INTEGRATION_VERIFIED", "HARDWARE_VERIFIED", "EXPERIMENTAL"],
+  "statuses": [
+    "PLANNED",
+    "SPEC_ONLY",
+    "IMPLEMENTED",
+    "COMPILE_TESTED",
+    "SIMULATED",
+    "INTEGRATION_VERIFIED",
+    "HARDWARE_VERIFIED",
+    "EXPERIMENTAL"
+  ],
   "entries": [
     {
       "category": "embedded",
@@ -78,10 +87,10 @@
     {
       "category": "protocol",
       "target": "MQTT",
-      "integration": "@pinout/protocols-mqtt (planned in Wave 2)",
+      "integration": "@pinout/protocols-mqtt (Wave 2, in progress)",
       "status": "PLANNED",
       "testedHow": "none",
-      "notes": "Declarative topic→state/event mapping design exists in spec docs."
+      "notes": "Declarative topic\u2192state/event mapping design exists in spec docs."
     },
     {
       "category": "protocol",
@@ -142,10 +151,10 @@
     {
       "category": "robotics",
       "target": "GRBL / CNC class",
-      "integration": "planned",
-      "status": "PLANNED",
-      "testedHow": "none",
-      "notes": "Physical machinery: dangerous actions must be explicit."
+      "integration": "@pinout/protocols-grbl",
+      "status": "IMPLEMENTED",
+      "testedHow": "deterministic GRBL simulator (status, homing, motion, soft limits, typed errors)",
+      "notes": "Simulator-tested only. Physical CNC requires independent hardware safeguards; never HARDWARE_VERIFIED without a dated hardware record."
     },
     {
       "category": "robotics",
@@ -168,7 +177,7 @@
       "target": "Module out-of-process hosting (Node + Python)",
       "integration": "@pinout/module-host + pinout-module SDK",
       "status": "IMPLEMENTED",
-      "testedHow": "cross-language integration tests (Node host ↔ Python heatlamp), crash/heartbeat/restart tests",
+      "testedHow": "cross-language integration tests (Node host \u2194 Python heatlamp), crash/heartbeat/restart tests",
       "notes": "Crash isolation only; NOT a security sandbox (see module-host README)."
     },
     {

@@ -30,6 +30,9 @@
     },
     {
       "path": "packages/protocols-grbl"
+    },
+    {
+      "path": "packages/protocols-mqtt"
     }
   ]
 }
