@@ -1,0 +1,16 @@
+package.json
+  h_b8c068798e4e71 41-42
+scripts/benchmark.ts
+  h_b8c068798e4e71 1-143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "a1a7668e57d44368b1af412848f017d2ae59a5ef",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
