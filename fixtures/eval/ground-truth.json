@@ -10,19 +10,8 @@
         "model": "NX-32",
         "deviceClass": "microcontroller"
       },
-      "capabilities": [
-        "gpio.write",
-        "gpio.read",
-        "i2c.write",
-        "i2c.read",
-        "pwm.write"
-      ],
-      "vendorNamesExpected": [
-        "gpio_write",
-        "gpio_read",
-        "i2c_write",
-        "i2c_read"
-      ],
+      "capabilities": ["gpio.write", "gpio.read", "i2c.write", "i2c.read", "pwm.write"],
+      "vendorNamesExpected": ["gpio_write", "gpio_read", "i2c_write", "i2c_read"],
       "documentedSafety": [
         {
           "capability": "gpio.write",
@@ -36,9 +25,7 @@
         "usb capabilities",
         "bluetooth capabilities"
       ],
-      "expectedInterfaces": [
-        "serial"
-      ],
+      "expectedInterfaces": ["serial"],
       "contradictionsExpected": 0
     },
     {
@@ -80,9 +67,7 @@
       "mustNotInvent": [
         "payload.set as hard safety rule (payload is configuration, not a safety limit)"
       ],
-      "expectedInterfaces": [
-        "sdk"
-      ],
+      "expectedInterfaces": ["sdk"],
       "contradictionsExpected": 0
     },
     {
@@ -100,13 +85,7 @@
         "current.read",
         "power.output.enable"
       ],
-      "vendorNamesExpected": [
-        "VOLT",
-        "MEAS:VOLT",
-        "CURR",
-        "MEAS:CURR",
-        "OUTP"
-      ],
+      "vendorNamesExpected": ["VOLT", "MEAS:VOLT", "CURR", "MEAS:CURR", "OUTP"],
       "documentedSafety": [
         {
           "capability": "voltage.set",
@@ -128,10 +107,7 @@
         "30 V output limit (never raised)",
         "frequency.set (function generator capabilities do not apply to a PSU)"
       ],
-      "expectedInterfaces": [
-        "serial",
-        "tcp"
-      ],
+      "expectedInterfaces": ["serial", "tcp"],
       "contradictionsExpected": 0
     },
     {
@@ -142,16 +118,8 @@
         "model": "TP-9",
         "deviceClass": "industrial.process-controller"
       },
-      "capabilities": [
-        "temperature.read",
-        "temperature.set",
-        "pump.run"
-      ],
-      "vendorNamesExpected": [
-        "temperature(read)",
-        "setpoint(write)",
-        "pump.run(write)"
-      ],
+      "capabilities": ["temperature.read", "temperature.set", "pump.run"],
+      "vendorNamesExpected": ["temperature(read)", "setpoint(write)", "pump.run(write)"],
       "documentedSafety": [
         {
           "capability": "temperature.set",
@@ -166,9 +134,7 @@
         "writable pressure register (pressure is read-only)",
         "writing holding register 40020 (maintenance flag) as a capability"
       ],
-      "expectedInterfaces": [
-        "tcp"
-      ],
+      "expectedInterfaces": ["tcp"],
       "contradictionsExpected": 0
     },
     {
@@ -179,12 +145,8 @@
         "model": "L4",
         "deviceClass": "sensor.distance"
       },
-      "capabilities": [
-        "distance.read"
-      ],
-      "vendorNamesExpected": [
-        "distance_read"
-      ],
+      "capabilities": ["distance.read"],
+      "vendorNamesExpected": ["distance_read"],
       "documentedSafety": [
         {
           "capability": "distance.read",
@@ -193,13 +155,8 @@
         }
       ],
       "mustHaveUncertainties": false,
-      "mustNotInvent": [
-        "distance.set (sensors do not actuate)",
-        "clamped out-of-range values"
-      ],
-      "expectedInterfaces": [
-        "serial"
-      ],
+      "mustNotInvent": ["distance.set (sensors do not actuate)", "clamped out-of-range values"],
+      "expectedInterfaces": ["serial"],
       "contradictionsExpected": 0
     },
     {
@@ -210,15 +167,8 @@
         "model": "TB-1",
         "deviceClass": "lab.environmental_chamber"
       },
-      "capabilities": [
-        "temperature.set",
-        "temperature.read",
-        "cycle.start"
-      ],
-      "vendorNamesExpected": [
-        "set_temp",
-        "get_temp"
-      ],
+      "capabilities": ["temperature.set", "temperature.read", "cycle.start"],
+      "vendorNamesExpected": ["set_temp", "get_temp"],
       "documentedSafety": [
         {
           "capability": "temperature.set",
@@ -232,9 +182,7 @@
         "maximum 85 C from the example call as a hard limit",
         "any hard numeric rule from the contradictory example"
       ],
-      "expectedInterfaces": [
-        "sdk"
-      ],
+      "expectedInterfaces": ["sdk"],
       "contradictionsExpected": 1
     },
     {
@@ -245,20 +193,12 @@
         "model": "Q7",
         "deviceClass": "sensor.environment"
       },
-      "capabilities": [
-        "humidity.read"
-      ],
-      "vendorNamesExpected": [
-        "humidity_read"
-      ],
+      "capabilities": ["humidity.read"],
+      "vendorNamesExpected": ["humidity_read"],
       "documentedSafety": [],
       "mustHaveUncertainties": false,
-      "mustNotInvent": [
-        "humidity.set (sensors do not actuate)"
-      ],
-      "expectedInterfaces": [
-        "serial"
-      ],
+      "mustNotInvent": ["humidity.set (sensors do not actuate)"],
+      "expectedInterfaces": ["serial"],
       "contradictionsExpected": 0,
       "note": "HELD-OUT: authored after extractor tuning to check generalization. Report scores honestly."
     }

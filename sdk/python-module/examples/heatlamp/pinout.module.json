@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1",
+  "id": "examples/heatlamp",
+  "version": "0.1.0",
+  "publisher": "pinout-examples",
+  "runtime": "python",
+  "deviceClass": "actuator.heat-lamp",
+  "entry": "heatlamp.py",
+  "capabilities": ["lamp.on", "lamp.off", "lamp.status"],
+  "permissions": {},
+  "support": "SIMULATED"
+}

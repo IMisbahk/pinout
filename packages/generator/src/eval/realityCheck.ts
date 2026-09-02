@@ -124,12 +124,19 @@ function runPipeline(sourceDir: string): PipelineOutput {
   const ir = extractHardwareIr(sources);
 
   // Build source-type map for provenance classification.
-  const evidenceSources = new Map<string, 'markdown' | 'text' | 'pdf' | 'typescript' | 'python' | 'c' | 'cpp' | 'json' | 'yaml'>();
+  const evidenceSources = new Map<
+    string,
+    'markdown' | 'text' | 'pdf' | 'typescript' | 'python' | 'c' | 'cpp' | 'json' | 'yaml'
+  >();
   for (const doc of sources) {
-    const type = doc.type === 'md' ? 'markdown'
-      : doc.type === 'py' ? 'python'
-      : doc.type === 'ts' ? 'typescript'
-      : (doc.type as 'text' | 'c' | 'cpp' | 'json' | 'yaml' | 'markdown');
+    const type =
+      doc.type === 'md'
+        ? 'markdown'
+        : doc.type === 'py'
+          ? 'python'
+          : doc.type === 'ts'
+            ? 'typescript'
+            : (doc.type as 'text' | 'c' | 'cpp' | 'json' | 'yaml' | 'markdown');
     evidenceSources.set(doc.id, type);
   }
 
@@ -154,7 +161,9 @@ function runPipeline(sourceDir: string): PipelineOutput {
 
 function countFabricatedHardConstraints(provenanced: ProvenancedConstraint[]): number {
   // A fabricated hard constraint: hard-eligible but not DOCUMENTED.
-  return provenanced.filter((constraint) => constraint.hardEligible && constraint.provenance !== 'DOCUMENTED').length;
+  return provenanced.filter(
+    (constraint) => constraint.hardEligible && constraint.provenance !== 'DOCUMENTED',
+  ).length;
 }
 
 function matchDocumentedSafety(
@@ -171,8 +180,10 @@ function matchDocumentedSafety(
       if (constraint.capability !== expectation.capability) return false;
       if (numeric) {
         if (expectation.argument && constraint.argument !== expectation.argument) return false;
-        if (expectation.maximum !== undefined && constraint.maximum !== expectation.maximum) return false;
-        if (expectation.minimum !== undefined && constraint.minimum !== expectation.minimum) return false;
+        if (expectation.maximum !== undefined && constraint.maximum !== expectation.maximum)
+          return false;
+        if (expectation.minimum !== undefined && constraint.minimum !== expectation.minimum)
+          return false;
         return true;
       }
       // Non-numeric expectations (notes) match on capability coverage.
@@ -198,7 +209,9 @@ function evaluateTarget(target: GroundTruthTarget, corpusRoot: string): TargetEv
   const truePositive = [...expected].filter((id) => extracted.has(id)).length;
   // vendor.* namespace fallbacks are honest output for unknown symbols, not
   // semantic errors — excluded from false positives.
-  const falsePositive = [...extracted].filter((id) => !expected.has(id) && !id.startsWith('vendor.')).length;
+  const falsePositive = [...extracted].filter(
+    (id) => !expected.has(id) && !id.startsWith('vendor.'),
+  ).length;
   const falseNegative = [...expected].filter((id) => !extracted.has(id)).length;
   const precision = truePositive / (truePositive + falsePositive || 1);
   const recall = truePositive / (truePositive + falseNegative || 1);
@@ -207,11 +220,18 @@ function evaluateTarget(target: GroundTruthTarget, corpusRoot: string): TargetEv
   // Semantic mapping precision: of the extracted capabilities that ARE in the
   // expected set, how many came from a real semantic family (not vendor.*)?
   const semanticMapped = ir.capabilities.filter(
-    (capability: CandidateCapability) => expected.has(capability.id) && !capability.id.startsWith('vendor.'),
+    (capability: CandidateCapability) =>
+      expected.has(capability.id) && !capability.id.startsWith('vendor.'),
   );
-  const semanticPrecision = ir.capabilities.length > 0
-    ? semanticMapped.length / ir.capabilities.filter((capability) => !capability.id.startsWith('vendor.')).length || semanticMapped.length > 0 ? semanticMapped.length / Math.max(1, ir.capabilities.filter((c) => !c.id.startsWith('vendor.')).length) : 0
-    : 0;
+  const semanticPrecision =
+    ir.capabilities.length > 0
+      ? semanticMapped.length /
+          ir.capabilities.filter((capability) => !capability.id.startsWith('vendor.')).length ||
+        semanticMapped.length > 0
+        ? semanticMapped.length /
+          Math.max(1, ir.capabilities.filter((c) => !c.id.startsWith('vendor.')).length)
+        : 0
+      : 0;
 
   // Interface accuracy: expected interface kinds present.
   const expectedInterfaces = new Set(target.expectedInterfaces);
@@ -222,7 +242,15 @@ function evaluateTarget(target: GroundTruthTarget, corpusRoot: string): TargetEv
 
   // Safety precision/recall.
   const safetyMatch = matchDocumentedSafety(provenanced, target.documentedSafety);
-  const safetyPrecision = safetyMatch.total > 0 ? safetyMatch.truePositive / Math.max(1, provenanced.filter((constraint) => constraint.provenance === 'DOCUMENTED').length || safetyMatch.truePositive) : 1;
+  const safetyPrecision =
+    safetyMatch.total > 0
+      ? safetyMatch.truePositive /
+        Math.max(
+          1,
+          provenanced.filter((constraint) => constraint.provenance === 'DOCUMENTED').length ||
+            safetyMatch.truePositive,
+        )
+      : 1;
   const safetyRecall = safetyMatch.truePositive / safetyMatch.total;
 
   // Fabricated hard constraints — the metric that must stay at zero.
@@ -234,9 +262,7 @@ function evaluateTarget(target: GroundTruthTarget, corpusRoot: string): TargetEv
   // False certainty: INFERRED/UNKNOWN constraints that did NOT request human
   // review and did not raise an uncertainty — pretending to know.
   const falseCertainty = provenanced.filter(
-    (constraint) =>
-      constraint.provenance !== 'DOCUMENTED' &&
-      !constraint.requiresHumanReview,
+    (constraint) => constraint.provenance !== 'DOCUMENTED' && !constraint.requiresHumanReview,
   ).length;
 
   // Must-not-invent violations: capability ids whose semantic families appear
@@ -246,8 +272,7 @@ function evaluateTarget(target: GroundTruthTarget, corpusRoot: string): TargetEv
     .filter((family): family is string => family !== undefined)
     .filter((family) =>
       ir.capabilities.some(
-        (capability) =>
-          capability.id.startsWith(`${family}.`) && !expected.has(capability.id),
+        (capability) => capability.id.startsWith(`${family}.`) && !expected.has(capability.id),
       ),
     );
 
@@ -271,7 +296,10 @@ function evaluateTarget(target: GroundTruthTarget, corpusRoot: string): TargetEv
   };
 }
 
-export function runRealityCheckEvaluation(corpusRoot: string, groundTruthPath: string): EvaluationReport {
+export function runRealityCheckEvaluation(
+  corpusRoot: string,
+  groundTruthPath: string,
+): EvaluationReport {
   const truth = loadGroundTruth(groundTruthPath);
   const targets = truth.targets.map((target) => evaluateTarget(target, corpusRoot));
 
@@ -286,7 +314,10 @@ export function runRealityCheckEvaluation(corpusRoot: string, groundTruthPath: s
     interfaceAccuracy: mean(targets.map((t) => t.interfaceAccuracy)),
     safetyPrecision: mean(targets.map((t) => t.safetyPrecision)),
     safetyRecall: mean(targets.map((t) => t.safetyRecall)),
-    fabricatedHardSafetyConstraints: targets.reduce((sum, t) => sum + t.fabricatedHardSafetyConstraints, 0),
+    fabricatedHardSafetyConstraints: targets.reduce(
+      (sum, t) => sum + t.fabricatedHardSafetyConstraints,
+      0,
+    ),
     criticalSafetyMisses: targets.reduce((sum, t) => sum + t.criticalSafetyMisses, 0),
     contradictionDetection: mean(targets.map((t) => t.contradictionDetection)),
     falseCertainty: targets.reduce((sum, t) => sum + t.falseCertainty, 0),
@@ -303,13 +334,21 @@ export function formatEvaluationReport(report: EvaluationReport): string {
   for (const target of report.targets) {
     lines.push('');
     lines.push(`${target.targetId}`);
-    lines.push(`  capability P/R/F1: ${target.capabilityPrecision.toFixed(2)} / ${target.capabilityRecall.toFixed(2)} / ${target.capabilityF1.toFixed(2)}`);
+    lines.push(
+      `  capability P/R/F1: ${target.capabilityPrecision.toFixed(2)} / ${target.capabilityRecall.toFixed(2)} / ${target.capabilityF1.toFixed(2)}`,
+    );
     lines.push(`  semantic mapping precision: ${target.semanticMappingPrecision.toFixed(2)}`);
     lines.push(`  interface accuracy: ${target.interfaceAccuracy.toFixed(2)}`);
-    lines.push(`  safety precision/recall: ${target.safetyPrecision.toFixed(2)} / ${target.safetyRecall.toFixed(2)}`);
-    lines.push(`  fabricated hard safety constraints: ${target.fabricatedHardSafetyConstraints} (target: 0)`);
+    lines.push(
+      `  safety precision/recall: ${target.safetyPrecision.toFixed(2)} / ${target.safetyRecall.toFixed(2)}`,
+    );
+    lines.push(
+      `  fabricated hard safety constraints: ${target.fabricatedHardSafetyConstraints} (target: 0)`,
+    );
     lines.push(`  critical safety misses: ${target.criticalSafetyMisses}`);
-    lines.push(`  contradiction detection: ${target.contradictionDetection === 1 ? 'OK' : `MISMATCH (expected count differs)`}`);
+    lines.push(
+      `  contradiction detection: ${target.contradictionDetection === 1 ? 'OK' : `MISMATCH (expected count differs)`}`,
+    );
     lines.push(`  false certainty: ${target.falseCertainty}`);
     lines.push(`  generation time: ${target.generationTimeMs}ms`);
     if (target.mustNotInventViolations.length > 0) {
@@ -319,7 +358,9 @@ export function formatEvaluationReport(report: EvaluationReport): string {
   lines.push('');
   lines.push('AGGREGATE');
   lines.push(`  capability F1: ${report.aggregate.capabilityF1.toFixed(3)}`);
-  lines.push(`  fabricated hard safety constraints: ${report.aggregate.fabricatedHardSafetyConstraints} (MUST BE 0)`);
+  lines.push(
+    `  fabricated hard safety constraints: ${report.aggregate.fabricatedHardSafetyConstraints} (MUST BE 0)`,
+  );
   lines.push(`  critical safety misses: ${report.aggregate.criticalSafetyMisses}`);
   lines.push(`  false certainty: ${report.aggregate.falseCertainty}`);
   return lines.join('\n');

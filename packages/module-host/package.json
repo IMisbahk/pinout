@@ -1,0 +1,23 @@
+{
+  "name": "@pinout/module-host",
+  "version": "0.1.0",
+  "description": "Out-of-process module hosting for Pinout \u2014 crash isolation, heartbeats, bounded restarts, and NDJSON IPC for Node and Python module workers.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinoutlabs/pinout.git"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "workers"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pinout/core": "*"
+  }
+}

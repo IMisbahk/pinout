@@ -276,7 +276,11 @@ export type {
 } from './policy/safety.js';
 export { OperationManager, isTerminalOperationStatus } from './operation/operationManager.js';
 export { BoundedIdempotencyStore } from './operation/idempotencyStore.js';
-export type { IdempotencyStoreOptions, IdempotencyTombstone, IdempotencyLookup } from './operation/idempotencyStore.js';
+export type {
+  IdempotencyStoreOptions,
+  IdempotencyTombstone,
+  IdempotencyLookup,
+} from './operation/idempotencyStore.js';
 export type {
   OperationHandle,
   OperationRunContext,
@@ -300,11 +304,7 @@ export {
   loadJournalEntries,
   redactPayload,
 } from './journal/journal.js';
-export {
-  buildReplaySession,
-  replayJournal,
-  formatReplaySession,
-} from './journal/replay.js';
+export { buildReplaySession, replayJournal, formatReplaySession } from './journal/replay.js';
 export type { ReplaySession, ReplayTimelineEntry, ReplayHandler } from './journal/replay.js';
 export type {
   JournalEntry,

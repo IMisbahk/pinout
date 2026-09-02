@@ -21,6 +21,9 @@
     },
     {
       "path": "packages/protocols-scpi"
+    },
+    {
+      "path": "packages/module-host"
     }
   ]
 }

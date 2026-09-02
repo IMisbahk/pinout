@@ -63,11 +63,21 @@ export class BoundedIdempotencyStore {
   }
 
   /** Keys are scoped by device, capability, AND owner: no cross-user collisions. */
-  static keyFor(deviceId: string, capability: string, owner: string | undefined, key: string): string {
+  static keyFor(
+    deviceId: string,
+    capability: string,
+    owner: string | undefined,
+    key: string,
+  ): string {
     return `${deviceId}::${capability}::${owner ?? ''}::${key}`;
   }
 
-  lookup(deviceId: string, capability: string, owner: string | undefined, key: string): IdempotencyLookup {
+  lookup(
+    deviceId: string,
+    capability: string,
+    owner: string | undefined,
+    key: string,
+  ): IdempotencyLookup {
     const id = BoundedIdempotencyStore.keyFor(deviceId, capability, owner, key);
     const tombstone = this.tombstones.get(id);
     if (!tombstone) {

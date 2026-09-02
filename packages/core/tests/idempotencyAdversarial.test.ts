@@ -14,14 +14,17 @@ describe('BoundedIdempotencyStore', () => {
   it('scopes keys by owner: two callers with the same key never collide', () => {
     const now = 1_000_000;
     const store = new BoundedIdempotencyStore({ now: () => now });
-    store.recordUnder(BoundedIdempotencyStore.keyFor('arm-01', 'motion.move_to', 'agent-a', 'retry-1'), {
-      operationId: 'op_a',
-      deviceId: 'arm-01',
-      capability: 'motion.move_to',
-      owner: 'agent-a',
-      status: 'running',
-      createdAt: now,
-    });
+    store.recordUnder(
+      BoundedIdempotencyStore.keyFor('arm-01', 'motion.move_to', 'agent-a', 'retry-1'),
+      {
+        operationId: 'op_a',
+        deviceId: 'arm-01',
+        capability: 'motion.move_to',
+        owner: 'agent-a',
+        status: 'running',
+        createdAt: now,
+      },
+    );
     const b = store.lookup('arm-01', 'motion.move_to', 'agent-b', 'retry-1');
     expect(b.hit).toBe(false);
     const a = store.lookup('arm-01', 'motion.move_to', 'agent-a', 'retry-1');
@@ -31,7 +34,11 @@ describe('BoundedIdempotencyStore', () => {
 
   it('evicts least-recently-used entries beyond maxEntries (bounded memory)', () => {
     let now = 0;
-    const store = new BoundedIdempotencyStore({ maxEntries: 100, retentionMs: 1_000_000, now: () => now });
+    const store = new BoundedIdempotencyStore({
+      maxEntries: 100,
+      retentionMs: 1_000_000,
+      now: () => now,
+    });
     for (let i = 0; i < 150; i += 1) {
       store.recordUnder(BoundedIdempotencyStore.keyFor('d', 'c', 'o', `key-${i}`), {
         operationId: `op_${i}`,
@@ -73,14 +80,17 @@ describe('BoundedIdempotencyStore', () => {
     let now = 0;
     const store = new BoundedIdempotencyStore({ maxEntries: 50, now: () => now });
     for (let i = 0; i < 10_000; i += 1) {
-      store.recordUnder(BoundedIdempotencyStore.keyFor('d', 'c', 'attacker', `flood-${i}-${'x'.repeat(50)}`), {
-        operationId: `op_${i}`,
-        deviceId: 'd',
-        capability: 'c',
-        owner: 'attacker',
-        status: 'completed',
-        createdAt: now,
-      });
+      store.recordUnder(
+        BoundedIdempotencyStore.keyFor('d', 'c', 'attacker', `flood-${i}-${'x'.repeat(50)}`),
+        {
+          operationId: `op_${i}`,
+          deviceId: 'd',
+          capability: 'c',
+          owner: 'attacker',
+          status: 'completed',
+          createdAt: now,
+        },
+      );
       now += 1;
     }
     expect(store.size()).toBe(50);
@@ -156,7 +166,13 @@ describe('OperationManager idempotency hardening', () => {
     const store = new BoundedIdempotencyStore({ maxEntries: 4, retentionMs: 1_000_000 });
     const manager = new OperationManager({}, store);
     let runs = 0;
-    const run = { run: async () => { runs += 1; await tick(1); return {}; } };
+    const run = {
+      run: async () => {
+        runs += 1;
+        await tick(1);
+        return {};
+      },
+    };
 
     // Flood with 10 keyed operations on the same device/capability/owner,
     // evicting the first tombstone.

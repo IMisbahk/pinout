@@ -268,10 +268,17 @@ function extractCapabilities(
             );
             // Record numeric example calls as claims (data for contradiction
             // detection, never hard rules).
-            const numericArg = bareCall[2]!.split(',').map((part) => part.trim()).find((part) => /^-?\d+(?:\.\d+)?$/.test(part));
+            const numericArg = bareCall[2]!
+              .split(',')
+              .map((part) => part.trim())
+              .find((part) => /^-?\d+(?:\.\d+)?$/.test(part));
             if (numericArg !== undefined && !mapping.capabilityId.startsWith('vendor.')) {
               const value = Number.parseFloat(numericArg);
-              if (!claims.some((claim) => claim.capability === mapping.capabilityId && claim.value === value)) {
+              if (
+                !claims.some(
+                  (claim) => claim.capability === mapping.capabilityId && claim.value === value,
+                )
+              ) {
                 claims.push({
                   claim: `${symbol}(${numericArg}) in ${doc.path}`,
                   capability: mapping.capabilityId,
@@ -429,11 +436,37 @@ function extractSafety(
 
     // "X must not exceed N <unit>" and "maximum N <unit>" documented limits
     // mapped by unit to capability families.
-    const unitLimits: Array<{ pattern: RegExp; capability: string; argument: string; unit: string }> = [
-      { pattern: /(joint[^.\n]{0,30}?)?speed[^.\n]{0,40}?must not exceed\s*(\d+(?:\.\d+)?)\s*rad\/s/i, capability: 'motion.move_joint', argument: 'speed_rad_s', unit: 'rad/s' },
-      { pattern: /(tool[^.\n]{0,30}?)?speed[^.\n]{0,40}?must not exceed\s*(\d+(?:\.\d+)?)\s*mm\/s/i, capability: 'motion.move_to', argument: 'speed_mm_s', unit: 'mm/s' },
-      { pattern: /maximum\s*(\d+(?:\.\d+)?)\s*mA\s*per\s*pin/i, capability: 'gpio.write', argument: 'current', unit: 'mA' },
-      { pattern: /payload\s*maximum\s*(\d+(?:\.\d+)?)\s*kg/i, capability: 'payload.set', argument: 'kg', unit: 'kg' },
+    const unitLimits: Array<{
+      pattern: RegExp;
+      capability: string;
+      argument: string;
+      unit: string;
+    }> = [
+      {
+        pattern:
+          /(joint[^.\n]{0,30}?)?speed[^.\n]{0,40}?must not exceed\s*(\d+(?:\.\d+)?)\s*rad\/s/i,
+        capability: 'motion.move_joint',
+        argument: 'speed_rad_s',
+        unit: 'rad/s',
+      },
+      {
+        pattern: /(tool[^.\n]{0,30}?)?speed[^.\n]{0,40}?must not exceed\s*(\d+(?:\.\d+)?)\s*mm\/s/i,
+        capability: 'motion.move_to',
+        argument: 'speed_mm_s',
+        unit: 'mm/s',
+      },
+      {
+        pattern: /maximum\s*(\d+(?:\.\d+)?)\s*mA\s*per\s*pin/i,
+        capability: 'gpio.write',
+        argument: 'current',
+        unit: 'mA',
+      },
+      {
+        pattern: /payload\s*maximum\s*(\d+(?:\.\d+)?)\s*kg/i,
+        capability: 'payload.set',
+        argument: 'kg',
+        unit: 'kg',
+      },
     ];
     for (const limit of unitLimits) {
       const limitMatch = findLineEvidence(doc, limit.pattern);
@@ -461,11 +494,15 @@ function extractSafety(
       const capabilityId = quantity === 'voltage' ? 'voltage.set' : 'current.set';
       const rangeMatch = findLineEvidence(
         doc,
-        new RegExp(`${quantity}[^.\\n]{0,40}?(\\d+(?:\\.\\d+)?)\\s*(?:${unit}\\b)?\\s*(?:to|–|-)\\s*(\\d+(?:\\.\\d+)?)\\s*${unit}\\b`, 'i'),
+        new RegExp(
+          `${quantity}[^.\\n]{0,40}?(\\d+(?:\\.\\d+)?)\\s*(?:${unit}\\b)?\\s*(?:to|–|-)\\s*(\\d+(?:\\.\\d+)?)\\s*${unit}\\b`,
+          'i',
+        ),
       );
       if (
         rangeMatch &&
-        (capabilities.has(capabilityId) || capabilities.has(quantity === 'voltage' ? 'voltage.read' : 'current.read'))
+        (capabilities.has(capabilityId) ||
+          capabilities.has(quantity === 'voltage' ? 'voltage.read' : 'current.read'))
       ) {
         safety.push({
           type: 'range',

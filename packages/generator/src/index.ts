@@ -39,4 +39,9 @@ export type {
   ImplementationState,
 } from './safety/provenance.js';
 export { repairGeneratedModule, parseCompilerErrors } from './pipeline/repair.js';
-export type { CompilerError, RepairAttempt, RepairResult, RepairOptions } from './pipeline/repair.js';
+export type {
+  CompilerError,
+  RepairAttempt,
+  RepairResult,
+  RepairOptions,
+} from './pipeline/repair.js';

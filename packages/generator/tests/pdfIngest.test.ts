@@ -3,7 +3,11 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { extractTextFromContentStream, ingestPdf, pdfPagesToEvidence } from '../src/ingest/pdfIngest.js';
+import {
+  extractTextFromContentStream,
+  ingestPdf,
+  pdfPagesToEvidence,
+} from '../src/ingest/pdfIngest.js';
 
 /** Build a minimal valid 2-page PDF with FlateDecode text streams. */
 function buildTwoPagePdf(pages: string[]): Buffer {
@@ -45,7 +49,9 @@ function buildTwoPagePdf(pages: string[]): Buffer {
 
 describe('extractTextFromContentStream', () => {
   it('extracts Tj literal strings', () => {
-    const text = extractTextFromContentStream(Buffer.from('BT (Maximum temperature 80 C) Tj ET', 'latin1'));
+    const text = extractTextFromContentStream(
+      Buffer.from('BT (Maximum temperature 80 C) Tj ET', 'latin1'),
+    );
     expect(text).toContain('Maximum temperature 80 C');
   });
 
@@ -57,8 +63,12 @@ describe('extractTextFromContentStream', () => {
   });
 
   it('decodes escaped literals and hex strings', () => {
-    expect(extractTextFromContentStream(Buffer.from('(a\\\\b\\070c) Tj', 'latin1'))).toContain('a\\b8c');
-    const hex = extractTextFromContentStream(Buffer.from('<0048 0065 006c 006c 006f> Tj', 'latin1'));
+    expect(extractTextFromContentStream(Buffer.from('(a\\\\b\\070c) Tj', 'latin1'))).toContain(
+      'a\\b8c',
+    );
+    const hex = extractTextFromContentStream(
+      Buffer.from('<0048 0065 006c 006c 006f> Tj', 'latin1'),
+    );
     expect(hex).toContain('Hello');
   });
 
@@ -83,7 +93,10 @@ describe('ingestPdf', () => {
 
   it('extracts text with page-level provenance from a valid PDF', async () => {
     const pdfPath = join(dir, 'manual.pdf');
-    await writeFile(pdfPath, buildTwoPagePdf(['Maximum coil temperature 80 C', 'Do not exceed 24 V supply']));
+    await writeFile(
+      pdfPath,
+      buildTwoPagePdf(['Maximum coil temperature 80 C', 'Do not exceed 24 V supply']),
+    );
     const result = ingestPdf(pdfPath);
 
     expect(result.textUnavailable).toBe(false);
@@ -135,7 +148,12 @@ describe('ingestPdf', () => {
   it('handles truncated/corrupt streams without crashing', async () => {
     const valid = buildTwoPagePdf(['hello world page']);
     // Corrupt the stream body.
-    const corrupted = Buffer.from(valid.toString('latin1').replace(/stream\n[\s\S]*?\nendstream/, 'stream\nJUNKJUNK\nendstream'), 'latin1');
+    const corrupted = Buffer.from(
+      valid
+        .toString('latin1')
+        .replace(/stream\n[\s\S]*?\nendstream/, 'stream\nJUNKJUNK\nendstream'),
+      'latin1',
+    );
     const path = join(dir, 'corrupt.pdf');
     await writeFile(path, corrupted);
     const result = ingestPdf(path);

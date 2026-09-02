@@ -1,9 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import {
-  formatEvaluationReport,
-  runRealityCheckEvaluation,
-} from '../src/eval/realityCheck.js';
+import { formatEvaluationReport, runRealityCheckEvaluation } from '../src/eval/realityCheck.js';
 
 const corpusRoot = join(process.cwd(), 'fixtures/eval');
 const groundTruthPath = join(process.cwd(), 'fixtures/eval/ground-truth.json');
@@ -58,7 +55,14 @@ describe('Reality Check evaluation corpus', () => {
   });
 
   it('achieves capability recall >= 0.5 on the clean corpora', () => {
-    for (const id of ['microcontroller', 'robot-arm', 'lab-instrument', 'industrial-modbus', 'sensor', 'heldout-envsensor']) {
+    for (const id of [
+      'microcontroller',
+      'robot-arm',
+      'lab-instrument',
+      'industrial-modbus',
+      'sensor',
+      'heldout-envsensor',
+    ]) {
       const target = byTarget.get(id)!;
       expect(
         { id, recall: target.capabilityRecall },
@@ -83,10 +87,7 @@ describe('Reality Check evaluation corpus', () => {
   it('raises uncertainties for underspecified targets', () => {
     for (const id of ['industrial-modbus', 'ambiguous-sdk']) {
       const target = byTarget.get(id)!;
-      expect(
-        target.uncertaintiesDetected,
-        `${id} should have uncertainties`,
-      ).toBeGreaterThan(0);
+      expect(target.uncertaintiesDetected, `${id} should have uncertainties`).toBeGreaterThan(0);
     }
   });
 

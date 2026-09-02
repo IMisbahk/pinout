@@ -94,7 +94,10 @@ export interface OperationHandle {
 }
 
 export class OperationManager {
-  private readonly operations = new Map<string, OperationSnapshot & { abort?: AbortController; owner?: string }>();
+  private readonly operations = new Map<
+    string,
+    OperationSnapshot & { abort?: AbortController; owner?: string }
+  >();
   private readonly waiters = new Map<
     string,
     Array<(err: unknown, result?: Record<string, unknown>) => void>
@@ -130,7 +133,12 @@ export class OperationManager {
         options.owner,
         options.idempotencyKey,
       );
-      const lookup = this.idempotencyStore.lookup(options.deviceId, options.capability, options.owner, options.idempotencyKey);
+      const lookup = this.idempotencyStore.lookup(
+        options.deviceId,
+        options.capability,
+        options.owner,
+        options.idempotencyKey,
+      );
       if (lookup.hit && lookup.operationId && this.operations.has(lookup.operationId)) {
         // Within the retention window the key resolves to the original
         // outcome, so a client retry can never re-trigger the side effect.
@@ -160,7 +168,12 @@ export class OperationManager {
 
     if (options.idempotencyKey) {
       this.idempotencyStore.recordUnder(
-        BoundedIdempotencyStore.keyFor(options.deviceId, options.capability, options.owner, options.idempotencyKey),
+        BoundedIdempotencyStore.keyFor(
+          options.deviceId,
+          options.capability,
+          options.owner,
+          options.idempotencyKey,
+        ),
         {
           operationId: id,
           deviceId: options.deviceId,
@@ -554,7 +567,9 @@ export class OperationManager {
     });
   }
 
-  private publicSnapshot(op: OperationSnapshot & { abort?: AbortController; owner?: string }): OperationSnapshot {
+  private publicSnapshot(
+    op: OperationSnapshot & { abort?: AbortController; owner?: string },
+  ): OperationSnapshot {
     const { abort: _abort, ...rest } = op;
     return { ...rest };
   }

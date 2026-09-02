@@ -27,7 +27,9 @@ export function registerRecordCommands(program: Command, outputFor: () => CliOut
       const output = outputFor();
       if (existsSync(RECORD_PID_FILE)) {
         const existing = Number.parseInt(readFileSync(RECORD_PID_FILE, 'utf8').trim(), 10);
-        output.error(`A recording daemon is already running (pid ${existing}). Stop it first: pinout record stop`);
+        output.error(
+          `A recording daemon is already running (pid ${existing}). Stop it first: pinout record stop`,
+        );
         process.exitCode = 1;
         return;
       }
@@ -58,7 +60,9 @@ export function registerRecordCommands(program: Command, outputFor: () => CliOut
         process.kill(pid, 'SIGTERM');
         output.log(`Recording stopped (pid ${pid}). Journal is ready for: pinout replay`);
       } catch (error) {
-        output.log(`Daemon ${pid} is not running (${error instanceof Error ? error.message : String(error)}); cleaning up.`);
+        output.log(
+          `Daemon ${pid} is not running (${error instanceof Error ? error.message : String(error)}); cleaning up.`,
+        );
       }
       unlinkSync(RECORD_PID_FILE);
     });

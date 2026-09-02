@@ -8,7 +8,7 @@ describe('parseCompilerErrors', () => {
   it('extracts file, line, code, and message from tsc output', () => {
     const output = [
       "src/index.ts(12,5): error TS2304: Cannot find name 'gpioHelper'.",
-      'src/backend.ts(3,1): error TS2305: Module \'"./types.js"\' has no exported member \'Missing\'.',
+      "src/backend.ts(3,1): error TS2305: Module '\"./types.js\"' has no exported member 'Missing'.",
       'npm warn something irrelevant',
     ].join('\n');
     const errors = parseCompilerErrors(output);
@@ -32,7 +32,10 @@ describe('repairGeneratedModule', () => {
     const outputPath = join(dir, 'module-a');
     await mkdir(join(outputPath, 'src'), { recursive: true });
     const entry = join(outputPath, 'src', 'index.ts');
-    await writeFile(entry, 'export function run(): number {\n  return computeLevel({ pin: 2 });\n}\n');
+    await writeFile(
+      entry,
+      'export function run(): number {\n  return computeLevel({ pin: 2 });\n}\n',
+    );
 
     let call = 0;
     const result = repairGeneratedModule({
@@ -65,7 +68,11 @@ describe('repairGeneratedModule', () => {
     const entry = join(outputPath, 'src', 'index.ts');
     await writeFile(
       entry,
-      ["import { Missing, Real } from './types.js';", 'export const y = Real;', "export function z(): void { new Missing(); }"].join('\n'),
+      [
+        "import { Missing, Real } from './types.js';",
+        'export const y = Real;',
+        'export function z(): void { new Missing(); }',
+      ].join('\n'),
     );
 
     let call = 0;
@@ -75,7 +82,9 @@ describe('repairGeneratedModule', () => {
       build: () => {
         call += 1;
         if (call === 1) {
-          throw new Error("src/index.ts(1,10): error TS2305: Module '\"./types.js\"' has no exported member 'Missing'.");
+          throw new Error(
+            "src/index.ts(1,10): error TS2305: Module '\"./types.js\"' has no exported member 'Missing'.",
+          );
         }
       },
     });
@@ -96,7 +105,7 @@ describe('repairGeneratedModule', () => {
       maxAttempts: 3,
       build: () => {
         calls += 1;
-        throw new Error("src/index.ts(1,1): error TS9999: Something unfixable and exotic.");
+        throw new Error('src/index.ts(1,1): error TS9999: Something unfixable and exotic.');
       },
     });
 

@@ -24,7 +24,10 @@ import { convert } from '../src/spec/units.js';
 describe('frame transforms', () => {
   it('applies a pure translation between frames', () => {
     const baseToTool = makeTransform('base', 'tool0', vector3(1, 0, 0), quaternion(0, 0, 0, 1));
-    const result = applyTransform(baseToTool, frameReference('base', pose(vector3(2, 3, 4), quaternion(0, 0, 0, 1))));
+    const result = applyTransform(
+      baseToTool,
+      frameReference('base', pose(vector3(2, 3, 4), quaternion(0, 0, 0, 1))),
+    );
     expect(result.frame).toBe('tool0');
     expect(result.pose.position).toEqual({ x: 3, y: 3, z: 4 });
   });
@@ -42,12 +45,20 @@ describe('frame transforms', () => {
     const worldToTcp = composeTransforms(worldToBase, baseToTcp);
     expect(worldToTcp.from).toBe('world');
     expect(worldToTcp.to).toBe('tcp');
-    const result = applyTransform(worldToTcp, frameReference('world', pose(vector3(1, 1, 0), quaternion(0, 0, 0, 1))));
+    const result = applyTransform(
+      worldToTcp,
+      frameReference('world', pose(vector3(1, 1, 0), quaternion(0, 0, 0, 1))),
+    );
     expect(result.pose.position).toEqual({ x: 11, y: 3, z: 0 });
   });
 
   it('invert: inverting twice returns the original', () => {
-    const t = makeTransform('base', 'tcp', vector3(1, 2, 3), quaternionFromAxisAngle(vector3(0, 1, 0), 0.3));
+    const t = makeTransform(
+      'base',
+      'tcp',
+      vector3(1, 2, 3),
+      quaternionFromAxisAngle(vector3(0, 1, 0), 0.3),
+    );
     const inverse = invertTransform(t);
     expect(inverse.from).toBe('tcp');
     expect(inverse.to).toBe('base');

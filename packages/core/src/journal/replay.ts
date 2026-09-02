@@ -35,7 +35,15 @@ export interface ReplaySession {
 /** Build a replay timeline from journal entries (sequence-ordered). */
 export function buildReplaySession(entries: JournalEntry[]): ReplaySession {
   if (entries.length === 0) {
-    return { startedAt: 0, endedAt: 0, durationMs: 0, entryCount: 0, devices: [], kinds: {}, timeline: [] };
+    return {
+      startedAt: 0,
+      endedAt: 0,
+      durationMs: 0,
+      entryCount: 0,
+      devices: [],
+      kinds: {},
+      timeline: [],
+    };
   }
   const sorted = [...entries].sort((a, b) => a.sequence - b.sequence);
   const startedAt = sorted[0]!.at;
@@ -114,7 +122,9 @@ export async function replayJournal(
         await new Promise((resolve) => setTimeout(resolve, Math.min(delta, 5000)));
       }
     }
-    const entry = entries.find((candidate) => candidate.sequence === timelineEntry.sequence) ?? (entries[index] as JournalEntry);
+    const entry =
+      entries.find((candidate) => candidate.sequence === timelineEntry.sequence) ??
+      (entries[index] as JournalEntry);
     handler.onEntry(entry, {
       index,
       total: session.entryCount,
@@ -138,7 +148,9 @@ export function formatReplaySession(session: ReplaySession): string[] {
   for (const entry of session.timeline) {
     const device = entry.deviceId ? ` [${entry.deviceId}]` : '';
     const summary = entry.summary ? ` ${entry.summary}` : '';
-    lines.push(`  +${String(entry.offsetMs).padStart(6)}ms #${entry.sequence} ${entry.kind}${device}${summary}`);
+    lines.push(
+      `  +${String(entry.offsetMs).padStart(6)}ms #${entry.sequence} ${entry.kind}${device}${summary}`,
+    );
   }
   return lines;
 }

@@ -25,7 +25,12 @@ export interface ProvenancedConstraint extends CandidateSafetyConstraint {
 
 export interface Contradiction {
   id: string;
-  kind: 'numeric-conflict' | 'unit-conflict' | 'supported-conflict' | 'precondition-conflict' | 'config-conflict';
+  kind:
+    | 'numeric-conflict'
+    | 'unit-conflict'
+    | 'supported-conflict'
+    | 'precondition-conflict'
+    | 'config-conflict';
   message: string;
   a: CandidateSafetyConstraint | DocumentedClaim;
   b: CandidateSafetyConstraint | DocumentedClaim;
@@ -67,7 +72,10 @@ function unitFamily(unit: string | undefined): string | undefined {
  */
 export function classifyProvenance(
   constraint: CandidateSafetyConstraint,
-  evidenceSources: Map<string, 'markdown' | 'text' | 'pdf' | 'typescript' | 'python' | 'c' | 'cpp' | 'json' | 'yaml'>,
+  evidenceSources: Map<
+    string,
+    'markdown' | 'text' | 'pdf' | 'typescript' | 'python' | 'c' | 'cpp' | 'json' | 'yaml'
+  >,
 ): SafetyProvenance {
   if (constraint.evidence.length === 0) return 'UNKNOWN';
   const documentedEvidence = constraint.evidence.some((ref) => {
@@ -267,10 +275,16 @@ export interface InjectionFinding {
 }
 
 const INJECTION_PATTERNS: Array<{ name: string; regex: RegExp }> = [
-  { name: 'ignore-instructions', regex: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i },
+  {
+    name: 'ignore-instructions',
+    regex: /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/i,
+  },
   { name: 'disregard-safety', regex: /disregard\s+(all\s+)?(safety|policies|limits)/i },
   { name: 'system-prompt-override', regex: /you\s+are\s+now\s+(a|an)\s+/i },
-  { name: 'reveal-secrets', regex: /reveal|print|expose\s+(your\s+)?(system\s+prompt|secrets|api\s+keys?)/i },
+  {
+    name: 'reveal-secrets',
+    regex: /reveal|print|expose\s+(your\s+)?(system\s+prompt|secrets|api\s+keys?)/i,
+  },
   { name: 'override-limits', regex: /set\s+(voltage|max|maximum)\s+to\s+\d{4,}/i },
   { name: 'tool-execution', regex: /execute\s+(the\s+following|this)\s+(command|tool|code)/i },
   { name: 'developer-mode', regex: /developer\s+mode\s+(enabled|activated)/i },
@@ -286,7 +300,10 @@ export function scanForPromptInjection(
       if (match) {
         findings.push({
           pattern: name,
-          excerpt: text.slice(Math.max(0, match.index - 40), match.index + 80).replace(/\s+/g, ' ').trim(),
+          excerpt: text
+            .slice(Math.max(0, match.index - 40), match.index + 80)
+            .replace(/\s+/g, ' ')
+            .trim(),
           path,
         });
       }
@@ -299,7 +316,8 @@ export function scanForPromptInjection(
  * Honest implementation states (spec v1). A generated TypeScript function
  * containing TODO does NOT mean IMPLEMENTED.
  */
-export type ImplementationState = 'DISCOVERED' | 'MAPPED' | 'STUBBED' | 'IMPLEMENTED' | 'SIMULATED' | 'VERIFIED';
+export type ImplementationState =
+  'DISCOVERED' | 'MAPPED' | 'STUBBED' | 'IMPLEMENTED' | 'SIMULATED' | 'VERIFIED';
 
 export function classifyImplementationState(options: {
   hasVendorCallMapping: boolean;

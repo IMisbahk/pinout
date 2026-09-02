@@ -10,7 +10,14 @@
  * Composing or applying transforms whose frames do not chain is an error —
  * frame confusion must fail loudly, never silently.
  */
-import type { CoordinateFrame, FrameReference, Pose, Quaternion, Transform, Vector3 } from '../spec/types.js';
+import type {
+  CoordinateFrame,
+  FrameReference,
+  Pose,
+  Quaternion,
+  Transform,
+  Vector3,
+} from '../spec/types.js';
 
 export function vector3(x: number, y: number, z: number): Vector3 {
   return { x, y, z };
@@ -40,7 +47,12 @@ export function frameReference(frame: CoordinateFrame, referencePose: Pose): Fra
   return { frame, pose: referencePose };
 }
 
-export function makeTransform(from: CoordinateFrame, to: CoordinateFrame, translation: Vector3, rotation: Quaternion): Transform {
+export function makeTransform(
+  from: CoordinateFrame,
+  to: CoordinateFrame,
+  translation: Vector3,
+  rotation: Quaternion,
+): Transform {
   return { from, to, translation, rotation, at: Date.now() };
 }
 
@@ -103,7 +115,12 @@ export function composeTransforms(first: Transform, second: Transform): Transfor
     first.translation.y + rotatedTranslation.y,
     first.translation.z + rotatedTranslation.z,
   );
-  return makeTransform(first.from, second.to, translation, quaternionMultiply(first.rotation, second.rotation));
+  return makeTransform(
+    first.from,
+    second.to,
+    translation,
+    quaternionMultiply(first.rotation, second.rotation),
+  );
 }
 
 /** Invert a transform: A→B becomes B→A. */
@@ -119,7 +136,11 @@ export function invertTransform(transform: Transform): Transform {
 }
 
 /** Build a transform chain through a frame tree and apply it. */
-export function transformChain(transforms: Transform[], from: CoordinateFrame, to: CoordinateFrame): Transform {
+export function transformChain(
+  transforms: Transform[],
+  from: CoordinateFrame,
+  to: CoordinateFrame,
+): Transform {
   let composed: Transform | undefined;
   let current = from;
   for (const transform of transforms) {
@@ -140,7 +161,11 @@ export interface FrameTree {
 }
 
 /** Find and apply the transform taking `reference` into `target` frame. */
-export function transformFrameReference(tree: FrameTree, reference: FrameReference, target: CoordinateFrame): FrameReference {
+export function transformFrameReference(
+  tree: FrameTree,
+  reference: FrameReference,
+  target: CoordinateFrame,
+): FrameReference {
   if (reference.frame === target) return reference;
   const chain = transformChain(tree.transforms, reference.frame, target);
   return applyTransform(chain, reference);

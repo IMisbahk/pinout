@@ -53,7 +53,13 @@ export function ingestPdf(filePath: string): PdfIngestResult {
   }
 
   if (!raw.subarray(0, 5).toString('latin1').startsWith('%PDF')) {
-    return { fileName, pageCount: 0, pages: [], textUnavailable: true, reason: 'Not a PDF (missing %PDF header).' };
+    return {
+      fileName,
+      pageCount: 0,
+      pages: [],
+      textUnavailable: true,
+      reason: 'Not a PDF (missing %PDF header).',
+    };
   }
 
   const objects = parseObjects(raw);
@@ -94,7 +100,8 @@ export function ingestPdf(filePath: string): PdfIngestResult {
       pageCount: pages.length,
       pages,
       textUnavailable: true,
-      reason: 'PDF_TEXT_UNAVAILABLE: no embedded text (likely scanned). Human/OCR review required — this is NOT evidence that no constraints exist.',
+      reason:
+        'PDF_TEXT_UNAVAILABLE: no embedded text (likely scanned). Human/OCR review required — this is NOT evidence that no constraints exist.',
     };
   }
 
@@ -118,7 +125,8 @@ function parseObjects(raw: Buffer): PdfObject[] {
     const endObjMarker = latin.indexOf('endobj', bodyStart);
     if (endObjMarker === -1) continue;
 
-    const dictEnd = streamMarker !== -1 && streamMarker < endObjMarker ? streamMarker : endObjMarker;
+    const dictEnd =
+      streamMarker !== -1 && streamMarker < endObjMarker ? streamMarker : endObjMarker;
     const dictText = latin.slice(bodyStart, dictEnd);
     const dict = parseDictionary(dictText);
 
@@ -141,13 +149,16 @@ function parseObjects(raw: Buffer): PdfObject[] {
 function parseDictionary(text: string): Map<string, unknown> {
   const dict = new Map<string, unknown>();
   // /Key followed by one of: /Name, [refs], "N M R", number, true/false.
-  const entryRegex = /\/([A-Za-z][A-Za-z0-9]*)\s*(\/\.[A-Za-z0-9.]+|\/[A-Za-z0-9]+|\[[^\]]*\]|\d+\s+\d+\s+R\b|-?\d+(?:\.\d+)?|true|false)/g;
+  const entryRegex =
+    /\/([A-Za-z][A-Za-z0-9]*)\s*(\/\.[A-Za-z0-9.]+|\/[A-Za-z0-9]+|\[[^\]]*\]|\d+\s+\d+\s+R\b|-?\d+(?:\.\d+)?|true|false)/g;
   let match: RegExpExecArray | null;
   while ((match = entryRegex.exec(text)) !== null) {
     const key = match[1]!;
     const valueText = match[2]!.trim();
     if (valueText.startsWith('[')) {
-      const refs = [...valueText.matchAll(/(\d+)\s+\d+\s+R/g)].map((ref) => Number.parseInt(ref[1]!, 10));
+      const refs = [...valueText.matchAll(/(\d+)\s+\d+\s+R/g)].map((ref) =>
+        Number.parseInt(ref[1]!, 10),
+      );
       dict.set(key, refs);
     } else {
       const ref = /^(\d+)\s+\d+\s+R$/.exec(valueText);
@@ -216,7 +227,8 @@ export function extractTextFromContentStream(stream: Buffer): string {
   const content = stream.toString('latin1');
   const out: string[] = [];
 
-  const tjRegex = /(?:\[((?:[^\]\\]|\\.)*)\]\s*TJ)|((?:\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]+>)\s*(?:Tj|'|"))|(T\*)|(Td|TD|Tm)/g;
+  const tjRegex =
+    /(?:\[((?:[^\]\\]|\\.)*)\]\s*TJ)|((?:\((?:[^()\\]|\\.)*\)|<[0-9A-Fa-f\s]+>)\s*(?:Tj|'|"))|(T\*)|(Td|TD|Tm)/g;
   let match: RegExpExecArray | null;
   while ((match = tjRegex.exec(content)) !== null) {
     if (match[1] !== undefined) {
@@ -280,7 +292,12 @@ function decodePdfStringLiteral(literal: string): string {
       else if (next >= '0' && next <= '7') {
         let octal = next;
         let lookahead = inner[i + 1];
-        while (octal.length < 3 && lookahead !== undefined && lookahead >= '0' && lookahead <= '7') {
+        while (
+          octal.length < 3 &&
+          lookahead !== undefined &&
+          lookahead >= '0' &&
+          lookahead <= '7'
+        ) {
           octal += lookahead;
           i += 1;
           lookahead = inner[i + 1];
