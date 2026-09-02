@@ -14,3 +14,10 @@ export {
   hashContent,
 } from './integrity.js';
 export type { IntegrityReport, IntegrityStatus, ModuleSignature } from './integrity.js';
+export {
+  evaluateConformanceLevel,
+  conformanceRecord,
+  CONFORMANCE_LEVELS,
+  LEVEL_NAMES,
+} from './conformanceLevels.js';
+export type { ConformanceLevel, ConformanceEvidence } from './conformanceLevels.js';
