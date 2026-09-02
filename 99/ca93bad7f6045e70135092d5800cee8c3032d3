@@ -1,0 +1,22 @@
+packages/cli/src/recordCommands.ts
+  h_b8c068798e4e71 1-86
+packages/cli/src/runCli.ts
+  h_b8c068798e4e71 32,166
+packages/core/src/index.ts
+  h_b8c068798e4e71 303-308
+packages/core/src/journal/replay.ts
+  h_b8c068798e4e71 1-144
+packages/core/tests/replay.test.ts
+  h_b8c068798e4e71 1-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "99ca93bad7f6045e70135092d5800cee8c3032d3",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
