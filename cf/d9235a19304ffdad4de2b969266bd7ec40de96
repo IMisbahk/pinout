@@ -1,0 +1,20 @@
+packages/core/src/frames/frames.ts
+  h_b8c068798e4e71 1-147
+packages/core/src/index.ts
+  h_b8c068798e4e71 316-331
+packages/core/src/spec/units.ts
+  h_b8c068798e4e71 106-111
+packages/core/tests/framesUnits.test.ts
+  h_b8c068798e4e71 1-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "cfd9235a19304ffdad4de2b969266bd7ec40de96",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
