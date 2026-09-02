@@ -1,0 +1,20 @@
+{
+  "name": "@pinout/protocols-grbl",
+  "version": "0.1.0",
+  "description": "GRBL adapter for Pinout — machine status, homing, motion, and stops over any transport. Sim-first; physical CNC machinery demands independent hardware safeguards.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinoutlabs/pinout.git"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pinout/core": "*"
+  }
+}
