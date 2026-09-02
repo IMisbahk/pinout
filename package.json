@@ -38,7 +38,8 @@
     "mcp": "npm run build --silent && node scripts/mcp-bootstrap.js",
     "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js",
     "demo:physical-intelligence": "npm run build --silent && tsx examples/physical-intelligence.ts",
-    "demo:generate-device": "npm run build --silent && tsx examples/generate-device.ts"
+    "demo:generate-device": "npm run build --silent && tsx examples/generate-device.ts",
+    "bench": "npm run build --silent && tsx scripts/benchmark.ts"
   },
   "engines": {
     "node": ">=20"
