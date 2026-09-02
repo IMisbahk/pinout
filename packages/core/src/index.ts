@@ -313,6 +313,22 @@ export type {
   JournalStorage,
   JournalOptions,
 } from './journal/journal.js';
+export {
+  vector3,
+  quaternion,
+  quaternionFromAxisAngle,
+  quaternionMultiply,
+  quaternionConjugate,
+  pose,
+  frameReference,
+  makeTransform,
+  rotateVector,
+  applyTransform,
+  composeTransforms,
+  invertTransform,
+  transformChain,
+  transformFrameReference,
+} from './frames/frames.js';
 export { StreamBus } from './stream/streamBus.js';
 export type {
   StreamDescriptor,

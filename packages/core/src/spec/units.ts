@@ -103,6 +103,12 @@ export function convert(value: number, from: Unit, to: Unit): number {
   const reverse = LINEAR[`${to}|${from}`];
   if (reverse) return value * reverse.factor;
 
+  // Pressure, via Pascal as the pivot.
+  const pressureToPa: Partial<Record<Unit, number>> = { Pa: 1, kPa: 1000, bar: 100000, psi: 6894.757293168361 };
+  if (pressureToPa[from] !== undefined && pressureToPa[to] !== undefined) {
+    return (value * pressureToPa[from]!) / pressureToPa[to]!;
+  }
+
   // Temperature, via Kelvin as the pivot.
   if (from === 'C' && to === 'K') return celsiusToKelvin(value);
   if (from === 'K' && to === 'C') return kelvinToCelsius(value);
