@@ -1,0 +1,36 @@
+hardware/catalog.json
+  h_b8c068798e4e71 4-13,90,93,154-157,180
+packages/protocols-mqtt/README.md
+  h_b8c068798e4e71 1-27
+packages/protocols-mqtt/package.json
+  h_b8c068798e4e71 1-20
+packages/protocols-mqtt/src/errors.ts
+  h_b8c068798e4e71 1-11
+packages/protocols-mqtt/src/index.ts
+  h_b8c068798e4e71 1-24
+packages/protocols-mqtt/src/mapping.ts
+  h_b8c068798e4e71 1-92
+packages/protocols-mqtt/src/mqttClient.ts
+  h_b8c068798e4e71 1-172
+packages/protocols-mqtt/src/wire.ts
+  h_b8c068798e4e71 1-191
+packages/protocols-mqtt/tests/brokerSimulator.ts
+  h_b8c068798e4e71 1-133
+packages/protocols-mqtt/tests/mqtt.test.ts
+  h_b8c068798e4e71 1-163
+packages/protocols-mqtt/tsconfig.json
+  h_b8c068798e4e71 1-9
+tsconfig.json
+  h_b8c068798e4e71 33-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "cb0afbe65bd3c53d273d3152afd8b67d07bb2879",
+  "prompts": {},
+  "humans": {
+    "h_b8c068798e4e71": {
+      "author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
