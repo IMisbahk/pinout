@@ -24,6 +24,9 @@
     },
     {
       "path": "packages/module-host"
+    },
+    {
+      "path": "packages/discovery"
     }
   ]
 }

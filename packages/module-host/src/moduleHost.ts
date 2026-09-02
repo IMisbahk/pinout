@@ -252,7 +252,7 @@ export class ModuleProcess {
 
     child.on('exit', (code, signal) => {
       readline.close();
-      this.heartbeatTimer && clearTimeout(this.heartbeatTimer);
+      if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
       this.heartbeatTimer = undefined;
       const crashed = !this.stopping;
       this.rejectAllPending(
@@ -347,7 +347,7 @@ export class ModuleProcess {
   }
 
   private resetHeartbeatWatch(): void {
-    this.heartbeatTimer && clearTimeout(this.heartbeatTimer);
+    if (this.heartbeatTimer) clearTimeout(this.heartbeatTimer);
     const timeout = (this.spec.heartbeatIntervalMs ?? 1000) * 3 + 500;
     this.heartbeatTimer = setTimeout(() => {
       if (this.stopping) return;

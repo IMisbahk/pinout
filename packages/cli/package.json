@@ -37,6 +37,7 @@
     "@pinout/generator": "*",
     "commander": "^12.1.0",
     "@pinout/daemon": "*",
-    "@pinout/module-host": "*"
+    "@pinout/module-host": "*",
+    "@pinout/discovery": "*"
   }
 }

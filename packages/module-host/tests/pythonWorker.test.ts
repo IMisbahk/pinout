@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ModuleHost, ModuleCrashedError, type ModuleProcess } from '../src/index.js';
+import { ModuleHost, ModuleCrashedError } from '../src/index.js';
+import type { ModuleProcess } from '../src/index.js';
+import type { ChildProcess } from 'node:child_process';
 
 const python3Available = (): boolean => {
   try {
