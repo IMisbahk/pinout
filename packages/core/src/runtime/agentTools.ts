@@ -9,17 +9,28 @@ export interface RuntimeAgentTool extends AgentTool {
   mcpName: string;
 }
 
+export class AgentToolNameCollisionError extends Error {
+  constructor(name: string, first: RuntimeAgentTool, second: RuntimeAgentTool) {
+    super(
+      `MCP tool name '${name}' collides between '${first.deviceId}:${first.capability}' and '${second.deviceId}:${second.capability}'. Rename the device or capability before exposing this runtime.`,
+    );
+    this.name = 'AgentToolNameCollisionError';
+  }
+}
+
 export function runtimeToAgentTools(runtime: PinoutRuntime): RuntimeAgentTool[] {
   const tools: RuntimeAgentTool[] = [];
   for (const summary of runtime.devices()) {
     const device = runtime.getDevice(summary.id);
     tools.push(...deviceToRuntimeAgentTools(device));
   }
-  return tools;
+  return assertUniqueToolNames(tools);
 }
 
 export function deviceToRuntimeAgentTools(device: DeviceInstance): RuntimeAgentTool[] {
-  return device.capabilities.map((capability) => toRuntimeAgentTool(device.id, capability));
+  return assertUniqueToolNames(
+    device.capabilities.map((capability) => toRuntimeAgentTool(device.id, capability)),
+  );
 }
 
 export function toRuntimeAgentTool(
@@ -52,4 +63,16 @@ export function parseMcpToolName(mcpName: string): { deviceId: string; capabilit
   const rawId = mcpName.slice(0, separator).replace(/_/g, '-');
   const rawCapability = mcpName.slice(separator + 2).replace(/_/g, '.');
   return { deviceId: rawId, capability: rawCapability };
+}
+
+function assertUniqueToolNames(tools: RuntimeAgentTool[]): RuntimeAgentTool[] {
+  const seen = new Map<string, RuntimeAgentTool>();
+  for (const tool of tools) {
+    const first = seen.get(tool.mcpName);
+    if (first) {
+      throw new AgentToolNameCollisionError(tool.mcpName, first, tool);
+    }
+    seen.set(tool.mcpName, tool);
+  }
+  return tools;
 }

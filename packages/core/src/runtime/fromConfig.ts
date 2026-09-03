@@ -1,6 +1,6 @@
 import type { PolicyRule } from '../policy/types.js';
 import { policiesFromDeclarative } from '../module/policies.js';
-import { ensureModuleLoaded, loadAllInstalledModules } from '../modules/registry.js';
+import { ensureModuleLoaded } from '../modules/registry.js';
 import { readDevicesFile, type DeviceDefinition } from '../home/deviceStore.js';
 import { resolveDevicesConfigPath, resolvePinoutHome } from '../home/paths.js';
 import { resolveRegistrationOptions } from '../home/transportFactory.js';
@@ -23,7 +23,6 @@ export async function createRuntimeFromConfig(
   options: FromConfigOptions = {},
 ): Promise<FromConfigResult> {
   const home = resolvePinoutHome(options.home);
-  await loadAllInstalledModules(home);
   const devicesPath = resolveDevicesConfigPath(home, options.devicesPath);
   const devicesFile = readDevicesFile(devicesPath, home);
   const runtime = new PinoutRuntime();

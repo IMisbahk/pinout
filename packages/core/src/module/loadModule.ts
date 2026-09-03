@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url';
-import { join, resolve } from 'node:path';
+import { realpath } from 'node:fs/promises';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import type { PinoutModuleDefinition } from '../runtime/types.js';
 import { ModuleInvalidError, ModuleLoadFailedError } from './errors.js';
 import {
@@ -28,9 +29,20 @@ async function importModuleEntrypoint(
   installPath: string,
   manifest: PinoutModuleManifest,
 ): Promise<PinoutModuleDefinition> {
+  if (isAbsolute(manifest.entrypoint)) {
+    throw new ModuleInvalidError('Module entrypoint must be relative to the module directory.');
+  }
   const entryPath = resolve(installPath, manifest.entrypoint);
+  if (!isContained(installPath, entryPath)) {
+    throw new ModuleInvalidError('Module entrypoint must remain inside the module directory.');
+  }
   try {
-    const imported = await import(pathToFileURL(entryPath).href);
+    const moduleRoot = await realpath(installPath);
+    const resolvedEntryPath = await realpath(entryPath);
+    if (!isContained(moduleRoot, resolvedEntryPath)) {
+      throw new ModuleInvalidError('Module entrypoint must remain inside the module directory.');
+    }
+    const imported = await import(pathToFileURL(resolvedEntryPath).href);
     const definition = imported.default ?? imported.module;
     if (!definition || typeof definition !== 'object') {
       throw new ModuleInvalidError('Module entrypoint must export a default Pinout module.');
@@ -42,6 +54,11 @@ async function importModuleEntrypoint(
     }
     throw new ModuleLoadFailedError(manifest.id, error);
   }
+}
+
+function isContained(parent: string, child: string): boolean {
+  const path = relative(resolve(parent), resolve(child));
+  return path === '' || (path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path));
 }
 
 function assertLoadedModuleMatchesManifest(

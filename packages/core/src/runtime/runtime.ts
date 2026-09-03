@@ -1,7 +1,7 @@
 import { PinoutError } from '../errors.js';
 import { mergeModulePolicies } from '../module/policies.js';
 import { getModule } from '../modules/registry.js';
-import { DeviceInstance } from './deviceInstance.js';
+import { DeviceInstance, type InvokeOptions } from './deviceInstance.js';
 import { ProtocolDeviceBackend } from './protocolBackend.js';
 import { createRuntimeFromConfig, type FromConfigOptions } from './fromConfig.js';
 import type {
@@ -28,6 +28,7 @@ export class DeviceNotFoundError extends PinoutError {
 export class PinoutRuntime {
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
+  private readonly deviceEventUnsubscribers = new Map<string, () => void>();
 
   static async fromConfig(options: FromConfigOptions = {}): Promise<PinoutRuntime> {
     const { runtime } = await createRuntimeFromConfig(options);
@@ -45,6 +46,7 @@ export class PinoutRuntime {
         id: device.id,
         deviceClass: device.identity.deviceClass,
         moduleId: device.moduleId,
+        activeTransportKind: device.activeTransportKind,
         lifecycle: device.getHealth().lifecycle,
         simulated: device.simulated,
       };
@@ -128,9 +130,9 @@ export class PinoutRuntime {
       capabilities: module.capabilities,
       policies: mergeModulePolicies(module.policies, options.deploymentPolicies ?? []),
       simulated,
+      activeTransportKind: options.transport?.kind ?? backend.kind,
       transportKinds: module.supportedTransportKinds,
       getOperationalState: () => backend.getOperationalState?.() ?? {},
-      onRuntimeEvent: (event) => this.emit(event),
     });
 
     if (backend instanceof ProtocolDeviceBackend) {
@@ -142,7 +144,7 @@ export class PinoutRuntime {
       );
     }
 
-    this.deviceMap.set(options.id, instance);
+    await this.register(instance);
     return instance;
   }
 
@@ -150,21 +152,29 @@ export class PinoutRuntime {
     if (this.deviceMap.has(device.id)) {
       throw new DuplicateDeviceError(device.id);
     }
+    const unsubscribe = device.subscribeRuntimeEvents((event) => this.emit(event));
+    this.deviceEventUnsubscribers.set(device.id, unsubscribe);
     this.deviceMap.set(device.id, device);
   }
 
   async unregister(id: string): Promise<void> {
     const device = this.getDevice(id);
-    await device.close();
-    this.deviceMap.delete(id);
+    try {
+      await device.close();
+    } finally {
+      this.deviceEventUnsubscribers.get(id)?.();
+      this.deviceEventUnsubscribers.delete(id);
+      this.deviceMap.delete(id);
+    }
   }
 
   async invoke(
     deviceId: string,
     capability: string,
     input: Record<string, unknown> = {},
+    options: InvokeOptions = {},
   ): Promise<Record<string, unknown>> {
-    return this.getDevice(deviceId).invoke(capability, input);
+    return this.getDevice(deviceId).invoke(capability, input, options);
   }
 
   async close(): Promise<void> {

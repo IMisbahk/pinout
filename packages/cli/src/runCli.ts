@@ -10,6 +10,10 @@ import {
   runConfiguredDevicesCommand,
   runInvokeCommand,
   runRuntimeStartCommand,
+  runRuntimeInspection,
+  runRuntimeCapabilities,
+  runRuntimeTools,
+  runEmergencyStop,
 } from './pinoutHomeCommands.js';
 import { registerGenerateCommands } from './generateCommands.js';
 import {
@@ -24,6 +28,9 @@ import {
   type ConnectionFlags,
 } from './connectionArgs.js';
 import { runDoctor } from './doctor.js';
+import { registerDaemonCommands } from './daemonCommands.js';
+import { registerRecordCommands } from './recordCommands.js';
+import { registerModuleIntegrityCommands } from './moduleIntegrityCommands.js';
 import { createOutput, type CliOutput } from './output.js';
 import { esp32PinGroups } from './pinsTable.js';
 import { readScriptFile, readScriptSteps, runScript } from './runScript.js';
@@ -133,6 +140,34 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         await runInvokeCommand(program, deviceId, capability, options.payload, io, outputFor);
       },
     );
+
+  runtime
+    .command('inspect [deviceId]')
+    .description('Inspect active runtime device identity, health, state, and capabilities.')
+    .action(async (deviceId?: string) => runRuntimeInspection(program, deviceId, io, outputFor));
+  runtime
+    .command('capabilities [deviceId]')
+    .description('List capabilities advertised by active runtime devices.')
+    .action(async (deviceId?: string) => runRuntimeCapabilities(program, deviceId, io, outputFor));
+  runtime
+    .command('tools [deviceId]')
+    .description('List agent-tool projections for active runtime devices.')
+    .action(async (deviceId?: string) => runRuntimeTools(program, deviceId, io, outputFor));
+  runtime
+    .command('emergency-stop [deviceId]')
+    .description(
+      'Best-effort stop using only advertised stop capabilities (not a certified E-stop).',
+    )
+    .option('--yes', 'confirm the physical-output action')
+    .action(async (deviceId: string | undefined, options: { yes?: boolean }) =>
+      runEmergencyStop(program, deviceId, options.yes === true, io, outputFor),
+    );
+
+  registerDaemonCommands(program, () => outputFor(program, io));
+  registerRecordCommands(program, () => outputFor(program, io));
+  registerModuleIntegrityCommands(findExistingCommand(program, 'module'), () =>
+    outputFor(program, io),
+  );
 
   program
     .command('doctor')
@@ -496,6 +531,14 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function findExistingCommand(program: Command, name: string): Command {
+  const found = program.commands.find((command) => command.name() === name);
+  if (!found) {
+    throw new Error(`Internal error: command '${name}' is not registered yet.`);
+  }
+  return found;
 }
 
 function readPackageVersion(): string {

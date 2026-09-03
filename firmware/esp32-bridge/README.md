@@ -7,8 +7,19 @@ It does not implement a full board support package. It accepts structured comman
 ## What it supports
 
 - `sys.hello`, `sys.ping`, `sys.info`
-- `gpio.mode`, `gpio.write`, `gpio.read`, `gpio.toggle`, `gpio.pulse`
+- `gpio.mode`, `gpio.write`, `gpio.batchWrite`, `gpio.stopAll`, `gpio.read`, `gpio.toggle`, `gpio.pulse`
 - `gpio.pwm`, `gpio.analogRead`, `gpio.watch`, `gpio.unwatch` (`gpio.changed` events)
+- `i2c.begin`, `i2c.write`, `i2c.read`, `i2c.scan` (default SDA 21 / SCL 22)
+- `spi.begin`, `spi.transfer` (default SCK 18 / MISO 19 / MOSI 23 / CS 5)
+- `gpio.servo` (50 Hz hobby servo on a GPIO)
+- `gpio.motor` (PWM + optional direction pin)
+
+`gpio.batchWrite` validates all entries before changing any output (1–16 writes), making
+multi-pin updates predictable. `gpio.stopAll` is a best-effort software stop: it drives every
+output activated by the bridge low and clears PWM channels. It is not a certified safety
+function, and it does not restore the previous state. Pulses are scheduled without blocking
+the serial loop; their response is sent immediately and the previous pin level is restored when
+the duration expires. A stop cancels pending pulse expirations and leaves those pins low.
 
 See [docs/protocol.md](../../docs/protocol.md) for the message format.
 

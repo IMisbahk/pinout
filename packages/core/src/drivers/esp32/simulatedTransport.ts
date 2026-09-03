@@ -21,6 +21,7 @@ class SimulatedEsp32Transport implements Transport {
   private readonly decoder = new TextDecoder();
   private writeBuffer = '';
   private readonly state = createGpioState();
+  private readonly pulseTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private started = false;
 
   get readable(): AsyncIterable<Uint8Array> {
@@ -36,6 +37,8 @@ class SimulatedEsp32Transport implements Transport {
   }
 
   async close(): Promise<void> {
+    for (const timer of this.pulseTimers.values()) clearTimeout(timer);
+    this.pulseTimers.clear();
     this.state.watched.clear();
     this.inbound.close();
   }
@@ -83,9 +86,13 @@ class SimulatedEsp32Transport implements Transport {
           setTimeout(task, delayMs);
         },
       });
+      this.cancelSupersededPulses(message.action, result);
       this.emitSuccess(message.id, result);
       if (message.action === 'gpio.pulse') {
         this.schedulePulseRevert(result);
+      } else if (message.action === 'gpio.stopAll') {
+        for (const timer of this.pulseTimers.values()) clearTimeout(timer);
+        this.pulseTimers.clear();
       }
     } catch (error) {
       if (error instanceof DeviceError) {
@@ -124,12 +131,63 @@ class SimulatedEsp32Transport implements Transport {
       return;
     }
 
-    setTimeout(() => {
+    const existing = this.pulseTimers.get(pin);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
       const wasWatched = this.state.watched.has(pin);
       this.state.levels.set(pin, previousValue);
       if (wasWatched) {
         this.emitEvent('gpio.changed', { pin, value: previousValue });
       }
+      this.pulseTimers.delete(pin);
     }, durationMs);
+    this.pulseTimers.set(pin, timer);
+  }
+
+  private cancelSupersededPulses(action: string, result: Record<string, unknown>): void {
+    if (action === 'gpio.pulse' || action === 'gpio.stopAll') return;
+    const outputActions = new Set([
+      'gpio.mode',
+      'gpio.write',
+      'gpio.batchWrite',
+      'gpio.toggle',
+      'gpio.pwm',
+      'gpio.servo',
+      'gpio.motor',
+      'i2c.begin',
+      'spi.begin',
+    ]);
+    if (!outputActions.has(action)) return;
+
+    const pins = new Set<number>();
+    for (const key of [
+      'pin',
+      'pwmPin',
+      'dirPin',
+      'sda',
+      'scl',
+      'sck',
+      'miso',
+      'mosi',
+      'chipSelect',
+    ]) {
+      if (typeof result[key] === 'number') pins.add(result[key]);
+    }
+    if (Array.isArray(result.writes)) {
+      for (const write of result.writes) {
+        if (
+          write &&
+          typeof write === 'object' &&
+          typeof (write as { pin?: unknown }).pin === 'number'
+        ) {
+          pins.add((write as { pin: number }).pin);
+        }
+      }
+    }
+    for (const pin of pins) {
+      const timer = this.pulseTimers.get(pin);
+      if (timer) clearTimeout(timer);
+      this.pulseTimers.delete(pin);
+    }
   }
 }

@@ -9,6 +9,14 @@ import {
   assertGpioMode,
   assertGpioPin,
   assertGpioValue,
+  assertI2cAddress,
+  assertBusBytes,
+  assertBusLength,
+  assertEsp32BusPin,
+  assertServoAngle,
+  assertMotorSpeed,
+  esp32DefaultI2c,
+  esp32DefaultSpi,
   type GpioPinMode,
 } from './pins.js';
 
@@ -18,6 +26,8 @@ export const esp32BridgeCapabilities = [
   'sys.info',
   'gpio.mode',
   'gpio.write',
+  'gpio.batchWrite',
+  'gpio.stopAll',
   'gpio.read',
   'gpio.toggle',
   'gpio.pulse',
@@ -25,13 +35,21 @@ export const esp32BridgeCapabilities = [
   'gpio.analogRead',
   'gpio.watch',
   'gpio.unwatch',
+  'i2c.begin',
+  'i2c.write',
+  'i2c.read',
+  'i2c.scan',
+  'spi.begin',
+  'spi.transfer',
+  'gpio.servo',
+  'gpio.motor',
 ] as const;
 
 export const esp32BridgeActions = esp32BridgeCapabilities;
 
 export const esp32BridgeInfo: DeviceInfo = {
   firmware: 'esp32-bridge',
-  version: '0.1.0',
+  version: '0.3.0',
   protocol: protocolVersion,
   capabilities: [...esp32BridgeCapabilities],
 };
@@ -48,6 +66,28 @@ export interface GpioState {
   watched: Set<number>;
   pwmChannels: Map<number, PwmChannelState>;
   analogLevels: Map<number, number>;
+  i2c: I2cBusState;
+  spi: SpiBusState;
+  servos: Map<number, number>;
+  motors: Map<number, { speed: number; dirPin?: number }>;
+}
+
+export interface I2cBusState {
+  sda: number;
+  scl: number;
+  frequency: number;
+  started: boolean;
+  memory: Map<number, number[]>;
+}
+
+export interface SpiBusState {
+  sck: number;
+  miso: number;
+  mosi: number;
+  chipSelect: number;
+  frequency: number;
+  started: boolean;
+  lastTransfer: Map<number, number[]>;
 }
 
 export interface BridgeContext {
@@ -62,6 +102,24 @@ export function createGpioState(): GpioState {
     watched: new Set(),
     pwmChannels: new Map(),
     analogLevels: new Map(),
+    i2c: {
+      sda: esp32DefaultI2c.sda,
+      scl: esp32DefaultI2c.scl,
+      frequency: esp32DefaultI2c.frequency,
+      started: false,
+      memory: new Map(),
+    },
+    spi: {
+      sck: esp32DefaultSpi.sck,
+      miso: esp32DefaultSpi.miso,
+      mosi: esp32DefaultSpi.mosi,
+      chipSelect: esp32DefaultSpi.chipSelect,
+      frequency: esp32DefaultSpi.frequency,
+      started: false,
+      lastTransfer: new Map(),
+    },
+    servos: new Map(),
+    motors: new Map(),
   };
 }
 
@@ -80,6 +138,10 @@ export function handleBridgeAction(
       return { uptimeMs: 0, freeHeap: 200_000 };
     case 'gpio.write':
       return gpioWrite(payload, state, context);
+    case 'gpio.batchWrite':
+      return gpioBatchWrite(payload, state, context);
+    case 'gpio.stopAll':
+      return gpioStopAll(state, context);
     case 'gpio.read':
       return gpioRead(payload, state);
     case 'gpio.mode':
@@ -96,6 +158,22 @@ export function handleBridgeAction(
       return gpioWatch(payload, state);
     case 'gpio.unwatch':
       return gpioUnwatch(payload, state);
+    case 'i2c.begin':
+      return i2cBegin(payload, state);
+    case 'i2c.write':
+      return i2cWrite(payload, state);
+    case 'i2c.read':
+      return i2cRead(payload, state);
+    case 'i2c.scan':
+      return i2cScan(state);
+    case 'spi.begin':
+      return spiBegin(payload, state);
+    case 'spi.transfer':
+      return spiTransfer(payload, state);
+    case 'gpio.servo':
+      return gpioServo(payload, state);
+    case 'gpio.motor':
+      return gpioMotor(payload, state);
     default:
       throw new DeviceError('UNKNOWN_ACTION', `Unknown action '${action}'.`);
   }
@@ -124,6 +202,61 @@ function gpioWrite(
   setPinLevel(state, pin, value, context);
   state.modes.set(pin, 'output');
   return { pin, value };
+}
+
+function gpioBatchWrite(
+  payload: Record<string, unknown>,
+  state: GpioState,
+  context: BridgeContext,
+): Record<string, unknown> {
+  if (!Array.isArray(payload.writes) || payload.writes.length < 1 || payload.writes.length > 16) {
+    throw new DeviceError('INVALID_PAYLOAD', 'gpio.batchWrite requires 1–16 writes.');
+  }
+  const writes: Array<{ pin: number; value: boolean }> = [];
+  for (const entry of payload.writes) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      throw new DeviceError('INVALID_PAYLOAD', 'Each batch write must include pin and value.');
+    }
+    const item = entry as Record<string, unknown>;
+    const pin = requirePin(item);
+    let value: boolean;
+    try {
+      value = assertGpioValue(item.value);
+      assertEsp32WritePin(pin);
+    } catch (error) {
+      throw asPayloadError(error);
+    }
+    writes.push({ pin, value });
+  }
+  // Validate every entry before changing any output (all-or-nothing semantics).
+  for (const write of writes) {
+    setPinLevel(state, write.pin, write.value, context);
+    state.modes.set(write.pin, 'output');
+  }
+  return { writes };
+}
+
+function gpioStopAll(state: GpioState, context: BridgeContext): Record<string, unknown> {
+  const candidates = new Set<number>([
+    ...[...state.modes.entries()].filter(([, mode]) => mode === 'output').map(([pin]) => pin),
+    ...[...state.pwmChannels.values()].map((channel) => channel.pin),
+    ...state.servos.keys(),
+    ...state.motors.keys(),
+  ]);
+  const stoppedPins = new Set(candidates);
+  for (const motor of state.motors.values()) {
+    if (motor.dirPin !== undefined) {
+      stoppedPins.add(motor.dirPin);
+      setPinLevel(state, motor.dirPin, false, context);
+    }
+  }
+  for (const pin of candidates) {
+    setPinLevel(state, pin, false, context);
+  }
+  state.pwmChannels.clear();
+  state.servos.clear();
+  state.motors.clear();
+  return { stoppedPins: [...stoppedPins].sort((a, b) => a - b) };
 }
 
 function gpioRead(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
@@ -305,6 +438,170 @@ function gpioUnwatch(payload: Record<string, unknown>, state: GpioState): Record
   return { pin, watching: false };
 }
 
+function i2cBegin(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  try {
+    if (payload.sda !== undefined) {
+      const sda = assertGpioPin(payload.sda);
+      assertEsp32BusPin(sda, 'I2C SDA');
+      state.i2c.sda = sda;
+    }
+    if (payload.scl !== undefined) {
+      const scl = assertGpioPin(payload.scl);
+      assertEsp32BusPin(scl, 'I2C SCL');
+      state.i2c.scl = scl;
+    }
+    if (payload.frequency !== undefined) {
+      state.i2c.frequency = requirePositiveInt(payload.frequency, 'frequency');
+    }
+  } catch (error) {
+    throw asDeviceError(error);
+  }
+  state.i2c.started = true;
+  return { sda: state.i2c.sda, scl: state.i2c.scl, frequency: state.i2c.frequency };
+}
+
+function i2cWrite(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  let address: number;
+  let data: number[];
+  try {
+    address = assertI2cAddress(payload.address);
+    data = assertBusBytes(payload.data, 'data');
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  state.i2c.started = true;
+  state.i2c.memory.set(address, [...data]);
+  return { address, bytesWritten: data.length };
+}
+
+function i2cRead(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  let address: number;
+  let length: number;
+  try {
+    address = assertI2cAddress(payload.address);
+    length = assertBusLength(payload.length);
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  state.i2c.started = true;
+  const stored = state.i2c.memory.get(address) ?? [];
+  const data = Array.from({ length }, (_, index) => stored[index] ?? 0);
+  return { address, data };
+}
+
+function i2cScan(state: GpioState): Record<string, unknown> {
+  state.i2c.started = true;
+  return { addresses: [...state.i2c.memory.keys()].sort((a, b) => a - b) };
+}
+
+function spiBegin(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  try {
+    if (payload.sck !== undefined) {
+      const sck = assertGpioPin(payload.sck);
+      assertEsp32BusPin(sck, 'SPI SCK');
+      state.spi.sck = sck;
+    }
+    if (payload.miso !== undefined) {
+      const miso = assertGpioPin(payload.miso);
+      assertEsp32ReadPin(miso);
+      state.spi.miso = miso;
+    }
+    if (payload.mosi !== undefined) {
+      const mosi = assertGpioPin(payload.mosi);
+      assertEsp32BusPin(mosi, 'SPI MOSI');
+      state.spi.mosi = mosi;
+    }
+    if (payload.chipSelect !== undefined) {
+      const chipSelect = assertGpioPin(payload.chipSelect);
+      assertEsp32BusPin(chipSelect, 'SPI chip-select');
+      state.spi.chipSelect = chipSelect;
+    }
+    if (payload.frequency !== undefined) {
+      state.spi.frequency = requirePositiveInt(payload.frequency, 'frequency');
+    }
+  } catch (error) {
+    throw asDeviceError(error);
+  }
+  state.spi.started = true;
+  return {
+    sck: state.spi.sck,
+    miso: state.spi.miso,
+    mosi: state.spi.mosi,
+    chipSelect: state.spi.chipSelect,
+    frequency: state.spi.frequency,
+  };
+}
+
+function spiTransfer(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  let data: number[];
+  try {
+    data = assertBusBytes(payload.data, 'data');
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  let chipSelect = state.spi.chipSelect;
+  if (payload.chipSelect !== undefined) {
+    try {
+      chipSelect = assertGpioPin(payload.chipSelect);
+      assertEsp32BusPin(chipSelect, 'SPI chip-select');
+    } catch (error) {
+      throw asDeviceError(error);
+    }
+  }
+  state.spi.started = true;
+  state.spi.lastTransfer.set(chipSelect, [...data]);
+  return { chipSelect, data: [...data] };
+}
+
+function gpioServo(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  const pin = requirePin(payload);
+  try {
+    assertEsp32PwmPin(pin);
+  } catch (error) {
+    throw asDeviceError(error);
+  }
+  let angle: number;
+  try {
+    angle = assertServoAngle(payload.angle);
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  state.servos.set(pin, angle);
+  state.modes.set(pin, 'output');
+  return { pin, angle };
+}
+
+function gpioMotor(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  let pwmPin: number;
+  let dirPin: number | undefined;
+  try {
+    pwmPin = assertGpioPin(payload.pwmPin);
+    assertEsp32PwmPin(pwmPin);
+    if (payload.dirPin !== undefined) {
+      dirPin = assertGpioPin(payload.dirPin);
+      assertEsp32WritePin(dirPin);
+    }
+  } catch (error) {
+    throw asDeviceError(error);
+  }
+  let speed: number;
+  try {
+    speed = assertMotorSpeed(payload.speed, dirPin !== undefined);
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  const motor: { speed: number; dirPin?: number } = { speed };
+  if (dirPin !== undefined) {
+    motor.dirPin = dirPin;
+    state.modes.set(dirPin, 'output');
+    state.levels.set(dirPin, speed >= 0);
+  }
+  state.motors.set(pwmPin, motor);
+  state.modes.set(pwmPin, 'output');
+  state.pwmChannels.set(pwmPin % 8, { pin: pwmPin, duty: Math.abs(speed), frequency: 1000 });
+  return dirPin === undefined ? { pwmPin, speed } : { pwmPin, dirPin, speed };
+}
+
 export function readPinLevel(state: GpioState, pin: number): boolean {
   const mode = state.modes.get(pin);
   if (mode === 'pullup') {
@@ -363,6 +660,23 @@ function requirePwmChannel(channel: unknown): number {
     throw new ValidationError('gpio.pwm channel must be an integer between 0 and 15.');
   }
   return channel;
+}
+
+function requirePositiveInt(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
+    throw new ValidationError(`${field} must be a positive integer.`);
+  }
+  return value;
+}
+
+function asPayloadError(error: unknown): DeviceError {
+  if (error instanceof DeviceError) {
+    return error;
+  }
+  return new DeviceError(
+    'INVALID_PAYLOAD',
+    error instanceof Error ? error.message : 'Invalid payload.',
+  );
 }
 
 function asDeviceError(error: unknown): DeviceError {

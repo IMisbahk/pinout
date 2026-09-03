@@ -32,6 +32,10 @@ Provide either `--port` (or `PINOUT_PORT`) or `--mock`.
 | `module create\|test\|install\|list\|inspect\|uninstall` | External module workflow |
 | `device add\|remove\|list\|inspect` | Persistent device registry |
 | `runtime start` | Bootstrap runtime from `~/.pinout/devices.json` |
+| `runtime inspect [deviceId]` | Inspect identity, health, backend mode, state, and capabilities |
+| `runtime capabilities [deviceId]` | List capability schemas and physical-output classification |
+| `runtime tools [deviceId]` | List the agent/MCP tool projection |
+| `runtime emergency-stop [deviceId] --yes` | Best-effort advertised stop actions; not a certified E-stop |
 | `run [file]` | NDJSON action script on one connection |
 | `blink` | Blink GPIO 2 (or `--pin`) with `--count` / `--delay` |
 | `gpio write\|read\|mode\|toggle\|pulse\|pwm\|analog\|watch\|unwatch` | GPIO shortcuts |
@@ -46,8 +50,13 @@ npm run pinout -- module install ./examples/external-module/weird-sensor
 npm run pinout -- device add sensor-01 --module weird-sensor/thermometer --simulated
 npm run pinout -- devices
 npm run pinout -- invoke sensor-01 temperature.read --payload '{}'
+npm run pinout -- --json runtime inspect
+npm run pinout -- runtime capabilities esp32-01
+npm run pinout -- runtime emergency-stop esp32-01 --yes
 npm run pinout -- blink --mock --count 3
 ```
+
+The stop command invokes only stop capabilities advertised by each selected device, records unsupported devices and partial failures, and requires `--yes`. It cannot replace a hardware interlock or safety-rated emergency-stop circuit.
 
 ## Module ecosystem
 

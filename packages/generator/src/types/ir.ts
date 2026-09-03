@@ -92,6 +92,20 @@ export interface HardwareInterfaceIR {
   safety: CandidateSafetyConstraint[];
   evidence: EvidenceReference[];
   uncertainties: Uncertainty[];
+  /**
+   * Literal claims found in sources: example calls, usage snippets. Used by
+   * the contradiction engine to compare examples against documented limits.
+   * Claims from examples are DATA, never hard rules.
+   */
+  claims?: DocumentedNumericClaim[];
+}
+
+export interface DocumentedNumericClaim {
+  claim: string;
+  capability: string;
+  value: number;
+  unit?: string;
+  evidence: EvidenceReference[];
 }
 
 export function confidenceBand(confidence: number): ConfidenceBand {

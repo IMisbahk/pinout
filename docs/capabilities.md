@@ -48,6 +48,14 @@ Configure pin mode: `input`, `output`, `pullup`, or `pulldown`.
 
 Drive a GPIO pin high or low. Input: `{ pin, value }`. Output: `{ pin, value }`. Safety: physical output.
 
+### `gpio.batchWrite`
+
+Validate an entire set of 1–16 `{ pin, value }` writes before applying any of them. This prevents a validation failure from producing a partially applied batch; it is not a timing-synchronous hardware transaction.
+
+### `gpio.stopAll`
+
+Drive outputs tracked by the ESP32 bridge low, clear PWM/motor/servo state, and cancel pending pulses. This is a best-effort software stop—not a certified safety function.
+
 ### `gpio.read`
 
 Read pin level. Input: `{ pin }`. Output: `{ pin, value }`. Safety: read-only.
@@ -58,7 +66,7 @@ Flip the driven level of an output pin.
 
 ### `gpio.pulse`
 
-Drive high for `durationMs`, then return low.
+Drive a pin for `durationMs` without blocking command processing, then restore its previous level. `gpio.stopAll` cancels the restoration and leaves the pin low.
 
 ### `gpio.pwm`
 
@@ -71,6 +79,46 @@ ADC sample on GPIO 32–39. Output `value` is 0–4095.
 ### `gpio.watch` / `gpio.unwatch`
 
 Subscribe or unsubscribe to `gpio.changed` events for a pin.
+
+### `gpio.servo`
+
+Drive a hobby servo: `{ pin, angle }` with angle 0–180°. Uses 50 Hz LEDC (1–2 ms pulse). Distinct from the `pinout/servo` module, which has no pin — it *is* the servo.
+
+### `gpio.motor`
+
+Drive a DC motor: `{ pwmPin, speed, dirPin? }`. Speed is 0–1 without `dirPin`, or −1 to 1 with a direction pin. Distinct from `pinout/dc-motor`.
+
+## I2C (ESP32 bridge)
+
+Default pins: SDA 21, SCL 22, 100 kHz. Payloads are capped at 32 bytes by the 512-byte protocol line.
+
+### `i2c.begin`
+
+Optional `{ sda, scl, frequency }`. Result echoes the active bus config.
+
+### `i2c.write`
+
+Input: `{ address, data }` where `address` is 0–127 and `data` is 1–32 bytes. Hardware returns `BUS_ERROR` on NACK.
+
+### `i2c.read`
+
+Input: `{ address, length }`. Output: `{ address, data }`.
+
+### `i2c.scan`
+
+Returns `{ addresses }` for devices that acknowledge (1–127). The simulator returns addresses that have been written.
+
+## SPI (ESP32 bridge)
+
+Default pins: SCK 18, MISO 19, MOSI 23, CS 5, 1 MHz, mode 0.
+
+### `spi.begin`
+
+Optional `{ sck, miso, mosi, chipSelect, frequency }`.
+
+### `spi.transfer`
+
+Input: `{ data, chipSelect? }`. Full-duplex; the simulator echoes `data`.
 
 ## Robot manipulator (`pinout/robot-arm`)
 
@@ -100,11 +148,108 @@ Events: `motion.started`, `motion.completed`, `motion.stopped`, `gripper.changed
 
 Events: `temperature.changed`, `door.changed`, `experiment.started`, `experiment.stopped`.
 
+## DC motor (`pinout/dc-motor`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `motor.set` | `{ speed }` | Policy: speed −1 to 1 |
+| `motor.stop` | `{}` | Sets speed to 0 |
+| `motor.read` | `{}` | Commanded speed |
+| `status.read` | `{}` | `ready` / `running` / `stopped` / `faulted` |
+
+Events: `motor.changed`.
+
+## Hobby servo (`pinout/servo`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `servo.set_angle` | `{ angle }` | Policy: 0–180° |
+| `servo.read` | `{}` | Commanded angle |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `servo.changed`.
+
+## Stepper motor (`pinout/stepper`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `stepper.step` | `{ steps }` | Relative steps; policy ±100000 |
+| `stepper.goto` | `{ position }` | Absolute position; policy ±100000 |
+| `stepper.home` | `{}` | Move to step 0 |
+| `stepper.stop` | `{}` | Halt motion |
+| `stepper.read` | `{}` | Position + homed |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `stepper.moved`, `stepper.stopped`.
+
+## Distance sensor (`pinout/distance`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `distance.read` | `{}` | Range in meters |
+| `status.read` | `{}` | Operational snapshot |
+
+## IMU (`pinout/imu`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `imu.read` | `{}` | Accel (g) and gyro (rad/s) |
+| `status.read` | `{}` | Operational snapshot |
+
+## Encoder (`pinout/encoder`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `encoder.read` | `{}` | Tick count |
+| `encoder.reset` | `{}` | Zero ticks |
+| `status.read` | `{}` | Operational snapshot |
+
+## Limit switch (`pinout/limit-switch`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `limit.read` | `{}` | `{ triggered }` |
+| `status.read` | `{}` | Operational snapshot |
+
+## Force sensor (`pinout/force`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `force.read` | `{}` | Newtons |
+| `status.read` | `{}` | Operational snapshot |
+
+## Mobile base (`pinout/mobile-base`)
+
+| Capability | Input | Notes |
+| --- | --- | --- |
+| `drive.set_velocity` | `{ linear, angular }` | Policy: linear ±1.5 m/s, angular ±3 rad/s |
+| `drive.stop` | `{}` | Zero velocities |
+| `pose.read` | `{}` | Simulated odometry |
+| `status.read` | `{}` | Operational snapshot |
+
+Events: `drive.changed`.
+
+## Relay (`pinout/relay`)
+
+`relay.set { on }`, `relay.read`, and `status.read`. Emits `relay.changed`.
+
+## Proportional valve (`pinout/valve`)
+
+`valve.set { opening }`, `valve.read`, and `status.read`. Opening is policy-limited to 0–100 percent. Emits `valve.changed`.
+
+## Pump (`pinout/pump`)
+
+`pump.set { speed }`, `pump.stop`, `pump.read`, and `status.read`. Speed is policy-limited to 0–100 percent. Emits `pump.changed`.
+
+## Programmable power supply (`pinout/power-supply`)
+
+`power.set { voltage, currentLimit }`, `power.output { enabled }`, `power.read`, and `status.read`. The built-in simulator limits configuration to 0–60 V and 0–20 A; these are simulator policies, not ratings for arbitrary physical hardware. Emits `power.changed`.
+
 ## Agent tools
 
 `device.toAgentTools()` maps each advertised capability to an MCP-shaped tool descriptor for **single-device** connections.
 
-`PinoutRuntime` + `@pinout/mcp` derive tools dynamically from all registered devices (`esp32_01__gpio_write`, `arm_sim_01__motion_home`, etc.). See [modules.md](modules.md).
+`PinoutRuntime` + `@pinout/mcp` derive tools dynamically from all registered devices (`esp32_01__gpio_write`, `arm_sim_01__motion_home`, etc.). The runtime adapter also exposes read-only inventory and device-description tools. Physical-output tools are conservatively marked destructive, and normalized name collisions fail closed. See [modules.md](modules.md).
 
 ## Adding a capability
 

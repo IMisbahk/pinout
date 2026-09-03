@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc -b"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true,
   "engines": {
     "node": ">=20"

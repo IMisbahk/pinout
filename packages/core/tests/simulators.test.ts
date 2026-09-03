@@ -18,6 +18,16 @@ describe('simulated robot arm', () => {
     expect(events).toContain('gripper.changed');
     await arm.close();
   });
+
+  it('settles an in-flight motion when stop is requested', async () => {
+    const arm = createSimulatedRobotArmBackend({ motionDelayMs: 100 });
+    const motion = arm.invoke('motion.move_to', { x: 0.4, y: 0, z: 0.2 });
+    await Promise.resolve();
+    await expect(arm.invoke('motion.stop', {})).resolves.toEqual({ status: 'stopped' });
+    await expect(motion).rejects.toMatchObject({ code: 'MOTION_STOPPED' });
+    await expect(arm.invoke('status.read', {})).resolves.toMatchObject({ status: 'ready' });
+    await arm.close();
+  });
 });
 
 describe('simulated chamber', () => {

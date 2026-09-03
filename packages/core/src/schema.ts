@@ -1,4 +1,4 @@
-import { ValidationError } from './errors.js';
+import { ProtocolError, ValidationError } from './errors.js';
 import type { JsonSchema } from './types.js';
 
 export function validateInputSchema(
@@ -9,6 +9,22 @@ export function validateInputSchema(
   assertSchema(schema, value, path || 'payload');
   if (!isPlainObject(value)) {
     throw new ValidationError('payload must be an object.');
+  }
+  return value;
+}
+
+/** Validate a backend/device result before it crosses the public capability boundary. */
+export function validateOutputSchema(schema: JsonSchema, value: unknown): Record<string, unknown> {
+  try {
+    assertSchema(schema, value, 'result');
+  } catch (error) {
+    throw new ProtocolError(
+      `Capability output violated its declared schema: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+  if (!isPlainObject(value)) {
+    throw new ProtocolError('Capability output must be an object.');
   }
   return value;
 }
@@ -41,6 +57,12 @@ function assertSchema(schema: JsonSchema, value: unknown, path: string): void {
   if (schema.type === 'array') {
     if (!Array.isArray(value)) {
       throw new ValidationError(`${path} must be an array.`);
+    }
+    if (schema.minItems !== undefined && value.length < schema.minItems) {
+      throw new ValidationError(`${path} must contain at least ${schema.minItems} item(s).`);
+    }
+    if (schema.maxItems !== undefined && value.length > schema.maxItems) {
+      throw new ValidationError(`${path} must contain at most ${schema.maxItems} item(s).`);
     }
     if (schema.items) {
       for (let index = 0; index < value.length; index += 1) {

@@ -62,6 +62,7 @@ Prefer real protocol round-trips over mocking internal functions. Mock transport
 
 ```bash
 npm run demo:heterogeneous   # ESP32 + robot arm + chamber simulators
+npm run demo:robotics        # full first-party robotics parts workbench
 pinout module test ./examples/external-module/weird-sensor
 PINOUT_CONFIG=~/.pinout/devices.json npm run mcp
 ```

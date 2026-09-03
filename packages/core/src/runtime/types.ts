@@ -23,6 +23,7 @@ export interface DeviceHealth {
 
 export interface DeviceDescriptor extends DeviceIdentity {
   capabilities: string[];
+  activeTransportKind: string;
   transportKinds: string[];
   simulated: boolean;
 }
@@ -37,7 +38,7 @@ export interface RuntimeEventEnvelope {
 export type RuntimeEventHandler = (event: RuntimeEventEnvelope) => void;
 
 export interface DeviceBackend {
-  readonly kind: 'protocol' | 'simulated';
+  readonly kind: 'protocol' | 'simulated' | 'composite';
   invoke(action: string, payload: Record<string, unknown>): Promise<Record<string, unknown>>;
   close(): Promise<void>;
   subscribe(handler: (event: string, payload: Record<string, unknown>) => void): () => void;
@@ -71,6 +72,7 @@ export interface DeviceSummary {
   id: string;
   deviceClass: DeviceClass;
   moduleId: string;
+  activeTransportKind: string;
   lifecycle: DeviceLifecycleStatus;
   simulated: boolean;
   vendor?: string;

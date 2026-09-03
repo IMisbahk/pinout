@@ -1,5 +1,13 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { moduleInstallDirectory, modulesIndexPath, resolvePinoutHome } from './paths.js';
 import { loadModuleFromDirectory, type LoadedModule } from '../module/loadModule.js';
 import {
@@ -70,6 +78,9 @@ export async function installModuleFromPath(
   if (existing && !options.force) {
     throw new ModuleAlreadyInstalledError(manifest.id);
   }
+  if (existing) {
+    assertSafeInstallPath(existing.installPath, home);
+  }
   const installPath = moduleInstallDirectory(home, manifest.id);
   rmSync(installPath, { recursive: true, force: true });
   mkdirSync(dirname(installPath), { recursive: true });
@@ -98,6 +109,7 @@ export function uninstallModule(moduleId: string, home?: string): void {
   if (record.builtin) {
     throw new ModuleInvalidError(`Built-in module '${moduleId}' cannot be uninstalled.`);
   }
+  assertSafeInstallPath(record.installPath, resolvedHome);
   rmSync(record.installPath, { recursive: true, force: true });
   writeModulesIndex(
     {
@@ -118,8 +130,44 @@ export function inspectInstalledModule(moduleId: string, home?: string): Install
 }
 
 export async function loadInstalledModule(moduleId: string, home?: string): Promise<LoadedModule> {
-  const record = inspectInstalledModule(moduleId, home);
+  const resolvedHome = resolvePinoutHome(home);
+  const record = inspectInstalledModule(moduleId, resolvedHome);
+  assertSafeInstallPath(record.installPath, resolvedHome);
   return loadModuleFromDirectory(record.installPath);
+}
+
+/** Validate index-controlled paths before they are used for import or deletion. */
+function assertSafeInstallPath(installPath: string, home: string): void {
+  const modulesRoot = resolve(home, 'modules');
+  const candidate = resolve(installPath);
+  if (!isContained(modulesRoot, candidate)) {
+    throw new ModuleInvalidError(
+      `Installed module path '${installPath}' is outside the Pinout modules directory.`,
+    );
+  }
+  if (existsSync(candidate)) {
+    let realRoot: string;
+    let realCandidate: string;
+    try {
+      realRoot = realpathSync(modulesRoot);
+      realCandidate = realpathSync(candidate);
+    } catch (error) {
+      throw new ModuleInvalidError(
+        `Unable to validate installed module path '${installPath}'.`,
+        error,
+      );
+    }
+    if (!isContained(realRoot, realCandidate)) {
+      throw new ModuleInvalidError(
+        `Installed module path '${installPath}' resolves outside the Pinout modules directory.`,
+      );
+    }
+  }
+}
+
+function isContained(parent: string, child: string): boolean {
+  const path = relative(resolve(parent), resolve(child));
+  return path === '' || (path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path));
 }
 
 export function registerInstalledModuleRecord(record: InstalledModuleRecord, home?: string): void {

@@ -1,0 +1,9 @@
+Pinout
+Copyright 2026 Pinout and contributors
+
+This product includes software developed as part of the Pinout project
+(https://github.com/pinoutlabs/pinout), licensed under the Apache License,
+Version 2.0.
+
+Third-party dependencies are distributed under their own licenses; see the
+respective package metadata. Serial port support uses serialport (MIT).

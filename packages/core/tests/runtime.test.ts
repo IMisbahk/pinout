@@ -21,6 +21,10 @@ describe('PinoutRuntime heterogeneous', () => {
         'microcontroller',
         'robot.manipulator',
       ]);
+      expect(devices.find((device) => device.id === ids.esp32)).toMatchObject({
+        activeTransportKind: 'simulated-esp32',
+        simulated: true,
+      });
     } finally {
       await runtime.close();
     }

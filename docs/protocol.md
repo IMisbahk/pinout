@@ -67,7 +67,7 @@ Events have `event` and no `id`.
     "firmware": "esp32-bridge",
     "version": "0.1.0",
     "protocol": 1,
-    "capabilities": ["sys.hello", "gpio.mode", "gpio.write", "gpio.read", "gpio.toggle", "gpio.pulse", "gpio.pwm", "gpio.analogRead", "gpio.watch", "gpio.unwatch"]
+    "capabilities": ["sys.hello", "gpio.mode", "gpio.write", "gpio.read", "gpio.toggle", "gpio.pulse", "gpio.pwm", "gpio.analogRead", "gpio.watch", "gpio.unwatch", "i2c.begin", "i2c.write", "i2c.read", "i2c.scan", "spi.begin", "spi.transfer"]
   }
 }
 ```
@@ -130,7 +130,7 @@ Payload:
 { "pin": 2, "value": true, "durationMs": 100 }
 ```
 
-Drives the pin to `value` for `durationMs` milliseconds, then restores the previous level. On firmware the request blocks until the pulse completes; the simulator schedules the revert asynchronously.
+Drives the pin to `value` for `durationMs` milliseconds, then restores the previous level. Firmware and simulator schedule the revert without blocking command processing. `gpio.stopAll` cancels pending pulse restoration and leaves tracked outputs low. A later explicit output command on the same pin also cancels the restoration, so an expired pulse cannot overwrite newer operator intent.
 
 Result: `{ "pin": 2, "value": true, "durationMs": 100, "previousValue": false }`
 
@@ -176,6 +176,62 @@ Unsolicited event emitted when a watched pin changes level:
 
 Firmware polls watched pins in `loop()`. The simulator emits this event when a watched pin is written, toggled, pulsed, or reverted after a pulse.
 
+### `i2c.begin`
+
+Payload (all fields optional): `{ "sda": 21, "scl": 22, "frequency": 100000 }`
+
+Default ESP32 pins are SDA 21 and SCL 22 at 100 kHz.
+
+### `i2c.write`
+
+```json
+{ "address": 60, "data": [0, 175] }
+```
+
+`address` is 0–127. `data` is 1–32 bytes. Hardware returns `BUS_ERROR` if the device NACKs.
+
+Result: `{ "address": 60, "bytesWritten": 2 }`
+
+### `i2c.read`
+
+Payload: `{ "address": 60, "length": 2 }`
+
+Result: `{ "address": 60, "data": [0, 175] }`
+
+The simulator returns the last bytes written to that address, padded with zeros.
+
+### `i2c.scan`
+
+Payload: `{}`
+
+Result: `{ "addresses": [60] }`
+
+### `spi.begin`
+
+Payload (all fields optional): `{ "sck": 18, "miso": 19, "mosi": 23, "chipSelect": 5, "frequency": 1000000 }`
+
+### `spi.transfer`
+
+```json
+{ "data": [18, 52], "chipSelect": 5 }
+```
+
+Full-duplex, 1–32 bytes, SPI mode 0. The simulator echoes `data`.
+
+Result: `{ "chipSelect": 5, "data": [18, 52] }`
+
+### `gpio.servo`
+
+Payload: `{ "pin": 13, "angle": 90 }`
+
+50 Hz hobby-servo PWM. Angle is 0–180.
+
+### `gpio.motor`
+
+Payload: `{ "pwmPin": 25, "speed": 0.4, "dirPin": 26 }`
+
+`dirPin` is optional. Reverse (`speed` < 0) requires it.
+
 ## Error codes
 
 | Code | Meaning |
@@ -185,6 +241,7 @@ Firmware polls watched pins in `loop()`. The simulator emits this event when a w
 | `UNKNOWN_ACTION` | Action is not implemented on this device. |
 | `INVALID_PIN` | Pin is out of range or forbidden on this device. |
 | `INVALID_PAYLOAD` | Action input failed validation. |
+| `BUS_ERROR` | I2C NACK or other bus failure (hardware only). |
 
 Host-only errors (never sent by the device): `TIMEOUT`, `TRANSPORT_ERROR`, `PROTOCOL_ERROR`, `DISCONNECTED`, `UNSUPPORTED_CAPABILITY`, `VALIDATION_ERROR`, `ABORTED`.
 

@@ -1,0 +1,22 @@
+{
+  "name": "@pinout/protocols-modbus",
+  "version": "0.1.0",
+  "description": "Modbus TCP and RTU protocol adapter for Pinout — zero-dependency wire protocol with register-map device mapping.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pinoutlabs/pinout.git"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pinout/core": "*"
+  }
+}

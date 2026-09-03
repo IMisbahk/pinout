@@ -87,6 +87,37 @@ describe('gpio family via simulated ESP32', () => {
     expect(changed.some((message) => message.payload?.value === true)).toBe(true);
     expect(changed.some((message) => message.payload?.value === false)).toBe(true);
   });
+
+  it('cancels a pending pulse restoration when stopAll is requested', async () => {
+    const device = await connect({ transport: simulatedEsp32() });
+    try {
+      await device.invoke('gpio.pulse', { pin: 2, value: true, durationMs: 40 });
+      await device.invoke('gpio.stopAll', {});
+      await delay(70);
+      await expect(device.invoke('gpio.read', { pin: 2 })).resolves.toEqual({
+        pin: 2,
+        value: false,
+      });
+    } finally {
+      await device.close();
+    }
+  });
+
+  it('does not let a pulse restoration overwrite a newer explicit write', async () => {
+    const device = await connect({ transport: simulatedEsp32() });
+    try {
+      await device.invoke('gpio.write', { pin: 2, value: true });
+      await device.invoke('gpio.pulse', { pin: 2, value: false, durationMs: 30 });
+      await device.invoke('gpio.write', { pin: 2, value: false });
+      await new Promise((resolve) => setTimeout(resolve, 45));
+      await expect(device.invoke('gpio.read', { pin: 2 })).resolves.toEqual({
+        pin: 2,
+        value: false,
+      });
+    } finally {
+      await device.close();
+    }
+  });
 });
 
 function delay(ms: number): Promise<void> {

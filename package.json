@@ -4,9 +4,9 @@
   "description": "Hardware abstraction layer for programmable devices — SDK, CLI, firmware, and MCP adapter.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/imisbahk/pinout.git"
+    "url": "git+https://github.com/pinoutlabs/pinout.git"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -29,12 +29,17 @@
     "example:script": "npm run build --silent && tsx examples/script.ts",
     "example:agent-tools": "npm run build --silent && tsx examples/agent-tools.ts",
     "demo:heterogeneous": "npm run build --silent && tsx examples/heterogeneous.ts",
+    "demo:robotics": "npm run build --silent && tsx examples/robotics-parts.ts",
+    "demo:composite": "npm run build --silent && tsx examples/multi-driver-rig.ts",
     "demo:generate": "npm run build --silent && node packages/cli/dist/index.js generate ./fixtures/generator/heatbox-sdk --plan",
     "eval:generator": "npm run build --silent && vitest run packages/generator/tests/generator.test.ts",
     "eval:generator:live": "PINOUT_GENERATOR_PROVIDER=http npm run build --silent && vitest run packages/generator/tests/generator.test.ts",
     "example:mcp-heterogeneous": "npm run build --silent && tsx examples/mcp-heterogeneous.ts",
     "mcp": "npm run build --silent && node scripts/mcp-bootstrap.js",
-    "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js"
+    "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js",
+    "demo:physical-intelligence": "npm run build --silent && tsx examples/physical-intelligence.ts",
+    "demo:generate-device": "npm run build --silent && tsx examples/generate-device.ts",
+    "bench": "npm run build --silent && tsx scripts/benchmark.ts"
   },
   "engines": {
     "node": ">=20"
@@ -44,13 +49,13 @@
     "@pinout/cli": "*",
     "@pinout/core": "*",
     "@types/node": "^22.10.1",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0",
-    "vitest": "^2.1.8"
+    "vitest": "^3.2.7"
   }
 }

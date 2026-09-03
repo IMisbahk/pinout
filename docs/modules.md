@@ -23,13 +23,63 @@ Device instance (esp32-01)
   └── state: firmware identity + GPIO levels
 ```
 
-## Built-in modules (Sprint 2)
+## Built-in modules (Sprint 2+)
 
 | Module id | Device class | Backend |
 | --- | --- | --- |
 | `pinout/esp32` | `microcontroller` | Serial / simulated ESP32 (protocol v1) |
 | `pinout/robot-arm` | `robot.manipulator` | In-process simulator |
 | `pinout/environmental-chamber` | `lab.environmental_chamber` | In-process simulator |
+| `pinout/dc-motor` | `actuator.dc_motor` | In-process simulator |
+| `pinout/servo` | `actuator.servo` | In-process simulator |
+| `pinout/stepper` | `actuator.stepper` | In-process simulator |
+| `pinout/distance` | `sensor.distance` | In-process simulator |
+| `pinout/imu` | `sensor.imu` | In-process simulator |
+| `pinout/encoder` | `sensor.encoder` | In-process simulator |
+| `pinout/limit-switch` | `sensor.limit_switch` | In-process simulator |
+| `pinout/force` | `sensor.force` | In-process simulator |
+| `pinout/mobile-base` | `robot.mobile_base` | In-process simulator |
+| `pinout/relay` | `actuator.relay` | In-process simulator |
+| `pinout/valve` | `actuator.valve` | In-process simulator |
+| `pinout/pump` | `actuator.pump` | In-process simulator |
+| `pinout/power-supply` | `supply.power` | In-process simulator |
+
+## Multi-driver devices
+
+`createCompositeDevice()` presents several independently managed backends as one policy-enforced device. Every public capability must have exactly one explicit route, duplicate capability names are rejected, and driver events carry the originating driver name.
+
+```ts
+import {
+  createCompositeDevice,
+  createSimulatedPumpBackend,
+  createSimulatedRelayBackend,
+  pumpModule,
+  relayModule,
+} from '@pinout/core';
+
+const rig = createCompositeDevice({
+  id: 'fluid-rig-01',
+  moduleId: 'example/fluid-rig',
+  deviceClass: 'system.fluid_rig',
+  drivers: {
+    pump: createSimulatedPumpBackend(),
+    contactor: createSimulatedRelayBackend(),
+  },
+  capabilities: [
+    ...pumpModule.capabilities,
+    relayModule.capabilities.find((capability) => capability.name === 'relay.set')!,
+  ],
+  routes: {
+    'pump.set': { driver: 'pump' },
+    'pump.stop': { driver: 'pump' },
+    'pump.read': { driver: 'pump' },
+    'status.read': { driver: 'pump' },
+    'relay.set': { driver: 'contactor' },
+  },
+});
+```
+
+Composition is capability routing, not a real-time transaction coordinator. Cross-driver atomicity, certified stops, and distributed rollback remain deployment concerns.
 
 ## External modules (Sprint 3)
 
@@ -67,7 +117,7 @@ const runtime = await PinoutRuntime.fromConfig();
 // loads ~/.pinout/devices.json + installed modules
 ```
 
-Or use `createHeterogeneousRuntime()` for the in-memory demo set when no config file exists.
+Or use `createHeterogeneousRuntime()` for the in-memory lab demo (ESP32 + arm + chamber), or `createRoboticsWorkbench()` for the full first-party parts set.
 
 ## Semantic capability families
 
@@ -75,6 +125,19 @@ Capabilities use dotted names grouped by physical semantics:
 
 - `gpio.*` — digital I/O (microcontrollers)
 - `motion.*`, `gripper.*`, `pose.*` — manipulators
+- `motor.*` — DC motors
+- `servo.*` — hobby servos
+- `stepper.*` — stepper motors
+- `distance.*` — rangefinders
+- `imu.*` — inertial measurement units
+- `encoder.*` — quadrature encoders
+- `limit.*` — end-stops / limit switches
+- `force.*` — load cells / force sensors
+- `drive.*` — mobile bases / differential drive
+- `relay.*` — electrical contacts
+- `valve.*` — proportional flow control
+- `pump.*` — pump speed and stop
+- `power.*` — programmable supply configuration and output enable
 - `temperature.*`, `door.*`, `experiment.*` — environmental chambers
 - `temperature.*`, `humidity.*` — sensors (external modules)
 - `status.*`, `sys.*` — diagnostics shared across classes

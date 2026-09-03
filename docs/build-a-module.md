@@ -187,4 +187,4 @@ Generated modules start at status **GENERATED / UNVERIFIED**. They use the same 
   config.json           # optional future settings
 ```
 
-Built-in modules (`pinout/esp32`, `pinout/robot-arm`, `pinout/environmental-chamber`) are always available and listed alongside installed modules.
+Built-in modules (`pinout/esp32`, `pinout/robot-arm`, `pinout/environmental-chamber`, `pinout/dc-motor`, `pinout/servo`, `pinout/stepper`, `pinout/distance`, `pinout/imu`, `pinout/encoder`, `pinout/limit-switch`, `pinout/force`, `pinout/mobile-base`) are always available and listed alongside installed modules.

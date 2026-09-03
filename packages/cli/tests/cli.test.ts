@@ -164,6 +164,62 @@ describe('cli', () => {
     ).toBe(0);
     expect(ping.logs.join('\n')).toContain('pong');
   });
+
+  it('discovers active runtime devices, capabilities, and tools as JSON', async () => {
+    const inspect = captureIo();
+    expect(await runCli(['node', 'pinout', '--json', 'runtime', 'inspect'], inspect)).toBe(0);
+    const inspected = JSON.parse(inspect.logs[0] ?? '{}') as {
+      devices: Array<{
+        id: string;
+        activeTransportKind: string;
+        supportedTransportKinds: string[];
+      }>;
+    };
+    expect(inspected.devices.map((device) => device.id)).toContain('esp32-01');
+    expect(inspected.devices.find((device) => device.id === 'esp32-01')).toMatchObject({
+      activeTransportKind: 'simulated-esp32',
+      supportedTransportKinds: expect.arrayContaining(['serial']),
+    });
+
+    const capabilities = captureIo();
+    expect(
+      await runCli(
+        ['node', 'pinout', '--json', 'runtime', 'capabilities', 'esp32-01'],
+        capabilities,
+      ),
+    ).toBe(0);
+    expect(JSON.parse(capabilities.logs[0] ?? '{}')).toMatchObject({
+      devices: [{ deviceId: 'esp32-01' }],
+    });
+
+    const tools = captureIo();
+    expect(await runCli(['node', 'pinout', '--json', 'runtime', 'tools', 'esp32-01'], tools)).toBe(
+      0,
+    );
+    expect(
+      JSON.parse(tools.logs[0] ?? '{}').tools.some((tool: { mcpName: string }) =>
+        tool.mcpName.includes('gpio_write'),
+      ),
+    ).toBe(true);
+  });
+
+  it('requires explicit confirmation and reports best-effort emergency stop', async () => {
+    const refused = captureIo();
+    expect(await runCli(['node', 'pinout', 'runtime', 'emergency-stop'], refused)).toBe(1);
+    expect(refused.errors.join('\n')).toMatch(/--yes|certified/i);
+
+    const stopped = captureIo();
+    expect(
+      await runCli(
+        ['node', 'pinout', '--json', 'runtime', 'emergency-stop', 'esp32-01', '--yes'],
+        stopped,
+      ),
+    ).toBe(0);
+    expect(JSON.parse(stopped.logs[0] ?? '{}')).toMatchObject({
+      certified: false,
+      bestEffort: true,
+    });
+  });
 });
 
 function captureIo() {
