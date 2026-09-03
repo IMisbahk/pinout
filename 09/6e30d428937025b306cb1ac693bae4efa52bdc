@@ -1,0 +1,445 @@
+package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 7,9,39-42,52,59
+fixtures/eval/sensor/datasheet.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-13
+packages/core/tests/streamStress.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-88
+fixtures/eval/industrial-modbus/register-map.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-20
+MEGA_SPRINT_REPORT.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-161
+packages/module-host/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-23
+fixtures/eval/ground-truth.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-206
+packages/protocols-grbl/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-4
+examples/generate-device.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-229
+packages/core/src/frames/frames.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-172
+packages/daemon/src/start.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-35
+packages/protocols-modbus/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-27
+packages/protocols-scpi/src/errors.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-60
+packages/protocols-grbl/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+packages/protocols-scpi/src/parser.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-383
+NOTICE
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+packages/core/src/operation/operationManager.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-586
+packages/core/tests/streamBus.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-150
+packages/discovery/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-47
+packages/module-host/src/moduleHost.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-424
+packages/discovery/tests/discovery.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-274
+packages/protocols-grbl/tests/grbl.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-119
+packages/protocols-modbus/tests/clients.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-234
+CHANGELOG.md
+  s_c6e8ac5098c493::t_3925388a520bf8 7-34,130-131
+packages/protocols-scpi/src/client.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-346
+examples/physical-intelligence.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-232
+sdk/python/pyproject.toml
+  s_c6e8ac5098c493::t_3925388a520bf8 1-37
+sdk/python/src/pinout/client.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-276
+packages/core/tests/deviceGraph.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-156
+packages/protocols-mqtt/src/mqttClient.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-274
+packages/protocols-mqtt/tests/brokerSimulator.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-140
+packages/protocols-scpi/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-10
+packages/core/src/spec/units.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-169
+docs/spec/safety.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-66
+packages/protocols-mqtt/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-35
+sdk/python-module/src/pinout_module/module.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-170
+sdk/python-module/src/pinout_module/runner.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-163
+packages/cli/src/runCli.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 31-33,166-171,536-541
+  s_c6e8ac5098c493::t_f0158b0e3a9f27 542-543
+packages/generator/tests/provenance.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-267
+packages/generator/src/eval/realityCheck.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-370
+packages/module-host/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-48
+firmware/micropython-bridge/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-48
+packages/daemon/tests/api.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-377
+packages/protocols-mqtt/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+packages/protocols-scpi/tests/client.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-204
+fixtures/eval/ambiguous-sdk/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-10
+packages/core/src/transports/udpTransport.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-185
+docs/mega-sprint-baseline.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-62
+packages/core/src/operation/idempotencyStore.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-134
+packages/core/src/transports/webSocketTransport.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-239
+packages/core/tests/toolExport.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-39
+packages/module-host/src/protocol.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-117
+packages/core/tests/halt.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-79
+fixtures/eval/microcontroller/manual.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-26
+docs/spec/capabilities.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-52
+firmware/boards/esp32-c3-supermini.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-22
+packages/protocols-scpi/src/instruments/scpiInstrument.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-64
+packages/discovery/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+sdk/python/src/pinout/errors.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-82
+sdk/python/src/pinout/async_client.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-123
+packages/core/tests/faultInjection.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-169
+sdk/python-module/examples/heatlamp/heatlamp.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-80
+sdk/python-module/pyproject.toml
+  s_c6e8ac5098c493::t_3925388a520bf8 1-33
+packages/core/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 22,29,32-36
+packages/cli/tests/moduleIntegrity.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-131
+packages/core/src/graph/deviceGraph.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-225
+packages/module-host/workers/nodeModuleWorker.mjs
+  s_c6e8ac5098c493::t_3925388a520bf8 1-166
+packages/protocols-scpi/tests/instruments.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-213
+packages/protocols-modbus/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+sdk/python-module/src/pinout_module/__main__.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-3
+packages/protocols-grbl/src/grblSimulator.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-27,30-46,48-55,57-67,69-76,78-94,96-126,128-133,135-146,154-174,180-203
+  s_c6e8ac5098c493::t_34a44ca492cc4c 28-29,47,56,68,77,95,127,134,147-153,175-179
+packages/core/tests/journal.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-118
+firmware/micropython-bridge/config.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-29
+.gitignore
+  s_c6e8ac5098c493::t_3925388a520bf8 1,3-4,6-7,9-13,17-26,28-57,59-72,74-77,79
+  s_c6e8ac5098c493::t_56f50e34da3133 80
+packages/core/tests/framesUnits.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-156
+docs/platform-merge-validation.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-69
+packages/generator/src/semantic/capabilityMapper.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 104,107-171
+packages/module-host/src/permissions.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-92
+packages/protocols-mqtt/src/errors.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-11
+firmware/boards/raspberry-pi-pico.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-26
+packages/cli/src/daemonCommands.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-157
+packages/core/tests/deviceSafetyIntegration.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-138
+LICENSE
+  s_c6e8ac5098c493::t_3925388a520bf8 1-205
+packages/core/tests/safetyEngine.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-363
+packages/daemon/src/httpServer.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-729
+packages/core/src/runtime/deviceInstance.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1,3,5,28-43,55-56,74-75,142,154-158,165-195
+packages/generator/src/ingest/pdfIngest.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-356
+packages/protocols-scpi/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-31
+packages/protocols-scpi/src/instruments/digitalMultimeter.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-25
+packages/protocols-scpi/src/instruments/powerSupply.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-56
+packages/core/tests/udpTransport.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-169
+firmware/micropython-bridge/main.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-450
+sdk/python-module/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-21
+packages/protocols-scpi/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-185
+docs/spec/errors.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-49
+eslint.config.js
+  s_c6e8ac5098c493::t_3925388a520bf8 7-14,19-24
+packages/cli/src/moduleIntegrityCommands.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-103
+packages/core/src/errors.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 64-221
+packages/core/src/spec/types.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-429
+packages/core/tests/idempotencyAdversarial.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-238
+packages/cli/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 26,33,38-41
+docs/spec/journal.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-36
+firmware/boards/arduino-uno.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-23
+packages/core/src/spec/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-4
+packages/core/tests/boards.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-113
+packages/discovery/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-26
+packages/core/src/lease/leaseManager.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-214
+packages/daemon/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-30
+packages/core/tests/replay.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-87
+packages/protocols-modbus/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-61
+packages/protocols-modbus/tests/registerMap.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-179
+packages/protocols-mqtt/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-15
+packages/core/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 8-12,52-54,56-80,218-227,271-347
+packages/protocols-mqtt/tests/mqtt.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-184
+packages/protocols-modbus/src/rtuClient.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-184
+fixtures/eval/lab-instrument/manual.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-20
+docs/spec/leases.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-33
+packages/core/src/spec/version.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-18
+packages/generator/tests/repair.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-137
+packages/discovery/src/core.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-196
+SUPPORT.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-27
+packages/generator/src/safety/provenance.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-337
+packages/core/src/journal/replay.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-156
+packages/core/tests/leases.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-140
+packages/core/src/spec/danger.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-30
+packages/generator/tests/generator.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 75,84
+packages/module-host/tests/fixtures/crashy-module.mjs
+  s_c6e8ac5098c493::t_3925388a520bf8 1-10
+packages/module-host/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+packages/protocols-scpi/src/instruments/functionGenerator.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-54
+sdk/python-module/examples/heatlamp/pinout.module.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-12
+tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 4-36
+firmware/micropython-bridge/validate.js
+  s_c6e8ac5098c493::t_3925388a520bf8 1-183
+fixtures/eval/robot-arm/armlink.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-23
+packages/core/src/runtime/runtime.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 4,175,177
+hardware/catalog.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-216
+sdk/python-module/tests/test_module.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-143
+packages/protocols-grbl/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-22
+fixtures/eval/ambiguous-sdk/manual.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-16
+packages/cli/src/recordCommands.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-90
+scripts/benchmark.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-164
+sdk/python/tests/test_client.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-193
+packages/protocols-scpi/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-36
+packages/core/src/boards/descriptors.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-171
+packages/core/src/policy/safety.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-574
+sdk/python-module/src/pinout_module/__init__.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-46
+packages/protocols-scpi/tests/helpers.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-55
+docs/daemon.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-92
+packages/discovery/src/plugins.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-579
+sdk/python-module/MANIFEST.in
+  s_c6e8ac5098c493::t_3925388a520bf8 1-5
+CODE_OF_CONDUCT.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-64
+packages/module-host/tests/conformanceLevels.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-65
+packages/module-host/tests/integrity.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-105
+packages/module-host/src/integrity.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-276
+docs/spec/device.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-57
+packages/daemon/src/main.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-87
+packages/daemon/tsconfig.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-9
+packages/protocols-scpi/src/instruments/oscilloscope.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-136
+packages/generator/tests/realityCheck.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-106
+packages/core/src/stream/streamBus.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-265
+packages/protocols-mqtt/tests/regressions.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-142
+packages/core/tests/spec.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-95
+.github/workflows/ci.yml
+  s_c6e8ac5098c493::t_3925388a520bf8 11-14,17-22,27,34-73
+packages/generator/tests/pdfIngest.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-188
+packages/generator/src/types/ir.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 95-108
+packages/protocols-modbus/src/registerMap.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-149
+packages/daemon/src/streamSocket.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-91
+docs/spec/operations.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-66
+packages/core/src/halt/haltCoordinator.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-212
+packages/daemon/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-8
+packages/protocols-modbus/src/tcpClient.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-211
+packages/core/tests/webSocketTransport.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-257
+packages/protocols-mqtt/src/mapping.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-112
+packages/module-host/src/manifestTypes.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-10
+packages/protocols-scpi/tests/parser.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-167
+packages/mcp/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 15,22
+fixtures/eval/robot-arm/manual.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-10
+packages/module-host/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-23
+packages/core/tests/fuzz.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-250
+packages/module-host/tests/fixtures/echo-module.mjs
+  s_c6e8ac5098c493::t_3925388a520bf8 1-34
+docs/spec/overview.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-51
+fixtures/eval/heldout-envsensor/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-13
+packages/core/src/journal/journal.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-235
+packages/generator/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 15
+packages/core/src/runtime/toolExport.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-69
+packages/cli/tests/daemonCommands.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-107
+packages/module-host/tests/moduleHost.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-146
+packages/discovery/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-22
+packages/generator/src/pipeline/repair.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-176
+packages/module-host/tests/pythonWorker.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-107
+packages/protocols-mqtt/src/wire.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-298
+packages/protocols-modbus/tests/wire.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-120
+fixtures/eval/microcontroller/nx32.h
+  s_c6e8ac5098c493::t_3925388a520bf8 1-7
+packages/cli/src/discoverCommand.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-78
+sdk/python/README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 1-86
+packages/protocols-grbl/src/errors.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-21
+README.md
+  s_c6e8ac5098c493::t_3925388a520bf8 3,5-7,12-27,30-46,53,62,74-91,94,102-104,106-113,115,121-122,126-129,131,133,135,139-141,145
+packages/protocols-modbus/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-22
+sdk/python/src/pinout/__init__.py
+  s_c6e8ac5098c493::t_3925388a520bf8 1-45
+firmware/boards/esp32-s3-devkitc-1.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-28
+firmware/micropython-bridge/board-descriptor.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-38
+packages/module-host/tests/fixtures/silent-module.mjs
+  s_c6e8ac5098c493::t_3925388a520bf8 1-21
+packages/core/tests/operations.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-273
+packages/protocols-modbus/src/wire.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-310
+firmware/boards/esp32-devkit-v1.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-25
+packages/generator/src/extract/heuristicExtractor.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 2,7,20,22,26-46,68-70,165,190,207-294,384,390-392,400-519
+  s_c6e8ac5098c493::t_660295708d2f8c 520
+packages/protocols-mqtt/package.json
+  s_c6e8ac5098c493::t_3925388a520bf8 1-22
+packages/core/src/policy/engine.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 58-64
+packages/protocols-grbl/src/grblClient.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-259
+packages/module-host/src/conformanceLevels.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-74
+packages/generator/src/index.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 24-47
+packages/daemon/tests/streams.test.ts
+  s_c6e8ac5098c493::t_3925388a520bf8 1-59
+package-lock.json
+  s_c6e8ac5098c493::t_d4234aa8d9c73e 8,17,24,95-97,99-102,925-932,941-960,1600-1617,1642-1651,1935-1937,1942-1944,1949,1951,1953,1959-1960,1969-1971,1975-1979,1986-1988,1992,1994,2001,2013-2015,2019,2026-2028,2032-2034,2041-2043,2047-2049,2056-2058,2062,2069-2071,2075-2077,2221-2232,3540-3546,4027-4029,4653-4672,4782-4784,4792-4794,4960-4962,4966-4971,4977,4986-4988,4990-4996,5002-5004,5025-5030,5035-5037,5042-5045,5051,5058-5078,5080-5085,5092,5099-5102,5110-5112,5273-5293,5328,5331-5332,5334,5347,5349-5353,5359-5382,5386,5397,5408-5450
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "096e30d428937025b306cb1ac693bae4efa52bdc",
+  "prompts": {},
+  "sessions": {
+    "s_c6e8ac5098c493": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065d6-33c7-7f93-aa54-7e8fb93789c4",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
