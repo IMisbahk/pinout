@@ -12,7 +12,16 @@ import { join } from 'node:path';
 export interface BoardDescriptor {
   schemaVersion: '1';
   boardId: string;
-  family: 'esp32' | 'esp32-s2' | 'esp32-s3' | 'esp32-c3' | 'esp32-c6' | 'rp2040' | 'avr' | 'linux' | 'micropython';
+  family:
+    | 'esp32'
+    | 'esp32-s2'
+    | 'esp32-s3'
+    | 'esp32-c3'
+    | 'esp32-c6'
+    | 'rp2040'
+    | 'avr'
+    | 'linux'
+    | 'micropython';
   mcu: string;
   gpioPins: number[];
   adcPins?: number[];
@@ -33,7 +42,15 @@ export interface BoardDescriptor {
 }
 
 const SUPPORTED_FAMILIES = new Set([
-  'esp32', 'esp32-s2', 'esp32-s3', 'esp32-c3', 'esp32-c6', 'rp2040', 'avr', 'linux', 'micropython',
+  'esp32',
+  'esp32-s2',
+  'esp32-s3',
+  'esp32-c3',
+  'esp32-c6',
+  'rp2040',
+  'avr',
+  'linux',
+  'micropython',
 ]);
 
 export class BoardDescriptorError extends Error {
@@ -46,7 +63,9 @@ export function validateBoardDescriptor(descriptor: unknown): BoardDescriptor {
     throw new BoardDescriptorError('Board descriptor must be an object.');
   }
   if (board.schemaVersion !== '1') {
-    throw new BoardDescriptorError(`schemaVersion must be '1', received '${String(board.schemaVersion)}'.`);
+    throw new BoardDescriptorError(
+      `schemaVersion must be '1', received '${String(board.schemaVersion)}'.`,
+    );
   }
   if (typeof board.boardId !== 'string' || board.boardId.length === 0) {
     throw new BoardDescriptorError('boardId is required.');
@@ -54,11 +73,43 @@ export function validateBoardDescriptor(descriptor: unknown): BoardDescriptor {
   if (!SUPPORTED_FAMILIES.has(board.family)) {
     throw new BoardDescriptorError(`Unknown family '${String(board.family)}'.`);
   }
+  if (typeof board.mcu !== 'string' || !board.mcu.trim()) {
+    throw new BoardDescriptorError('mcu is required.');
+  }
+  if (
+    !['IMPLEMENTED', 'COMPILE_TESTED', 'SIMULATED', 'PLANNED', 'EXPERIMENTAL'].includes(
+      board.support,
+    )
+  ) {
+    throw new BoardDescriptorError('Unknown support status.');
+  }
+  for (const field of [
+    'gpioPins',
+    'reservedPins',
+    'adcPins',
+    'dacPins',
+    'pwmPins',
+    'inputOnlyPins',
+  ] as const) {
+    const pins = board[field];
+    if (pins === undefined && field !== 'gpioPins' && field !== 'reservedPins') continue;
+    if (
+      !Array.isArray(pins) ||
+      pins.some((pin) => !Number.isInteger(pin) || pin < 0) ||
+      new Set(pins).size !== pins.length
+    ) {
+      throw new BoardDescriptorError(
+        `${board.boardId}: ${field} must contain unique nonnegative integer pins.`,
+      );
+    }
+  }
   if (!Array.isArray(board.gpioPins) || board.gpioPins.length === 0) {
     throw new BoardDescriptorError(`${board.boardId}: gpioPins must be a non-empty array.`);
   }
   if (!Array.isArray(board.reservedPins)) {
-    throw new BoardDescriptorError(`${board.boardId}: reservedPins must be an array (may be empty).`);
+    throw new BoardDescriptorError(
+      `${board.boardId}: reservedPins must be an array (may be empty).`,
+    );
   }
   const usable = new Set(board.gpioPins);
   for (const pin of board.reservedPins) {
@@ -73,7 +124,9 @@ export function validateBoardDescriptor(descriptor: unknown): BoardDescriptor {
     if (!pins) continue;
     for (const pin of pins) {
       if (!usable.has(pin)) {
-        throw new BoardDescriptorError(`${board.boardId}: ${field} contains pin ${pin} which is not a usable GPIO.`);
+        throw new BoardDescriptorError(
+          `${board.boardId}: ${field} contains pin ${pin} which is not a usable GPIO.`,
+        );
       }
     }
   }
@@ -84,7 +137,10 @@ export function validateBoardDescriptor(descriptor: unknown): BoardDescriptor {
 }
 
 /** Load every valid descriptor from a directory; invalid files are named, never skipped silently. */
-export function loadBoardDescriptors(dir: string): { boards: BoardDescriptor[]; errors: Array<{ file: string; message: string }> } {
+export function loadBoardDescriptors(dir: string): {
+  boards: BoardDescriptor[];
+  errors: Array<{ file: string; message: string }>;
+} {
   const boards: BoardDescriptor[] = [];
   const errors: Array<{ file: string; message: string }> = [];
   if (!existsSync(dir)) {
@@ -103,7 +159,10 @@ export function loadBoardDescriptors(dir: string): { boards: BoardDescriptor[]; 
 }
 
 /** Look up a pin's role. Unknown pins return 'unknown' — callers must not actuate them. */
-export function pinRole(board: BoardDescriptor, pin: number): 'reserved' | 'usable' | 'adc' | 'input-only' | 'unknown' {
+export function pinRole(
+  board: BoardDescriptor,
+  pin: number,
+): 'reserved' | 'usable' | 'adc' | 'input-only' | 'unknown' {
   if (board.reservedPins.includes(pin)) return 'reserved';
   if (board.inputOnlyPins?.includes(pin)) return 'input-only';
   if (!board.gpioPins.includes(pin)) return 'unknown';

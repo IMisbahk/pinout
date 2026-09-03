@@ -1,4 +1,4 @@
-import { DisconnectedError, UnsupportedCapabilityError } from '../errors.js';
+import { DisconnectedError, UnsupportedCapabilityError, PinoutError } from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
 import type { SafetyEngine } from '../policy/safety.js';
 import type { PolicyRule } from '../policy/types.js';
@@ -163,13 +163,23 @@ export class DeviceInstance {
       operationalState: this.getOperationalState(),
     });
     if (this.safetyEngine) {
-      this.safetyEngine.enforce({
+      const context = {
         deviceId: this.id,
         capability,
         payload,
         operationalState: this.getOperationalState(),
         ...(options.owner !== undefined ? { owner: options.owner } : {}),
-      });
+      };
+      if (options.dryRun) {
+        const decision = this.safetyEngine.preview(context);
+        if (!decision.allowed)
+          throw new PinoutError(
+            decision.code ?? 'POLICY_ACTION_DENIED',
+            decision.message ?? 'Rejected by policy.',
+          );
+      } else {
+        this.safetyEngine.enforce(context);
+      }
     }
 
     if (options.dryRun) {

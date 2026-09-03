@@ -5,22 +5,50 @@
  * PUBLISH (QoS 0/1), PUBACK, SUBSCRIBE/SUBACK, PINGREQ/PINGRESP, DISCONNECT.
  * Remaining-length varint encoding per the MQTT 3.1.1 spec.
  */
+import { MqttError } from './errors.js';
 
 export type MqttPacketType =
-  | 'CONNECT' | 'CONNACK' | 'PUBLISH' | 'PUBACK' | 'SUBSCRIBE'
-  | 'SUBACK' | 'PINGREQ' | 'PINGRESP' | 'DISCONNECT';
+  | 'CONNECT'
+  | 'CONNACK'
+  | 'PUBLISH'
+  | 'PUBACK'
+  | 'SUBSCRIBE'
+  | 'SUBACK'
+  | 'PINGREQ'
+  | 'PINGRESP'
+  | 'DISCONNECT';
 
 const TYPE_BY_NUMBER: Record<number, MqttPacketType> = {
-  1: 'CONNECT', 2: 'CONNACK', 3: 'PUBLISH', 4: 'PUBACK', 8: 'SUBSCRIBE',
-  9: 'SUBACK', 12: 'PINGREQ', 13: 'PINGRESP', 14: 'DISCONNECT',
+  1: 'CONNECT',
+  2: 'CONNACK',
+  3: 'PUBLISH',
+  4: 'PUBACK',
+  8: 'SUBSCRIBE',
+  9: 'SUBACK',
+  12: 'PINGREQ',
+  13: 'PINGRESP',
+  14: 'DISCONNECT',
 };
 
 const TYPE_NUMBERS: Record<MqttPacketType, number> = {
-  CONNECT: 1, CONNACK: 2, PUBLISH: 3, PUBACK: 4, SUBSCRIBE: 8,
-  SUBACK: 9, PINGREQ: 12, PINGRESP: 13, DISCONNECT: 14,
+  CONNECT: 1,
+  CONNACK: 2,
+  PUBLISH: 3,
+  PUBACK: 4,
+  SUBSCRIBE: 8,
+  SUBACK: 9,
+  PINGREQ: 12,
+  PINGRESP: 13,
+  DISCONNECT: 14,
 };
 
 export function encodeRemainingLength(length: number): Buffer {
+  if (!Number.isInteger(length) || length < 0 || length > 268435455) {
+    throw new MqttError(
+      'MQTT_INVALID_LENGTH',
+      'Remaining length must be an integer from 0 to 268435455.',
+    );
+  }
   const bytes: number[] = [];
   let remaining = length;
   do {
@@ -48,42 +76,74 @@ export interface ConnectOptions {
 }
 
 export function encodeConnect(options: ConnectOptions): Buffer {
-  const flags = 0x02; // clean session
+  let flags = options.cleanSession === false ? 0 : 0x02;
+  if (!options.clientId && options.cleanSession === false) {
+    throw new MqttError('MQTT_INVALID_CLIENT_ID', 'Persistent sessions require a client ID.');
+  }
+  if (options.password !== undefined && options.username === undefined) {
+    throw new MqttError('MQTT_INVALID_CREDENTIALS', 'A password requires a username.');
+  }
   const payloadParts: Buffer[] = [encodeMqttString(options.clientId)];
-  let variableHeader = Buffer.concat([
+  if (options.username !== undefined) {
+    flags |= 0x80;
+    payloadParts.push(encodeMqttString(options.username));
+  }
+  if (options.password !== undefined) {
+    flags |= 0x40;
+    payloadParts.push(encodeMqttString(options.password));
+  }
+  const variableHeader = Buffer.concat([
     encodeMqttString('MQTT'),
     Buffer.from([0x04]), // protocol level 4 (3.1.1)
     Buffer.from([flags]),
-    Buffer.from([0x00, options.keepAliveSeconds ?? 60]),
+    encodeUint16(options.keepAliveSeconds ?? 60, true),
   ]);
-  if (options.username !== undefined) {
-    variableHeader = Buffer.concat([variableHeader, encodeMqttString(options.username)]);
-    void flags;
-  }
-  if (options.password !== undefined) {
-    variableHeader = Buffer.concat([variableHeader, encodeMqttString(options.password)]);
-  }
   const body = Buffer.concat([variableHeader, ...payloadParts]);
-  return Buffer.concat([Buffer.from([TYPE_NUMBERS.CONNECT << 4]), encodeRemainingLength(body.length), body]);
+  return Buffer.concat([
+    Buffer.from([TYPE_NUMBERS.CONNECT << 4]),
+    encodeRemainingLength(body.length),
+    body,
+  ]);
 }
 
 export function encodeSubscribe(packetId: number, topicFilter: string, qos = 0): Buffer {
+  validateQos(qos);
+  validateTopicFilter(topicFilter);
   const body = Buffer.concat([
-    Buffer.from([0x00, packetId]),
+    encodeUint16(packetId),
     encodeMqttString(topicFilter),
     Buffer.from([qos]),
   ]);
-  return Buffer.concat([Buffer.from([(TYPE_NUMBERS.SUBSCRIBE << 4) | 0x02]), encodeRemainingLength(body.length), body]);
+  return Buffer.concat([
+    Buffer.from([(TYPE_NUMBERS.SUBSCRIBE << 4) | 0x02]),
+    encodeRemainingLength(body.length),
+    body,
+  ]);
 }
 
-export function encodePublish(topic: string, payload: string | Buffer, packetId?: number, qos = 0): Buffer {
+export function encodePublish(
+  topic: string,
+  payload: string | Buffer,
+  packetId?: number,
+  qos = 0,
+): Buffer {
+  validateQos(qos);
+  if (!topic || /[+#]/.test(topic) || topic.includes('\u0000')) {
+    throw new MqttError(
+      'MQTT_INVALID_TOPIC',
+      'Publish topics must be nonempty and contain no wildcards or nulls.',
+    );
+  }
   const topicBytes = encodeMqttString(topic);
   const body =
     qos === 0
-      ? Buffer.concat([topicBytes, Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf8')])
+      ? Buffer.concat([
+          topicBytes,
+          Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf8'),
+        ])
       : Buffer.concat([
           topicBytes,
-          Buffer.from([0x00, packetId ?? 1]),
+          encodeUint16(packetId ?? 1),
           Buffer.isBuffer(payload) ? payload : Buffer.from(payload, 'utf8'),
         ]);
   const header = (TYPE_NUMBERS.PUBLISH << 4) | (qos === 0 ? 0x00 : 0x02);
@@ -96,6 +156,40 @@ export function encodePingReq(): Buffer {
 
 export function encodeDisconnect(): Buffer {
   return Buffer.from([TYPE_NUMBERS.DISCONNECT << 4, 0]);
+}
+
+export function encodePuback(packetId: number): Buffer {
+  return Buffer.concat([Buffer.from([0x40, 2]), encodeUint16(packetId)]);
+}
+
+function encodeUint16(value: number, allowZero = false): Buffer {
+  if (!Number.isInteger(value) || value < (allowZero ? 0 : 1) || value > 65535) {
+    throw new MqttError('MQTT_INVALID_INTEGER', 'Value is outside the MQTT uint16 range.');
+  }
+  const bytes = Buffer.alloc(2);
+  bytes.writeUInt16BE(value);
+  return bytes;
+}
+
+function validateQos(qos: number): void {
+  if (qos !== 0 && qos !== 1) {
+    throw new MqttError('MQTT_UNSUPPORTED_QOS', 'This client supports QoS 0 and 1 only.');
+  }
+}
+
+export function validateTopicFilter(filter: string): void {
+  const parts = filter.split('/');
+  if (
+    !filter ||
+    filter.includes('\u0000') ||
+    parts.some(
+      (part, i) =>
+        (part.includes('#') && (part !== '#' || i !== parts.length - 1)) ||
+        (part.includes('+') && part !== '+'),
+    )
+  ) {
+    throw new MqttError('MQTT_INVALID_TOPIC', 'Invalid MQTT topic filter.');
+  }
 }
 
 export interface MqttPacket {
@@ -117,7 +211,9 @@ export interface MqttPacket {
 }
 
 /** Extract one packet from the head of `buffer`; returns bytes consumed. */
-export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed: number } | undefined {
+export function tryDecodePacket(
+  buffer: Buffer,
+): { packet: MqttPacket; consumed: number } | undefined {
   if (buffer.length < 2) return undefined;
   const typeNumber = buffer[0]! >> 4;
   const typeName = TYPE_BY_NUMBER[typeNumber];
@@ -134,6 +230,7 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
     multiplier *= 128;
     index += 1;
     if ((byte & 0x80) === 0) break;
+    if (index > 4) return undefined;
   }
   const total = index + value;
   if (buffer.length < total) return undefined;
@@ -142,7 +239,8 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
   const packet: MqttPacket = { type };
   switch (type) {
     case 'CONNACK': {
-      if (body[1] !== undefined) packet.connackReturnCode = body[1];
+      if (body.length !== 2 || body[1]! > 5 || body[0]! > 1) return undefined;
+      packet.connackReturnCode = body[1]!;
       break;
     }
     case 'PUBLISH': {
@@ -150,6 +248,7 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
       // undefined (treated as garbage), never a RangeError.
       if (body.length < 2) return undefined;
       const qos = (buffer[0]! >> 1) & 0x03;
+      if (qos > 1) return undefined;
       packet.qos = qos;
       const topicLength = body.readUInt16BE(0);
       if (2 + topicLength > body.length) return undefined;
@@ -168,16 +267,18 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
     case 'SUBSCRIBE': {
       if (body.length < 2) return undefined;
       packet.packetId = body.readUInt16BE(0);
+      if (packet.packetId === 0) return undefined;
       if (type === 'SUBACK') {
+        if (body.length < 3) return undefined;
         packet.returnCodes = [...body.subarray(2)];
-      } else {
+      } else if (type === 'SUBSCRIBE') {
         // SUBSCRIBE payload: repeated (topic string, qos byte) pairs.
         const filters: string[] = [];
         let offset = 2;
         while (offset + 2 <= body.length) {
           const length = body.readUInt16BE(offset);
           offset += 2;
-          if (offset + length > body.length) return undefined;
+          if (offset + length >= body.length) return undefined;
           filters.push(body.subarray(offset, offset + length).toString('utf8'));
           offset += length + 1; // trailing qos byte
         }
@@ -189,7 +290,6 @@ export function tryDecodePacket(buffer: Buffer): { packet: MqttPacket; consumed:
     case 'PINGRESP':
     case 'DISCONNECT':
     case 'CONNECT':
-    case 'SUBSCRIBE':
       break;
   }
   return { packet, consumed: total };

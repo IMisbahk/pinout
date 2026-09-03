@@ -12,10 +12,12 @@ import {
   encodeDisconnect,
   encodePingReq,
   encodePublish,
+  encodePuback,
   encodeSubscribe,
   tryDecodePacket,
   type MqttPacket,
 } from './wire.js';
+import { topicMatches } from './mapping.js';
 
 export interface MqttClientOptions {
   transport: Transport;
@@ -38,8 +40,11 @@ export class MqttClient {
   private readonly rawBuffer: Buffer[] = [];
   /** Control packets (CONNACK/SUBACK/PUBACK/PINGRESP) awaiting a sender. */
   private readonly controlQueue: MqttPacket[] = [];
-  private onMessage: MessageHandler | undefined;
-  private packetIdCounter = 1;
+  private readonly subscriptions = new Map<string, MessageHandler>();
+  private readonly activePacketIds = new Set<number>();
+  private connectPromise: Promise<void> | undefined;
+  private keepAliveTimer: ReturnType<typeof setInterval> | undefined;
+  private pingPromise: Promise<void> | undefined;
   private started = false;
   private closed = false;
   private nextPacketId = 1;
@@ -54,46 +59,102 @@ export class MqttClient {
   }
 
   async connect(): Promise<void> {
+    if (this.closed) throw new MqttError('MQTT_CLOSED', 'Create a new client after closing.');
     if (this.started) return;
-    await this.transport.open();
-    void this.consume();
-    await this.sendAwait(
-      encodeConnect({
-        clientId: this.clientId,
-        keepAliveSeconds: this.keepAliveSeconds,
-        ...(this.username !== undefined ? { username: this.username } : {}),
-        ...(this.password !== undefined ? { password: this.password } : {}),
-      }),
-      (packet) => packet.type === 'CONNACK',
-    );
-    this.started = true;
+    this.connectPromise ??= this.openConnection();
+    return this.connectPromise;
+  }
+
+  private async openConnection(): Promise<void> {
+    const bytes = encodeConnect({
+      clientId: this.clientId,
+      keepAliveSeconds: this.keepAliveSeconds,
+      ...(this.username !== undefined ? { username: this.username } : {}),
+      ...(this.password !== undefined ? { password: this.password } : {}),
+    });
+    try {
+      await this.transport.open();
+      void this.consume();
+      const response = await this.sendAwait(bytes, (packet) => packet.type === 'CONNACK');
+      if (response.connackReturnCode !== 0) {
+        throw new MqttError(
+          'MQTT_CONNECTION_REFUSED',
+          `Broker refused connection (${response.connackReturnCode}).`,
+        );
+      }
+      this.started = true;
+      if (this.keepAliveSeconds > 0) {
+        this.keepAliveTimer = setInterval(() => {
+          void this.ping().catch(() => this.abortConnection());
+        }, this.keepAliveSeconds * 500);
+        this.keepAliveTimer.unref();
+      }
+    } catch (error) {
+      await this.abortConnection();
+      throw error;
+    }
   }
 
   async subscribe(topicFilter: string, handler: MessageHandler, qos = 0): Promise<void> {
-    this.onMessage = handler;
+    this.assertConnected();
     const packetId = this.allocatePacketId();
-    await this.sendAwait(encodeSubscribe(packetId, topicFilter, qos), (packet) => packet.type === 'SUBACK' && packet.packetId === packetId);
+    const previous = this.subscriptions.get(topicFilter);
+    try {
+      const bytes = encodeSubscribe(packetId, topicFilter, qos);
+      this.subscriptions.set(topicFilter, handler);
+      const response = await this.sendAwait(
+        bytes,
+        (packet) => packet.type === 'SUBACK' && packet.packetId === packetId,
+      );
+      if (response.returnCodes?.length !== 1 || ![0, 1].includes(response.returnCodes[0]!)) {
+        throw new MqttError(
+          'MQTT_SUBSCRIPTION_REFUSED',
+          `Broker refused subscription '${topicFilter}'.`,
+        );
+      }
+    } catch (error) {
+      if (previous) this.subscriptions.set(topicFilter, previous);
+      else this.subscriptions.delete(topicFilter);
+      throw error;
+    } finally {
+      this.activePacketIds.delete(packetId);
+    }
   }
 
   /** Publish with QoS 0 (fire-and-forget) or QoS 1 (waits for PUBACK). */
   async publish(topic: string, payload: string | Buffer, qos = 0): Promise<void> {
+    this.assertConnected();
     if (qos === 0) {
-      this.transport.write(encodePublish(topic, payload));
+      await this.transport.write(encodePublish(topic, payload));
       return;
     }
     const packetId = this.allocatePacketId();
-    await this.sendAwait(encodePublish(topic, payload, packetId, qos), (packet) => packet.type === 'PUBACK' && packet.packetId === packetId);
+    try {
+      await this.sendAwait(
+        encodePublish(topic, payload, packetId, qos),
+        (packet) => packet.type === 'PUBACK' && packet.packetId === packetId,
+      );
+    } finally {
+      this.activePacketIds.delete(packetId);
+    }
   }
 
   async ping(): Promise<void> {
-    await this.sendAwait(encodePingReq(), (packet) => packet.type === 'PINGRESP');
+    this.assertConnected();
+    this.pingPromise ??= this.sendAwait(encodePingReq(), (packet) => packet.type === 'PINGRESP')
+      .then(() => undefined)
+      .finally(() => {
+        this.pingPromise = undefined;
+      });
+    return this.pingPromise;
   }
 
   async close(): Promise<void> {
     if (this.closed) return;
     this.closed = true;
+    clearInterval(this.keepAliveTimer);
     try {
-      this.transport.write(encodeDisconnect());
+      await this.transport.write(encodeDisconnect());
     } catch {
       // best-effort disconnect
     }
@@ -103,13 +164,37 @@ export class MqttClient {
   // ---------------------------------------------------------------------------
 
   private allocatePacketId(): number {
-    const id = this.nextPacketId;
-    this.nextPacketId = (this.nextPacketId % 65535) + 1;
-    return id;
+    for (let count = 0; count < 65535; count += 1) {
+      const id = this.nextPacketId;
+      this.nextPacketId = (this.nextPacketId % 65535) + 1;
+      if (this.activePacketIds.has(id)) continue;
+      this.activePacketIds.add(id);
+      return id;
+    }
+    throw new MqttError('MQTT_INFLIGHT_LIMIT', 'All packet identifiers are in flight.');
   }
 
-  private async sendAwait(bytes: Buffer, predicate: (packet: MqttPacket) => boolean): Promise<MqttPacket> {
+  private assertConnected(): void {
+    if (!this.started || this.closed)
+      throw new MqttError('MQTT_CLOSED', 'MQTT client is not connected.');
+  }
+
+  private async abortConnection(): Promise<void> {
+    this.closed = true;
+    clearInterval(this.keepAliveTimer);
+    try {
+      await this.transport.close();
+    } catch {
+      /* Already disconnected. */
+    }
+  }
+
+  private async sendAwait(
+    bytes: Buffer,
+    predicate: (packet: MqttPacket) => boolean,
+  ): Promise<MqttPacket> {
     const deadline = Date.now() + this.timeoutMs;
+    if (this.closed) throw new MqttError('MQTT_CLOSED', 'MQTT transport is closed.');
     await this.transport.write(bytes);
     for (;;) {
       this.drainRawBuffer();
@@ -119,7 +204,11 @@ export class MqttClient {
         return matched!;
       }
       if (Date.now() > deadline) {
-        throw new MqttError('MQTT_TIMEOUT', `No matching MQTT response within ${this.timeoutMs}ms.`);
+        await this.abortConnection();
+        throw new MqttError(
+          'MQTT_TIMEOUT',
+          `No matching MQTT response within ${this.timeoutMs}ms.`,
+        );
       }
       if (this.closed) {
         throw new MqttError('MQTT_CLOSED', 'Transport closed while awaiting an MQTT response.');
@@ -131,6 +220,12 @@ export class MqttClient {
   /** Parse raw transport bytes; PUBLISH is delivered immediately, control packets queue. */
   private drainRawBuffer(): void {
     const buffered = Buffer.concat(this.rawBuffer);
+    if (buffered.length > 1024 * 1024) {
+      throw new MqttError(
+        'MQTT_PACKET_TOO_LARGE',
+        'Buffered MQTT data exceeds the 1 MiB client limit.',
+      );
+    }
     this.rawBuffer.length = 0;
     let cursor = 0;
     while (cursor < buffered.length) {
@@ -143,6 +238,8 @@ export class MqttClient {
       if (decoded.packet.type === 'PUBLISH') {
         this.deliverIncoming(decoded.packet);
       } else {
+        if (this.controlQueue.length >= 65535)
+          throw new MqttError('MQTT_QUEUE_FULL', 'Too many unclaimed control packets.');
         this.controlQueue.push(decoded.packet);
       }
     }
@@ -150,11 +247,14 @@ export class MqttClient {
 
   private deliverIncoming(packet: MqttPacket): void {
     if (packet.topic !== undefined && packet.payload !== undefined) {
-      this.onMessage?.(packet.topic, packet.payload);
+      for (const [filter, handler] of this.subscriptions) {
+        if (topicMatches(filter, packet.topic)) handler(packet.topic, packet.payload);
+      }
       if (packet.qos === 1 && packet.packetId !== undefined) {
         // QoS 1: acknowledge.
-        const ackBody = Buffer.from([0x00, packet.packetId]);
-        this.transport.write(Buffer.from([(4 << 4), 0x02, ...ackBody]));
+        void this.transport
+          .write(encodePuback(packet.packetId))
+          .catch(() => this.abortConnection());
       }
     }
   }
@@ -166,7 +266,9 @@ export class MqttClient {
         this.drainRawBuffer();
       }
     } catch {
-      this.closed = true;
+      // Parse, handler, and transport failures terminate this session.
+    } finally {
+      await this.abortConnection();
     }
   }
 }

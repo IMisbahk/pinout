@@ -27,6 +27,81 @@ afterAll(async () => {
 });
 
 describe('pinoutd HTTP API', () => {
+  it('scopes idempotency keys by the caller supplied to HTTP', async () => {
+    const invoke = async (owner: string) => {
+      const response = await fetch(`${base}/v1/devices/relay-01/invoke`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          capability: 'relay.set',
+          args: { on: false },
+          owner,
+          idempotencyKey: 'owner-test',
+          waitFor: 'result',
+        }),
+      });
+      expect(response.status).toBe(200);
+      return ((await response.json()) as { operation: { id: string } }).operation.id;
+    };
+    const first = await invoke('first');
+    expect(await invoke('second')).not.toBe(first);
+    expect(await invoke('first')).toBe(first);
+  });
+
+  it.each(['null', '[]', '{oops'])(
+    'returns validation errors for malformed bodies: %s',
+    async (body) => {
+      const response = await fetch(`${base}/v1/devices/relay-01/invoke`, { method: 'POST', body });
+      expect(response.status).toBe(400);
+    },
+  );
+
+  it('dry runs preserve rate slots and retries reuse an operation after its approval is consumed', async () => {
+    const runtime = new PinoutRuntime();
+    await runtime.registerFromModule(relayModule.id, { id: 'r', simulated: true });
+    const isolated = await startDaemon(runtime, {
+      port: 0,
+      safetyRules: [
+        { kind: 'rate', capability: 'relay.set', maxPerWindow: 1, windowMs: 60000 },
+        { kind: 'approval', capability: 'relay.set' },
+      ],
+    });
+    isolated.context.safety.recordApproval({
+      id: 'a',
+      deviceId: 'r',
+      capability: 'relay.set',
+      grantedBy: 'operator',
+    });
+    const invoke = (dryRun: boolean) =>
+      fetch(`http://127.0.0.1:${isolated.port}/v1/devices/r/invoke`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          capability: 'relay.set',
+          args: { on: true },
+          dryRun,
+          owner: 'agent',
+          idempotencyKey: 'once',
+          waitFor: 'result',
+        }),
+      });
+    try {
+      expect((await invoke(true)).status).toBe(200);
+      expect((await invoke(true)).status).toBe(200);
+      const first = await invoke(false);
+      expect(first.status).toBe(200);
+      const firstBody = (await first.json()) as { operation: { id: string } };
+      isolated.context.halt.halt('retry must not execute');
+      const retry = await invoke(false);
+      expect(retry.status).toBe(200);
+      expect(((await retry.json()) as { operation: { id: string } }).operation.id).toBe(
+        firstBody.operation.id,
+      );
+    } finally {
+      await isolated.close();
+    }
+  });
+
   it('reports health', async () => {
     const res = await fetch(`${base}/v1/health`);
     expect(res.status).toBe(200);

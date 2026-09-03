@@ -17,6 +17,12 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   prettier,
   {
+    files: ['packages/module-host/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', setTimeout: 'readonly', setInterval: 'readonly' },
+    },
+  },
+  {
     files: ['scripts/**/*.js'],
     languageOptions: {
       globals: {

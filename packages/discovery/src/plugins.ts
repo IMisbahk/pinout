@@ -25,23 +25,50 @@ interface SerialIdentityRule {
 }
 
 const SERIAL_RULES: SerialIdentityRule[] = [
-  { test: /esp32|cp210|silicon labs|ch340|ch9102/i, moduleId: 'pinout/esp32', vendor: 'Espressif', deviceClass: 'microcontroller', confidence: 0.5 },
-  { test: /pico|rp2|raspberry pi/i, moduleId: 'pinout/micropython-bridge', vendor: 'Raspberry Pi', deviceClass: 'microcontroller', confidence: 0.5 },
-  { test: /arduino/i, moduleId: 'protocol/firmata', vendor: 'Arduino', deviceClass: 'microcontroller', confidence: 0.35 },
+  {
+    test: /esp32|cp210|silicon labs|ch340|ch9102/i,
+    moduleId: 'pinout/esp32',
+    vendor: 'Espressif',
+    deviceClass: 'microcontroller',
+    confidence: 0.5,
+  },
+  {
+    test: /pico|rp2|raspberry pi/i,
+    moduleId: 'pinout/micropython-bridge',
+    vendor: 'Raspberry Pi',
+    deviceClass: 'microcontroller',
+    confidence: 0.5,
+  },
+  {
+    test: /arduino/i,
+    moduleId: 'protocol/firmata',
+    vendor: 'Arduino',
+    deviceClass: 'microcontroller',
+    confidence: 0.35,
+  },
 ];
 
 export function serialDiscoveryPlugin(listPorts = listSerialPorts): DiscoveryPlugin {
   return {
     name: 'serial',
-    async discover(options: DiscoveryOptions): Promise<DiscoveredCandidate[]> {
+    async discover(_options: DiscoveryOptions): Promise<DiscoveredCandidate[]> {
       // Never OPEN the ports: some adapters reset their target on open.
       const ports = await listPorts();
       return ports.map((port) => {
         const evidence: Evidence[] = [];
-        const identities: Array<{ moduleId: string; vendor?: string; deviceClass?: string; reason: string }> = [];
+        const identities: Array<{
+          moduleId: string;
+          vendor?: string;
+          deviceClass?: string;
+          reason: string;
+        }> = [];
         let confidence = 0.25;
         if (port.manufacturer) {
-          evidence.push({ source: 'usb-manufacturer', detail: `${port.path}: manufacturer '${port.manufacturer}'`, weight: 0.5 });
+          evidence.push({
+            source: 'usb-manufacturer',
+            detail: `${port.path}: manufacturer '${port.manufacturer}'`,
+            weight: 0.5,
+          });
           for (const rule of SERIAL_RULES) {
             if (rule.test.test(port.manufacturer)) {
               identities.push({
@@ -54,9 +81,16 @@ export function serialDiscoveryPlugin(listPorts = listSerialPorts): DiscoveryPlu
             }
           }
         }
-        evidence.push({ source: 'serial-enumeration', detail: `serial device present at ${port.path}`, weight: 0.3 });
+        evidence.push({
+          source: 'serial-enumeration',
+          detail: `serial device present at ${port.path}`,
+          weight: 0.3,
+        });
         if (identities.length === 0) {
-          identities.push({ moduleId: 'unknown/serial', reason: 'no matching signature from the manufacturer string' });
+          identities.push({
+            moduleId: 'unknown/serial',
+            reason: 'no matching signature from the manufacturer string',
+          });
         }
         return {
           id: candidateId({ kind: 'serial', address: port.path }),
@@ -64,7 +98,13 @@ export function serialDiscoveryPlugin(listPorts = listSerialPorts): DiscoveryPlu
             kind: 'serial',
             address: port.path,
             ...(port.vendorId !== undefined || port.productId !== undefined
-              ? { details: { vendorId: port.vendorId, productId: port.productId, manufacturer: port.manufacturer } }
+              ? {
+                  details: {
+                    vendorId: port.vendorId,
+                    productId: port.productId,
+                    manufacturer: port.manufacturer,
+                  },
+                }
               : {}),
           },
           possibleIdentity: identities,
@@ -81,11 +121,43 @@ export function serialDiscoveryPlugin(listPorts = listSerialPorts): DiscoveryPlu
 // USB VID/PID (no device opening)
 // ---------------------------------------------------------------------------
 
-const USB_RULES: Array<{ vid: string; pid?: string; moduleId: string; vendor: string; confidence: number; detail: string }> = [
-  { vid: '10c4', pid: 'ea60', moduleId: 'pinout/esp32', vendor: 'Espressif', confidence: 0.5, detail: 'CP210x USB-UART bridge (common on ESP32 boards)' },
-  { vid: '1a86', moduleId: 'pinout/esp32', vendor: 'WCH', confidence: 0.45, detail: 'CH34x USB-UART bridge' },
-  { vid: '2e8a', moduleId: 'pinout/micropython-bridge', vendor: 'Raspberry Pi', confidence: 0.5, detail: 'Raspberry Pi vendor ID (RP2040/Pico)' },
-  { vid: '2341', moduleId: 'protocol/firmata', vendor: 'Arduino', confidence: 0.45, detail: 'Arduino vendor ID' },
+const USB_RULES: Array<{
+  vid: string;
+  pid?: string;
+  moduleId: string;
+  vendor: string;
+  confidence: number;
+  detail: string;
+}> = [
+  {
+    vid: '10c4',
+    pid: 'ea60',
+    moduleId: 'pinout/esp32',
+    vendor: 'Espressif',
+    confidence: 0.5,
+    detail: 'CP210x USB-UART bridge (common on ESP32 boards)',
+  },
+  {
+    vid: '1a86',
+    moduleId: 'pinout/esp32',
+    vendor: 'WCH',
+    confidence: 0.45,
+    detail: 'CH34x USB-UART bridge',
+  },
+  {
+    vid: '2e8a',
+    moduleId: 'pinout/micropython-bridge',
+    vendor: 'Raspberry Pi',
+    confidence: 0.5,
+    detail: 'Raspberry Pi vendor ID (RP2040/Pico)',
+  },
+  {
+    vid: '2341',
+    moduleId: 'protocol/firmata',
+    vendor: 'Arduino',
+    confidence: 0.45,
+    detail: 'Arduino vendor ID',
+  },
 ];
 
 export function usbDiscoveryPlugin(): DiscoveryPlugin {
@@ -95,19 +167,34 @@ export function usbDiscoveryPlugin(): DiscoveryPlugin {
       const devices = await enumerateUsbDevices();
       return devices.map((device) => {
         const evidence: Evidence[] = [
-          { source: 'usb-vid-pid', detail: `USB device ${device.vendorId}:${device.productId} present`, weight: 0.35 },
+          {
+            source: 'usb-vid-pid',
+            detail: `USB device ${device.vendorId}:${device.productId} present`,
+            weight: 0.35,
+          },
         ];
-        const identities: Array<{ moduleId: string; vendor?: string; deviceClass?: string; reason: string }> = [];
+        const identities: Array<{
+          moduleId: string;
+          vendor?: string;
+          deviceClass?: string;
+          reason: string;
+        }> = [];
         let confidence = 0.2;
         for (const rule of USB_RULES) {
-          if (rule.vid === device.vendorId && (rule.pid === undefined || rule.pid === device.productId)) {
+          if (
+            rule.vid === device.vendorId &&
+            (rule.pid === undefined || rule.pid === device.productId)
+          ) {
             identities.push({ moduleId: rule.moduleId, vendor: rule.vendor, reason: rule.detail });
             evidence.push({ source: 'usb-known-device', detail: rule.detail, weight: 0.45 });
             confidence = Math.max(confidence, rule.confidence);
           }
         }
         if (identities.length === 0) {
-          identities.push({ moduleId: 'unknown/usb', reason: 'USB device with no known VID/PID signature' });
+          identities.push({
+            moduleId: 'unknown/usb',
+            reason: 'USB device with no known VID/PID signature',
+          });
         }
         const details = {
           vendorId: device.vendorId,
@@ -149,37 +236,44 @@ async function enumerateUsbDevices(): Promise<UsbDevice[]> {
 
 async function macOsUsbDevices(): Promise<UsbDevice[]> {
   return new Promise((resolve) => {
-    const child = execFile('system_profiler', ['SPUSBDataType', '-json'], { timeout: 5000, maxBuffer: 4 * 1024 * 1024 }, (error, stdout) => {
-      if (error) {
-        resolve([]);
-        return;
-      }
-      try {
-        const parsed = JSON.parse(stdout) as { SPUSBDataType?: Array<Record<string, unknown>> };
-        const devices: UsbDevice[] = [];
-        const walk = (items: Array<Record<string, unknown>>): void => {
-          for (const item of items) {
-            const vendorId = item.vendor_id as string | undefined;
-            const productId = item.product_id as string | undefined;
-            if (vendorId && productId) {
-              devices.push({
-                vendorId: String(vendorId).replace(/^0x/, '').toLowerCase().padStart(4, '0'),
-                productId: String(productId).replace(/^0x/, '').toLowerCase().padStart(4, '0'),
-                ...(typeof item.manufacturer === 'string' ? { manufacturer: item.manufacturer } : {}),
-                ...(typeof item._name === 'string' ? { product: item._name } : {}),
-              });
+    const child = execFile(
+      'system_profiler',
+      ['SPUSBDataType', '-json'],
+      { timeout: 5000, maxBuffer: 4 * 1024 * 1024 },
+      (error, stdout) => {
+        if (error) {
+          resolve([]);
+          return;
+        }
+        try {
+          const parsed = JSON.parse(stdout) as { SPUSBDataType?: Array<Record<string, unknown>> };
+          const devices: UsbDevice[] = [];
+          const walk = (items: Array<Record<string, unknown>>): void => {
+            for (const item of items) {
+              const vendorId = item.vendor_id as string | undefined;
+              const productId = item.product_id as string | undefined;
+              if (vendorId && productId) {
+                devices.push({
+                  vendorId: String(vendorId).replace(/^0x/, '').toLowerCase().padStart(4, '0'),
+                  productId: String(productId).replace(/^0x/, '').toLowerCase().padStart(4, '0'),
+                  ...(typeof item.manufacturer === 'string'
+                    ? { manufacturer: item.manufacturer }
+                    : {}),
+                  ...(typeof item._name === 'string' ? { product: item._name } : {}),
+                });
+              }
+              if (Array.isArray(item._items)) {
+                walk(item._items as Array<Record<string, unknown>>);
+              }
             }
-            if (Array.isArray(item._items)) {
-              walk(item._items as Array<Record<string, unknown>>);
-            }
-          }
-        };
-        walk(parsed.SPUSBDataType ?? []);
-        resolve(devices);
-      } catch {
-        resolve([]);
-      }
-    });
+          };
+          walk(parsed.SPUSBDataType ?? []);
+          resolve(devices);
+        } catch {
+          resolve([]);
+        }
+      },
+    );
     child.on('error', () => resolve([]));
   });
 }
@@ -334,8 +428,16 @@ export function mdnsDiscoveryPlugin(durationMs = 1500): DiscoveryPlugin {
             found.push({
               id: candidateId({ kind: 'mdns', address: name }),
               endpoint: { kind: 'mdns', address: name, details: { recordType: answer.type } },
-              possibleIdentity: [{ moduleId: 'pinout/bridge', reason: 'advertised a Pinout service over mDNS' }],
-              evidence: [{ source: 'mdns', detail: `_pinout service '${name}' responded to a query`, weight: 0.9 }],
+              possibleIdentity: [
+                { moduleId: 'pinout/bridge', reason: 'advertised a Pinout service over mDNS' },
+              ],
+              evidence: [
+                {
+                  source: 'mdns',
+                  detail: `_pinout service '${name}' responded to a query`,
+                  weight: 0.9,
+                },
+              ],
               confidence: 0.85,
               interfaces: ['network'],
             });
@@ -365,13 +467,24 @@ export function mdnsDiscoveryPlugin(durationMs = 1500): DiscoveryPlugin {
 // Opt-in, bounded network endpoint probing
 // ---------------------------------------------------------------------------
 
-const NETWORK_RULES: Array<{ port: number; moduleId: string; confidence: number; detail: string }> = [
-  { port: 502, moduleId: 'protocol/modbus-tcp', confidence: 0.4, detail: 'Modbus TCP port open' },
-  { port: 4840, moduleId: 'protocol/opc-ua', confidence: 0.5, detail: 'OPC UA default port open' },
-  { port: 1883, moduleId: 'protocol/mqtt', confidence: 0.4, detail: 'MQTT port open' },
-  { port: 8883, moduleId: 'protocol/mqtt', confidence: 0.4, detail: 'MQTT TLS port open' },
-  { port: 8787, moduleId: 'pinout/daemon', confidence: 0.9, detail: 'Pinout daemon health check answered ok' },
-];
+const NETWORK_RULES: Array<{ port: number; moduleId: string; confidence: number; detail: string }> =
+  [
+    { port: 502, moduleId: 'protocol/modbus-tcp', confidence: 0.4, detail: 'Modbus TCP port open' },
+    {
+      port: 4840,
+      moduleId: 'protocol/opc-ua',
+      confidence: 0.5,
+      detail: 'OPC UA default port open',
+    },
+    { port: 1883, moduleId: 'protocol/mqtt', confidence: 0.4, detail: 'MQTT port open' },
+    { port: 8883, moduleId: 'protocol/mqtt', confidence: 0.4, detail: 'MQTT TLS port open' },
+    {
+      port: 8787,
+      moduleId: 'pinout/daemon',
+      confidence: 0.9,
+      detail: 'Pinout daemon health check answered ok',
+    },
+  ];
 
 function probeTcp(host: string, port: number, timeoutMs: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -431,8 +544,16 @@ export function networkProbePlugin(): DiscoveryPlugin {
               {
                 id: candidateId({ kind: 'network', address: endpoint.host, port: endpoint.port }),
                 endpoint: { kind: 'network' as const, address: endpoint.host, port: endpoint.port },
-                possibleIdentity: [{ moduleId: 'pinout/daemon', reason: 'Pinout daemon health check answered ok' }],
-                evidence: [{ source: 'http-health', detail: 'GET /v1/health answered {"ok":true}', weight: 0.9 } as Evidence],
+                possibleIdentity: [
+                  { moduleId: 'pinout/daemon', reason: 'Pinout daemon health check answered ok' },
+                ],
+                evidence: [
+                  {
+                    source: 'http-health',
+                    detail: 'GET /v1/health answered {"ok":true}',
+                    weight: 0.9,
+                  } as Evidence,
+                ],
                 confidence: 0.9,
                 interfaces: ['network'],
               } satisfies DiscoveredCandidate,
@@ -440,16 +561,16 @@ export function networkProbePlugin(): DiscoveryPlugin {
           }
           const open = await probeTcp(endpoint.host, endpoint.port, timeoutMs);
           if (!open) return [];
-          return NETWORK_RULES.filter((rule) => rule.port === endpoint.port && rule.moduleId !== 'pinout/daemon').map(
-            (rule): DiscoveredCandidate => ({
-              id: candidateId({ kind: 'network', address: endpoint.host, port: endpoint.port }),
-              endpoint: { kind: 'network' as const, address: endpoint.host, port: endpoint.port },
-              possibleIdentity: [{ moduleId: rule.moduleId, reason: rule.detail }],
-              evidence: [{ source: 'tcp-probe', detail: rule.detail, weight: rule.confidence }],
-              confidence: rule.confidence,
-              interfaces: ['network'],
-            }),
-          );
+          return NETWORK_RULES.filter(
+            (rule) => rule.port === endpoint.port && rule.moduleId !== 'pinout/daemon',
+          ).map((rule): DiscoveredCandidate => ({
+            id: candidateId({ kind: 'network', address: endpoint.host, port: endpoint.port }),
+            endpoint: { kind: 'network' as const, address: endpoint.host, port: endpoint.port },
+            possibleIdentity: [{ moduleId: rule.moduleId, reason: rule.detail }],
+            evidence: [{ source: 'tcp-probe', detail: rule.detail, weight: rule.confidence }],
+            confidence: rule.confidence,
+            interfaces: ['network'],
+          }));
         }),
       );
       return results.flat();

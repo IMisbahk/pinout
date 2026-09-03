@@ -59,7 +59,9 @@ function evaluateStateEquals(
   // a TypeError that escapes the policy layer.
   const state = context.operationalState;
   const actual =
-    state !== null && typeof state === 'object' ? (state as Record<string, unknown>)[rule.field] : undefined;
+    state !== null && typeof state === 'object'
+      ? (state as Record<string, unknown>)[rule.field]
+      : undefined;
   if (actual !== rule.equals) {
     throw new PolicyPreconditionFailed(
       rule.message ??

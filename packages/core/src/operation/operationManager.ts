@@ -359,12 +359,14 @@ export class OperationManager {
       this.emit('operation.started', op.id, op.deviceId, op.capability, op.startedAt);
       try {
         const result = await options.run(context);
+        if (isTerminalOperationStatus(op.status)) return;
         // If the run finished despite a cancel request, report completed honestly.
         this.transition(op, 'completed', { result });
         this.emit('operation.completed', op.id, op.deviceId, op.capability, Date.now());
         this.settle(op.id);
       } catch (error) {
         clearTimeout(deadlineTimer);
+        if (isTerminalOperationStatus(op.status)) return;
         if (abort.signal.aborted && (error instanceof AbortedError || isAbortError(error))) {
           this.transition(op, 'cancelled', {
             error: {

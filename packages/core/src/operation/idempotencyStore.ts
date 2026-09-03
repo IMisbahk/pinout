@@ -69,7 +69,7 @@ export class BoundedIdempotencyStore {
     owner: string | undefined,
     key: string,
   ): string {
-    return `${deviceId}::${capability}::${owner ?? ''}::${key}`;
+    return JSON.stringify([deviceId, capability, owner ?? null, key]);
   }
 
   lookup(

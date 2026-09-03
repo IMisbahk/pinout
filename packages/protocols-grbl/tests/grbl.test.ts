@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GrblClient, parseStatusLine } from '../src/grblClient.js';
 import { GrblError } from '../src/errors.js';
-import { GrblSimulatorTransport } from './grblSimulator.js';
+import { GrblSimulatorTransport } from '../src/grblSimulator.js';
 
 describe('GRBL status parsing', () => {
   it('parses states and positions', () => {
@@ -19,6 +19,37 @@ describe('GRBL status parsing', () => {
 });
 
 describe('GrblClient against the simulator', () => {
+  it('serializes concurrent queries and consumes parser acknowledgements before moves', async () => {
+    const transport = new GrblSimulatorTransport({ travel: { x: 20, y: 20, z: 20 } });
+    const client = new GrblClient(transport);
+    await client.start();
+    try {
+      await client.home();
+      const [parser, status] = await Promise.all([client.parserState(), client.status()]);
+      expect(parser).toContain('G21');
+      expect(status.state).toBe('Idle');
+      await expect(client.rapidMove({ x: 500 })).rejects.toBeInstanceOf(GrblError);
+      await client.rapidMove({ x: 5 });
+      expect((await client.status()).wpos?.x).toBe(5);
+    } finally {
+      await client.close();
+    }
+  });
+
+  it('sends one newline and explicit units, distance mode, and feed mode per move', async () => {
+    const transport = new GrblSimulatorTransport();
+    const write = transport.write.bind(transport);
+    const commands: string[] = [];
+    transport.write = async (bytes) => {
+      commands.push(new TextDecoder().decode(bytes));
+      await write(bytes);
+    };
+    const client = new GrblClient(transport);
+    await client.start();
+    await client.feedMove({ x: 2 }, 30);
+    expect(commands).toContain('G21 G90 G94 G1 X2 F30\n');
+    await client.close();
+  });
   it('handshakes, polls status, homes, and moves', async () => {
     const transport = new GrblSimulatorTransport({ travel: { x: 200, y: 200, z: 100 } });
     const client = new GrblClient(transport);
@@ -76,9 +107,13 @@ describe('GrblClient against the simulator', () => {
     const client = new GrblClient(transport);
     await client.start();
     await expect(client.feedMove({ x: 1 }, 0)).rejects.toMatchObject({ code: 'GRBL_INVALID_FEED' });
-    await expect(client.feedMove({ x: 1 }, -5)).rejects.toMatchObject({ code: 'GRBL_INVALID_FEED' });
+    await expect(client.feedMove({ x: 1 }, -5)).rejects.toMatchObject({
+      code: 'GRBL_INVALID_FEED',
+    });
     await expect(client.rapidMove({})).rejects.toMatchObject({ code: 'GRBL_INVALID_POSITION' });
-    await expect(client.rapidMove({ x: Number.NaN })).rejects.toMatchObject({ code: 'GRBL_INVALID_POSITION' });
+    await expect(client.rapidMove({ x: Number.NaN })).rejects.toMatchObject({
+      code: 'GRBL_INVALID_POSITION',
+    });
     await client.close();
   });
 });

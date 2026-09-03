@@ -1,7 +1,7 @@
 {
   "name": "pinout",
   "private": true,
-  "description": "Hardware abstraction layer for programmable devices \u2014 SDK, CLI, firmware, and MCP adapter.",
+  "description": "Hardware abstraction layer for programmable devices — SDK, CLI, firmware, and MCP adapter.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pinoutlabs/pinout.git"
@@ -49,13 +49,13 @@
     "@pinout/cli": "*",
     "@pinout/core": "*",
     "@types/node": "^22.10.1",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9.16.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0",
-    "vitest": "^2.1.8"
+    "vitest": "^3.2.7"
   }
 }

@@ -20,9 +20,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@pinout/core": "*"
+    "@pinout/core": "*",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1"
+    "@types/node": "^22.10.1",
+    "@types/ws": "^8.5.10"
   }
 }

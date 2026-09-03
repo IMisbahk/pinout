@@ -11,14 +11,5 @@ export type { MqttPacket, MqttPacketType, ConnectOptions } from './wire.js';
 export { MqttClient } from './mqttClient.js';
 export type { MqttClientOptions, MessageHandler } from './mqttClient.js';
 export { MqttError } from './errors.js';
-export {
-  decodeIngestion,
-  encodePublishPayload,
-  topicMatches,
-} from './mapping.js';
-export type {
-  MqttMapping,
-  TopicIngestRule,
-  PublishRule,
-  MappedIngestion,
-} from './mapping.js';
+export { decodeIngestion, encodePublishPayload, topicMatches } from './mapping.js';
+export type { MqttMapping, TopicIngestRule, PublishRule, MappedIngestion } from './mapping.js';

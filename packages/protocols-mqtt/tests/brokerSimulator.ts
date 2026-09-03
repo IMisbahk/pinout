@@ -69,19 +69,23 @@ export class MqttBrokerSimulator {
               session.subscriptions.set(filter, () => undefined);
             }
             if (packet.packetId !== undefined) {
-              socket.write(Buffer.concat([
-                Buffer.from([0x90]),
-                encodeRemainingLength(2 + 1),
-                Buffer.from([0x00, packet.packetId]),
-                Buffer.from([0x00]),
-              ]));
+              socket.write(
+                Buffer.concat([
+                  Buffer.from([0x90]),
+                  encodeRemainingLength(2 + 1),
+                  Buffer.from([packet.packetId >> 8, packet.packetId & 0xff]),
+                  Buffer.from([0x00]),
+                ]),
+              );
             }
             break;
           }
           case 'PUBLISH': {
             if (packet.topic !== undefined && packet.payload !== undefined) {
               if (packet.qos === 1 && packet.packetId !== undefined) {
-                socket.write(Buffer.from([0x40, 0x02, (packet.packetId >> 8) & 0xff, packet.packetId & 0xff]));
+                socket.write(
+                  Buffer.from([0x40, 0x02, (packet.packetId >> 8) & 0xff, packet.packetId & 0xff]),
+                );
               }
               for (const other of this.sessions) {
                 for (const filter of other.subscriptions.keys()) {
@@ -114,7 +118,10 @@ function buildPublish(topic: string, payload: Buffer, qos: number): Buffer {
   const topicBytes = Buffer.alloc(2 + topic.length);
   topicBytes.writeUInt16BE(topic.length);
   topicBytes.write(topic, 2);
-  const body = qos === 0 ? Buffer.concat([topicBytes, payload]) : Buffer.concat([topicBytes, Buffer.from([0, 1]), payload]);
+  const body =
+    qos === 0
+      ? Buffer.concat([topicBytes, payload])
+      : Buffer.concat([topicBytes, Buffer.from([0, 1]), payload]);
   const header = (3 << 4) | (qos === 0 ? 0 : 2);
   return Buffer.concat([Buffer.from([header]), encodeRemainingLength(body.length), body]);
 }

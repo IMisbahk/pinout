@@ -173,6 +173,8 @@ export class StreamBus {
       iteratorDone = true;
       endedResolve();
       subs!.delete(sub);
+      const index = endSignals.indexOf(endedResolve);
+      if (index !== -1) endSignals.splice(index, 1);
     };
 
     const next = (): Promise<IteratorResult<StreamFrame>> => {
@@ -218,6 +220,8 @@ export class StreamBus {
         return {
           next,
           return: () => {
+            sub.closed = true;
+            sub.notify();
             finish();
             return Promise.resolve({ done: true, value: undefined as never });
           },

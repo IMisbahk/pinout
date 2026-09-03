@@ -14,6 +14,28 @@ beforeEach(() => {
 });
 
 describe('SafetyEngine: rate', () => {
+  it('previews without spending approvals or rate slots and rolls back rejected checks', () => {
+    const engine = new SafetyEngine({
+      rules: [
+        { kind: 'rate', capability: 'x', maxPerWindow: 1 },
+        { kind: 'approval', capability: 'x' },
+        { kind: 'interlock', capability: 'x', interlock: 'door' },
+      ],
+    });
+    const ctx = { deviceId: 'd', capability: 'x', payload: {}, operationalState: {} };
+    engine.recordApproval({
+      id: 'approval',
+      deviceId: 'd',
+      capability: 'x',
+      grantedBy: 'operator',
+    });
+    expect(engine.check(ctx).allowed).toBe(false);
+    engine.setInterlock('door', true);
+    expect(engine.preview(ctx).allowed).toBe(true);
+    expect(engine.preview(ctx).allowed).toBe(true);
+    expect(engine.check(ctx).allowed).toBe(true);
+    expect(engine.check(ctx).allowed).toBe(false);
+  });
   it('allows up to the limit then rejects with SAFETY_RATE_LIMIT', () => {
     const engine = new SafetyEngine({
       rules: [{ kind: 'rate', capability: 'gpio.write', maxPerWindow: 3, windowMs: 1000 }],

@@ -30,8 +30,8 @@ export interface GrblMachineStatus {
 export class GrblClient {
   private readonly transport: Transport;
   private readonly lineBuffer: number[] = [];
-  private readonly waiters: Array<(line: string) => void> = [];
-  private consuming = false;
+  private queue: Promise<unknown> = Promise.resolve();
+  private started = false;
   private closed = false;
 
   constructor(transport: Transport) {
@@ -39,11 +39,11 @@ export class GrblClient {
   }
 
   async start(): Promise<void> {
+    if (this.started) return;
+    this.started = true;
     await this.transport.open();
     void this.consume();
-    // Wake the controller (GRBL resets its line buffer on connect).
-    await this.transport.write(new TextEncoder().encode('\r\n\r\n'));
-    await this.waitForLine((line) => line.includes('Grbl'), 3000).catch(() => undefined);
+    await this.status();
   }
 
   async close(): Promise<void> {
@@ -53,21 +53,29 @@ export class GrblClient {
 
   /** Poll machine status. `?` never actuates anything. */
   async status(timeoutMs = DEFAULT_TIMEOUT_MS): Promise<GrblMachineStatus> {
-    await this.transport.write(new TextEncoder().encode('?'));
-    const line = await this.waitForLine((candidate) => candidate.startsWith('<') && candidate.endsWith('>'), timeoutMs);
-    return parseStatusLine(line);
+    return this.serialize(async () => {
+      await this.transport.write(new TextEncoder().encode('?'));
+      const line = await this.waitForLine(
+        (candidate) => candidate.startsWith('<') && candidate.endsWith('>'),
+        timeoutMs,
+      );
+      return parseStatusLine(line);
+    });
   }
 
   /** Run the homing cycle ($H). PHYSICAL MOTION. */
   async home(timeoutMs = 30_000): Promise<void> {
-    await this.sendExpectOk('$H', timeoutMs);
+    await this.serialize(() => this.sendExpectOk('$H', timeoutMs));
   }
 
   /**
    * Rapid linear move (G0) to a position in millimeters.
    * PHYSICAL MOTION — the caller owns workspace and axis-limit policies.
    */
-  async rapidMove(position: { x?: number; y?: number; z?: number }, timeoutMs = 30_000): Promise<void> {
+  async rapidMove(
+    position: { x?: number; y?: number; z?: number },
+    timeoutMs = 30_000,
+  ): Promise<void> {
     await this.sendLine(buildMove('G0', position), timeoutMs);
   }
 
@@ -75,9 +83,16 @@ export class GrblClient {
    * Linear move at a feed rate (G1) in millimeters with mm/min feed.
    * PHYSICAL MOTION.
    */
-  async feedMove(position: { x?: number; y?: number; z?: number }, feedMmPerMin: number, timeoutMs = 60_000): Promise<void> {
+  async feedMove(
+    position: { x?: number; y?: number; z?: number },
+    feedMmPerMin: number,
+    timeoutMs = 60_000,
+  ): Promise<void> {
     if (!Number.isFinite(feedMmPerMin) || feedMmPerMin <= 0) {
-      throw new GrblStatusError('GRBL_INVALID_FEED', `Feed rate must be a positive number of mm/min, received ${feedMmPerMin}.`);
+      throw new GrblStatusError(
+        'GRBL_INVALID_FEED',
+        `Feed rate must be a positive number of mm/min, received ${feedMmPerMin}.`,
+      );
     }
     await this.sendLine(`${buildMove('G1', position)} F${feedMmPerMin}`, timeoutMs);
   }
@@ -94,19 +109,35 @@ export class GrblClient {
 
   /** View G-code parser state ($G). */
   async parserState(timeoutMs = DEFAULT_TIMEOUT_MS): Promise<string> {
-    await this.transport.write(new TextEncoder().encode('$G\n'));
-    const line = await this.waitForLine((candidate) => candidate.startsWith('[GC:'), timeoutMs);
-    return line.slice(4, -1);
+    return this.serialize(async () => {
+      await this.transport.write(new TextEncoder().encode('$G\n'));
+      const line = await this.waitForLine((candidate) => candidate.startsWith('[GC:'), timeoutMs);
+      await this.expectOk(timeoutMs);
+      return line.slice(4, -1);
+    });
   }
 
   // ---------------------------------------------------------------------------
 
   private async sendLine(line: string, timeoutMs: number): Promise<void> {
-    await this.sendExpectOk(`${line}\n`, timeoutMs);
+    await this.serialize(() => this.sendExpectOk(line, timeoutMs));
+  }
+
+  private serialize<T>(run: () => Promise<T>): Promise<T> {
+    const result = this.queue.then(() => {
+      if (this.closed) throw new GrblStatusError('GRBL_CLOSED', 'GRBL transport is closed.');
+      return run();
+    });
+    this.queue = result.catch(() => undefined);
+    return result;
   }
 
   private async sendExpectOk(command: string, timeoutMs: number): Promise<void> {
     await this.transport.write(new TextEncoder().encode(`${command}\n`));
+    await this.expectOk(timeoutMs);
+  }
+
+  private async expectOk(timeoutMs: number): Promise<void> {
     const line = await this.waitForLine(
       (candidate) => candidate === 'ok' || candidate.startsWith('error:'),
       timeoutMs,
@@ -117,7 +148,10 @@ export class GrblClient {
     }
   }
 
-  private async waitForLine(predicate: (line: string) => boolean, timeoutMs: number): Promise<string> {
+  private async waitForLine(
+    predicate: (line: string) => boolean,
+    timeoutMs: number,
+  ): Promise<string> {
     const deadline = Date.now() + timeoutMs;
     for (;;) {
       while (this.lineBuffer.length > 0) {
@@ -128,13 +162,28 @@ export class GrblClient {
           .decode(Uint8Array.from(bytes))
           .replace(/[\r\n]+$/, '')
           .trim();
+        if (line.startsWith('ALARM:')) {
+          throw new GrblStatusError('GRBL_ALARM', line);
+        }
+        if (line.startsWith('error:') && !predicate(line)) {
+          const code = Number.parseInt(line.slice(6), 10);
+          throw new GrblError(code, GRBL_ERROR_MESSAGES[code] ?? line);
+        }
         if (line.length > 0 && predicate(line)) return line;
       }
       if (Date.now() > deadline) {
-        throw new GrblStatusError('GRBL_TIMEOUT', `No matching GRBL response within ${timeoutMs}ms.`);
+        // A late acknowledgement cannot safely be matched to another command.
+        await this.close();
+        throw new GrblStatusError(
+          'GRBL_TIMEOUT',
+          `No matching GRBL response within ${timeoutMs}ms.`,
+        );
       }
-      if (this.closed && this.lineBuffer.length === 0) {
-        throw new GrblStatusError('GRBL_CLOSED', 'GRBL transport closed while waiting for a response.');
+      if (this.closed) {
+        throw new GrblStatusError(
+          'GRBL_CLOSED',
+          'GRBL transport closed while waiting for a response.',
+        );
       }
       await new Promise((resolve) => setTimeout(resolve, 2));
     }
@@ -144,17 +193,15 @@ export class GrblClient {
     try {
       for await (const chunk of this.transport.readable) {
         this.lineBuffer.push(...chunk);
-        this.flushWaiters();
+        if (this.lineBuffer.length > 65536) {
+          await this.close();
+          break;
+        }
       }
     } catch {
+      // Waiting requests observe the closed state below.
+    } finally {
       this.closed = true;
-      this.flushWaiters();
-    }
-  }
-
-  private flushWaiters(): void {
-    if (this.lineBuffer.includes(0x0a)) {
-      for (const waiter of this.waiters.splice(0)) waiter('');
     }
   }
 }
@@ -165,14 +212,20 @@ function buildMove(code: 'G0' | 'G1', position: { x?: number; y?: number; z?: nu
     const value = position[axis];
     if (value === undefined) continue;
     if (!Number.isFinite(value)) {
-      throw new GrblStatusError('GRBL_INVALID_POSITION', `Axis ${axis} must be a finite number of millimeters.`);
+      throw new GrblStatusError(
+        'GRBL_INVALID_POSITION',
+        `Axis ${axis} must be a finite number of millimeters.`,
+      );
     }
     axes.push(`${axis.toUpperCase()}${value}`);
   }
   if (axes.length === 0) {
-    throw new GrblStatusError('GRBL_INVALID_POSITION', 'At least one axis (x/y/z) in millimeters is required.');
+    throw new GrblStatusError(
+      'GRBL_INVALID_POSITION',
+      'At least one axis (x/y/z) in millimeters is required.',
+    );
   }
-  return `${code} ${axes.join(' ')}`;
+  return `G21 G90 G94 ${code} ${axes.join(' ')}`;
 }
 
 export function parseStatusLine(line: string): GrblMachineStatus {
@@ -183,7 +236,10 @@ export function parseStatusLine(line: string): GrblMachineStatus {
     const colon = field.indexOf(':');
     if (colon === -1) continue;
     const key = field.slice(0, colon);
-    const values = field.slice(colon + 1).split(',').map(Number);
+    const values = field
+      .slice(colon + 1)
+      .split(',')
+      .map(Number);
     if (values.length === 3 && values.every((value) => Number.isFinite(value))) {
       const position = { x: values[0]!, y: values[1]!, z: values[2]! };
       if (key === 'MPos') status.mpos = position;

@@ -1,9 +1,8 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ModuleHost, ModuleCrashedError } from '../src/index.js';
 import type { ModuleProcess } from '../src/index.js';
-import type { ChildProcess } from 'node:child_process';
 
 const python3Available = (): boolean => {
   try {
@@ -87,8 +86,7 @@ describe.skipIf(!available)('ModuleHost: python worker', () => {
       restart: { maxRestarts: 0, backoffMs: 10 },
     });
     await crashing.start();
-    const child = (crashing as unknown as { child?: import('node:child_process').ChildProcess })
-      .child;
+    const child = (crashing as unknown as { child?: ChildProcess }).child;
     if (child) {
       try {
         child.kill('SIGKILL');

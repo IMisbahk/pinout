@@ -1,5 +1,9 @@
 # MEGA SPRINT REPORT
 
+The sections below record the original sprint. Subsequent integration fixes,
+completed streaming, and current validation are recorded in
+[`docs/platform-merge-validation.md`](docs/platform-merge-validation.md).
+
 Branch: `feat/pinout-platform-v1` · HEAD `9b91594` · 58 commits this run · nothing pushed.
 All numbers below were measured on this machine; nothing is asserted without a test or a command behind it.
 
@@ -38,7 +42,7 @@ Modbus TCP+RTU (zero-dep, CRC verified against independent implementation), SCPI
 
 ## 7. Embedded families
 
-Data-driven descriptors for ESP32 (classic, IMPLEMENTED), ESP32-S3, ESP32-C3 (COMPILE_TESTED-level data), RP2040 Pico, Arduino Uno — with reserved-pin validation that rejects guessed pins. MicroPython/CircuitPython bridge (EXPERIMENTAL, host-validated).
+Data-driven descriptors for ESP32 (classic, IMPLEMENTED), ESP32-S3, ESP32-C3, RP2040 Pico, Arduino Uno — with reserved-pin validation that rejects overlapping pins. S3/C3/Pico descriptors are EXPERIMENTAL; no matching firmware builds were verified. MicroPython/CircuitPython bridge (EXPERIMENTAL, host-validated).
 
 ## 8–10. Robotics / industrial / lab
 
@@ -111,11 +115,11 @@ None open. Fuzzing-era bugs fixed in-run (see §22).
 1. Capability descriptors of the 18 first-party modules predate the rich spec metadata (danger/units) — the spec layer and the module layer need a migration pass.
 2. `events` lack per-device sequence numbers (journal has them).
 3. Daemon auth is a single shared bearer token; no scoped capabilities/tokens yet.
-4. Examples import the GRBL simulator from a tests/ path (works, ugly).
+4. Resolved during integration: the GRBL simulator is now exported by its package, and the demo uses the built public export.
 
 ## 30. Attempted but not completed
 
-ROS 2 bridge design (sidecar contract) — no runtime available. OPC UA browse/read/subscribe — stack size vs. window. WS binary stream endpoint in the daemon (bus + SSE snapshots shipped).
+ROS 2 bridge design (sidecar contract) — no runtime available. OPC UA browse/read/subscribe — stack size vs. window. The previously unfinished WebSocket binary stream endpoint was completed during merge preparation; see the validation report above.
 
 ## 31. Deliberately NOT implemented
 
@@ -124,7 +128,7 @@ Marketing website, SaaS, billing, humanoid hardware, fake vendor modules, CANope
 ## 32. Recommended next priorities
 
 1. Migrate module descriptors to spec v1 metadata (danger/units) and wire policy provenance through the daemon.
-2. WebSocket binary streaming endpoint on pinoutd (bus already proven).
+2. Extend data-plane clients around the now-implemented WebSocket frame endpoint.
 3. Universal Robots RTDE client against the documented interface + a simulator.
 4. Persisted idempotency tombstones (journal-backed) for restart-safe dedupe.
 5. `pinout device inspect-candidate` enrollment flow completing discovery.

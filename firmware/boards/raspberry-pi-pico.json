@@ -3,7 +3,9 @@
   "boardId": "raspberry-pi-pico",
   "family": "rp2040",
   "mcu": "RP2040",
-  "gpioPins": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28],
+  "gpioPins": [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28
+  ],
   "adcPins": [26, 27, 28],
   "pwmPins": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
   "reservedPins": [23, 24, 25, 29],
@@ -20,5 +22,5 @@
   "warnings": [
     "Pins 23-25 and 29 have special board functions (LED, SMPS control, ADC_VREF): not general GPIO."
   ],
-  "support": "COMPILE_TESTED"
+  "support": "EXPERIMENTAL"
 }

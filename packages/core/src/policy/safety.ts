@@ -145,12 +145,12 @@ export class SafetyEngine {
   private readonly leaseManager: LeaseManager | undefined;
   private readonly onRejection?: SafetyEngineOptions['onRejection'];
 
-  private readonly rateWindows = new Map<string, RateWindow>();
+  private rateWindows = new Map<string, RateWindow>();
   private readonly interlocks = new Map<string, boolean | string | number>();
   private readonly sequences = new Map<string, number>();
-  private readonly approvals = new Map<string, ApprovalRecord>();
+  private approvals = new Map<string, ApprovalRecord>();
   private readonly deadman = new Map<string, number>();
-  private readonly budgets = new Map<string, ResourceBudget>();
+  private budgets = new Map<string, ResourceBudget>();
 
   constructor(options: SafetyEngineOptions) {
     this.rules = options.rules;
@@ -187,6 +187,40 @@ export class SafetyEngine {
 
   /** Throwing evaluation; rejects with typed policy errors. */
   enforce(context: PolicyContext & { owner?: string }): void {
+    const saved = this.snapshotConsumables();
+    try {
+      this.enforceRules(context);
+    } catch (error) {
+      this.restoreConsumables(saved);
+      throw error;
+    }
+  }
+
+  /** Evaluate without consuming approvals, rate slots, or resource budgets. */
+  preview(context: PolicyContext & { owner?: string }): PolicyDecision {
+    const saved = this.snapshotConsumables();
+    try {
+      return this.check(context);
+    } finally {
+      this.restoreConsumables(saved);
+    }
+  }
+
+  private snapshotConsumables() {
+    return structuredClone({
+      rateWindows: this.rateWindows,
+      approvals: this.approvals,
+      budgets: this.budgets,
+    });
+  }
+
+  private restoreConsumables(saved: ReturnType<SafetyEngine['snapshotConsumables']>): void {
+    this.rateWindows = saved.rateWindows;
+    this.approvals = saved.approvals;
+    this.budgets = saved.budgets;
+  }
+
+  private enforceRules(context: PolicyContext & { owner?: string }): void {
     // Legacy kinds first, unchanged semantics.
     evaluatePolicies(this.rules as LegacyPolicyRule[], context);
 

@@ -11,6 +11,14 @@ import { OperationManager } from '../src/operation/operationManager.js';
 const tick = (ms = 2) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('BoundedIdempotencyStore', () => {
+  it('does not collide when identifiers contain separators', () => {
+    expect(BoundedIdempotencyStore.keyFor('d', 'c', 'alice::extra', 'key')).not.toBe(
+      BoundedIdempotencyStore.keyFor('d', 'c', 'alice', 'extra::key'),
+    );
+    expect(BoundedIdempotencyStore.keyFor('d', 'c', undefined, 'key')).not.toBe(
+      BoundedIdempotencyStore.keyFor('d', 'c', '', 'key'),
+    );
+  });
   it('scopes keys by owner: two callers with the same key never collide', () => {
     const now = 1_000_000;
     const store = new BoundedIdempotencyStore({ now: () => now });

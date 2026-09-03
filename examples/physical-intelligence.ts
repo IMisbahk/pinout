@@ -33,10 +33,8 @@ import {
   StreamBus,
   SafetyEngine,
   toStructuredError,
-  type PinoutRuntime,
 } from '@pinout/core';
-import { GrblClient } from '../packages/protocols-grbl/dist/index.js';
-import { GrblSimulatorTransport } from '../packages/protocols-grbl/tests/grblSimulator.js';
+import { GrblClient, GrblSimulatorTransport } from '../packages/protocols-grbl/dist/index.js';
 
 const line = '─'.repeat(64);
 
@@ -52,29 +50,52 @@ async function main(): Promise<void> {
   const runtime = await createHeterogeneousRuntime();
   registerModule(relayModule);
   registerModule(robotArmModule);
-  const arm = await runtime.registerFromModule(robotArmModule.id, { id: 'ur-sim', simulated: true, label: 'UR-style arm (simulated)' });
-  const relay = await runtime.registerFromModule(relayModule.id, { id: 'bench-relay', simulated: true, label: 'Bench relay (simulated)' });
+  const arm = await runtime.registerFromModule(robotArmModule.id, {
+    id: 'ur-sim',
+    simulated: true,
+    label: 'UR-style arm (simulated)',
+  });
+  const relay = await runtime.registerFromModule(relayModule.id, {
+    id: 'bench-relay',
+    simulated: true,
+    label: 'Bench relay (simulated)',
+  });
   void arm;
   void relay;
   for (const device of runtime.devices()) {
-    console.log(`  • ${device.id.padEnd(16)} class=${device.deviceClass.padEnd(22)} simulated=${device.simulated}`);
+    console.log(
+      `  • ${device.id.padEnd(16)} class=${device.deviceClass.padEnd(22)} simulated=${device.simulated}`,
+    );
   }
 
   section('2. EMBEDDED — deterministic GPIO with schema-validated invocation');
-  const espDevice = runtime.getDevice((await import('@pinout/core')).defaultHeterogeneousDeviceIds.esp32);
+  const espDevice = runtime.getDevice(
+    (await import('@pinout/core')).defaultHeterogeneousDeviceIds.esp32,
+  );
   const pinState = await espDevice.invoke('gpio.write', { pin: 2, value: true });
   console.log(`  gpio.write(pin=2, value=1) → ${JSON.stringify(pinState)}`);
   const plan = await espDevice.invoke('gpio.write', { pin: 2, value: true }, { dryRun: true });
   console.log(`  dry-run → resolved=${JSON.stringify(plan.resolvedArgs)} (nothing executed)`);
   const espModule = (await import('@pinout/core')).getModule(esp32ModuleId);
-  console.log(`  conformance: ${espModule.id} → L3 SIMULATION_VERIFIED (per hardware/catalog.json — no hardware claim)`);
+  console.log(
+    `  conformance: ${espModule.id} → L3 SIMULATION_VERIFIED (per hardware/catalog.json — no hardware claim)`,
+  );
 
   section('3. ROBOT — long-running motion: operation handle, progress, lease');
-  const operations = new OperationManager(undefined, new BoundedIdempotencyStore({ maxEntries: 1000 }));
+  const operations = new OperationManager(
+    undefined,
+    new BoundedIdempotencyStore({ maxEntries: 1000 }),
+  );
   const leases = new LeaseManager();
-  const lease = leases.acquire({ scope: { kind: 'device', deviceId: 'ur-sim' }, owner: 'demo-agent', ttlMs: 60_000 });
+  const lease = leases.acquire({
+    scope: { kind: 'device', deviceId: 'ur-sim' },
+    owner: 'demo-agent',
+    ttlMs: 60_000,
+  });
   console.log(`  lease ${lease.id} acquired by demo-agent on ur-sim`);
-  console.log(`  competing owner blocked: ${!leases.permits('other-agent', 'ur-sim', 'motion.move_to').permitted}`);
+  console.log(
+    `  competing owner blocked: ${!leases.permits('other-agent', 'ur-sim', 'motion.move_to').permitted}`,
+  );
 
   const { handle } = operations.begin({
     deviceId: 'ur-sim',
@@ -91,7 +112,9 @@ async function main(): Promise<void> {
     },
   });
   for await (const progress of handle.progress()) {
-    console.log(`  ▸ ${handle.id} ${(progress.fraction! * 100).toFixed(0).padStart(3)}% ${progress.message ?? ''}`);
+    console.log(
+      `  ▸ ${handle.id} ${(progress.fraction! * 100).toFixed(0).padStart(3)}% ${progress.message ?? ''}`,
+    );
   }
   const motionResult = await handle.waitForResult();
   console.log(`  result: ${JSON.stringify(motionResult)}`);
@@ -103,11 +126,22 @@ async function main(): Promise<void> {
     owner: 'demo-agent',
     run: async () => ({ shouldNeverRun: true }),
   });
-  console.log(`  retry with same idempotency key → deduped=${retry.deduped} (physical action NOT re-executed)`);
+  console.log(
+    `  retry with same idempotency key → deduped=${retry.deduped} (physical action NOT re-executed)`,
+  );
 
   section('4. LAB — safety policy rejection (deterministic, below any model)');
   const safety = new SafetyEngine({
-    rules: [{ kind: 'numericRange', capability: 'voltage.set', field: 'voltage', min: 0, max: 30, provenance: 'DOCUMENTED' }],
+    rules: [
+      {
+        kind: 'numericRange',
+        capability: 'voltage.set',
+        field: 'voltage',
+        min: 0,
+        max: 30,
+        provenance: 'DOCUMENTED',
+      },
+    ],
   });
   const decision = safety.check({
     deviceId: 'bench-psu',
@@ -125,7 +159,9 @@ async function main(): Promise<void> {
   console.log(`  GRBL machine state: ${status.state} wpos=${JSON.stringify(status.wpos)}`);
   await grbl.feedHold();
   await grbl.close();
-  console.log('  (Modbus adapter ships in @pinout/protocols-modbus — register maps make writes explicit-only)');
+  console.log(
+    '  (Modbus adapter ships in @pinout/protocols-modbus — register maps make writes explicit-only)',
+  );
 
   section('6. SAFETY — halt/estop state machine with audited transitions');
   const halt = new HaltCoordinator();
@@ -139,15 +175,25 @@ async function main(): Promise<void> {
 
   section('7. DATA PLANE — IMU stream with backpressure (never through MCP)');
   const streams = new StreamBus();
-  streams.register({ id: 'imu:accel', deviceId: 'imu-01', name: 'accelerometer', nominalRateHz: 200, codec: 'float32[3]' });
+  streams.register({
+    id: 'imu:accel',
+    deviceId: 'imu-01',
+    name: 'accelerometer',
+    nominalRateHz: 200,
+    codec: 'float32[3]',
+  });
   const consumer = streams.subscribe('imu:accel', { bufferSize: 4, policy: 'drop-oldest' });
   for (let frame = 0; frame < 1000; frame += 1) {
     streams.publish('imu:accel', new Float32Array([0, 0, 9.8]), { sourceAt: Date.now() });
   }
   const window = await consumer.sample(4);
   console.log(`  published 1000 frames @200 Hz → slow consumer kept a bounded window`);
-  console.log(`  newest sequence=${window[3]!.sequence} (frames dropped: ${streams.stats('imu:accel')!.droppedFrames})`);
-  console.log(`  latest snapshot for agents: ${JSON.stringify(streams.snapshot('imu:accel')!.data)}`);
+  console.log(
+    `  newest sequence=${window[3]!.sequence} (frames dropped: ${streams.stats('imu:accel')!.droppedFrames})`,
+  );
+  console.log(
+    `  latest snapshot for agents: ${JSON.stringify(streams.snapshot('imu:accel')!.data)}`,
+  );
   consumer.close();
 
   section('8. AGENT EXPORT — protocol-neutral tool definitions');

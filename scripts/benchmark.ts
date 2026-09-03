@@ -49,7 +49,11 @@ function benchSync(name: string, iterations: number, fn: (index: number) => void
   record(name, iterations, performance.now() - started);
 }
 
-async function benchAsync(name: string, iterations: number, fn: (index: number) => Promise<void>): Promise<void> {
+async function benchAsync(
+  name: string,
+  iterations: number,
+  fn: (index: number) => Promise<void>,
+): Promise<void> {
   const started = performance.now();
   for (let i = 0; i < iterations; i += 1) await fn(i);
   record(name, iterations, performance.now() - started);
@@ -64,13 +68,22 @@ async function main(): Promise<void> {
     { kind: 'stateEquals' as const, capability: 'voltage.set', field: 'output', equals: 'off' },
   ];
   benchSync('policy.evaluate (2 rules)', 100_000, () => {
-    evaluatePolicies(rules, { deviceId: 'd', capability: 'voltage.set', payload: { voltage: 12 }, operationalState: { output: 'off' } });
+    evaluatePolicies(rules, {
+      deviceId: 'd',
+      capability: 'voltage.set',
+      payload: { voltage: 12 },
+      operationalState: { output: 'off' },
+    });
   });
 
   // -- journal append + redaction -----------------------------------------
   const journal = new Journal({ storage: new MemoryJournalStorage() });
   benchSync('journal.append (redacted payload)', 50_000, (i) => {
-    journal.append('invocation.requested', { deviceId: 'd' }, { capability: 'x', apiKey: 'secret', i });
+    journal.append(
+      'invocation.requested',
+      { deviceId: 'd' },
+      { capability: 'x', apiKey: 'secret', i },
+    );
   });
 
   // -- payload redaction ------------------------------------------------------
@@ -116,7 +129,11 @@ async function main(): Promise<void> {
   // -- operations lifecycle ----------------------------------------------------------------
   const operations = new OperationManager();
   await benchAsync('operation.begin→complete (await result)', 2_000, async () => {
-    const { handle } = operations.begin({ deviceId: 'd', capability: 'c', run: async () => ({ ok: true }) });
+    const { handle } = operations.begin({
+      deviceId: 'd',
+      capability: 'c',
+      run: async () => ({ ok: true }),
+    });
     await handle.waitForResult();
   });
 
@@ -131,7 +148,11 @@ async function main(): Promise<void> {
   mkdirSync(join(process.cwd(), 'benchmarks', 'results'), { recursive: true });
   writeFileSync(
     join(process.cwd(), 'benchmarks', 'results', 'benchmarks.json'),
-    JSON.stringify({ recordedAt: new Date().toISOString(), node: process.version, results }, null, 2),
+    JSON.stringify(
+      { recordedAt: new Date().toISOString(), node: process.version, results },
+      null,
+      2,
+    ),
   );
   console.log('\nRecorded to benchmarks/results/benchmarks.json');
   process.exit(0);

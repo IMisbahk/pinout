@@ -56,7 +56,11 @@ export function evaluateConformanceLevel(evidence: ConformanceEvidence): Conform
 }
 
 /** Serialize the achieved level for a catalog/manifest record. */
-export function conformanceRecord(manifest: ModuleManifestLike, level: ConformanceLevel, evidence: ConformanceEvidence): Record<string, unknown> {
+export function conformanceRecord(
+  manifest: ModuleManifestLike,
+  level: ConformanceLevel,
+  evidence: ConformanceEvidence,
+): Record<string, unknown> {
   const record: Record<string, unknown> = {
     moduleId: manifest.id ?? '(unknown)',
     moduleVersion: manifest.version ?? '(unknown)',

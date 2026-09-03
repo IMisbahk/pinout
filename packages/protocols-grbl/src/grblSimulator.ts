@@ -25,7 +25,8 @@ interface Vec3 {
 export class GrblSimulatorTransport implements Transport {
   readonly kind = 'grbl-simulator';
   private readonly listeners = new Set<(chunk: Uint8Array) => void>();
-  private readonly options: Required<Pick<GrblSimulatorOptions, 'version' | 'motionDelayMs'>> & GrblSimulatorOptions;
+  private readonly options: Required<Pick<GrblSimulatorOptions, 'version' | 'motionDelayMs'>> &
+    GrblSimulatorOptions;
   private wpos: Vec3 = { x: 0, y: 0, z: 0 };
   private mposOffset: Vec3 = { x: 10, y: 5, z: 0 };
   private homed = false;
@@ -33,6 +34,7 @@ export class GrblSimulatorTransport implements Transport {
   private feedRate: number | undefined;
   private startupEmitted = false;
   private inputBuffer = '';
+  private closed = false;
 
   constructor(options: GrblSimulatorOptions = {}) {
     this.options = {
@@ -43,7 +45,8 @@ export class GrblSimulatorTransport implements Transport {
   }
 
   get readable(): AsyncIterable<Uint8Array> {
-    const self = this;
+    const listeners = this.listeners;
+    const isClosed = () => this.closed;
     return {
       async *[Symbol.asyncIterator]() {
         const queue: Uint8Array[] = [];
@@ -52,9 +55,9 @@ export class GrblSimulatorTransport implements Transport {
           queue.push(chunk);
           notify?.();
         };
-        self.listeners.add(listener);
+        listeners.add(listener);
         try {
-          for (;;) {
+          while (!isClosed()) {
             if (queue.length === 0) {
               await new Promise<void>((resolve) => {
                 notify = resolve;
@@ -64,20 +67,24 @@ export class GrblSimulatorTransport implements Transport {
             yield queue.shift()!;
           }
         } finally {
-          self.listeners.delete(listener);
+          listeners.delete(listener);
         }
       },
     };
   }
 
   async open(): Promise<void> {
+    this.closed = false;
     if (!this.startupEmitted) {
       this.startupEmitted = true;
-      this.emit(`Grbl ${this.options.version} ['$' for help]\r\n`);
+      this.respond(`Grbl ${this.options.version} ['$' for help]\r\n`);
     }
   }
 
-  async close(): Promise<void> {}
+  async close(): Promise<void> {
+    this.closed = true;
+    this.emit(new Uint8Array());
+  }
 
   async write(data: Uint8Array): Promise<void> {
     const text = new TextDecoder().decode(data);
@@ -91,7 +98,7 @@ export class GrblSimulatorTransport implements Transport {
         this.state = 'Hold:0';
       } else if (char === '\x18') {
         this.state = 'Alarm';
-        this.respond('Grbl 1.1h [\'$\' for help]\r\n');
+        this.respond("Grbl 1.1h ['$' for help]\r\n");
       } else {
         lineText += char;
       }
@@ -123,13 +130,14 @@ export class GrblSimulatorTransport implements Transport {
     if (line === '$G') {
       const feed = this.feedRate !== undefined ? ` F${this.feedRate}` : '';
       this.respond(`[GC:G0 G54 G17 G21 G90 G94 M5 M9 T0${feed}]\r\n`);
+      this.respond('ok\r\n');
       return;
     }
     if (line === '$#' || line.startsWith('$')) {
       this.respond('ok\r\n');
       return;
     }
-    const move = /^(G0|G1)\s+(.*)$/.exec(line);
+    const move = /^(?:G21 G90 G94 )?(G0|G1)\s+(.*)$/.exec(line);
     if (move) {
       const axes = move[2]!.split(/\s+/);
       const target: Vec3 = { ...this.wpos };
@@ -142,7 +150,13 @@ export class GrblSimulatorTransport implements Transport {
       }
       if (this.options.travel) {
         const travel = this.options.travel;
-        const inside = target.x >= 0 && target.x <= travel.x && target.y >= 0 && target.y <= travel.y && target.z >= 0 && target.z <= travel.z;
+        const inside =
+          target.x >= 0 &&
+          target.x <= travel.x &&
+          target.y >= 0 &&
+          target.y <= travel.y &&
+          target.z >= 0 &&
+          target.z <= travel.z;
         if (!inside || !this.homed) {
           this.respond(this.homed ? 'error:33\r\n' : 'error:9\r\n');
           return;
@@ -164,7 +178,11 @@ export class GrblSimulatorTransport implements Transport {
 
   private statusLine(): string {
     const w = this.wpos;
-    const m = { x: w.x + this.mposOffset.x, y: w.y + this.mposOffset.y, z: w.z + this.mposOffset.z };
+    const m = {
+      x: w.x + this.mposOffset.x,
+      y: w.y + this.mposOffset.y,
+      z: w.z + this.mposOffset.z,
+    };
     const format = (v: Vec3): string => `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`;
     return `<${this.state}|WPos:${format(w)}|MPos:${format(m)}|FS:0,0>\r\n`;
   }

@@ -8,7 +8,14 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { decodeLine, parseLine, maxProtocolLineBytes } from '../src/protocol.js';
-import { decodeMbap, decodeRtu, crc16, encodeRtu, decodePdu, encodeMbap } from '../../protocols-modbus/src/wire.js';
+import {
+  decodeMbap,
+  decodeRtu,
+  crc16,
+  encodeRtu,
+  decodePdu,
+  encodeMbap,
+} from '../../protocols-modbus/src/wire.js';
 import { tryDecodePacket } from '../../protocols-mqtt/src/wire.js';
 import { extractTextFromContentStream } from '../../generator/src/ingest/pdfIngest.js';
 import { evaluatePolicies } from '../src/policy/engine.js';
@@ -42,21 +49,19 @@ describe('fuzz: pinout NDJSON line decoder', () => {
     const random = prng(0x4e44);
     for (let i = 0; i < FUZZ_ITERATIONS; i += 1) {
       const bytes = fuzzBytes(random, Math.floor(random() * 200));
-      let result;
-      try {
-        result = decodeLine(bytes.toString('utf8'));
-        expect(['ignore', 'invalidJson', 'invalidMessage', 'message']).toContain(result.kind);
-      } catch (error) {
-        // decodeLine itself must not throw; parseLine surfaces ProtocolError.
-        throw error;
-      }
+      const result = decodeLine(bytes.toString('utf8'));
+      expect(['ignore', 'invalidJson', 'invalidMessage', 'message']).toContain(result.kind);
       void parseLine;
     }
   });
 
   it('never hangs on deeply nested or huge lines and rejects oversized frames', () => {
     const random = prng(0x4e45);
-    const huge = '{"v":1,"id":"x","action":"a","payload":{"deep":' + '['.repeat(4000) + ']'.repeat(4000) + '}}';
+    const huge =
+      '{"v":1,"id":"x","action":"a","payload":{"deep":' +
+      '['.repeat(4000) +
+      ']'.repeat(4000) +
+      '}}';
     const result = decodeLine(huge);
     expect(result.kind).toBeDefined();
     for (let i = 0; i < 50; i += 1) {
@@ -89,7 +94,9 @@ describe('fuzz: Modbus frames', () => {
       try {
         decodeRtu(frame, pdu[0] ?? 3, 1);
       } catch (error) {
-        expect(['MODBUS_CRC_ERROR', 'MODBUS_PROTOCOL_ERROR', 'MODBUS_INVALID_QUANTITY']).toContain((error as { code?: string }).code);
+        expect(['MODBUS_CRC_ERROR', 'MODBUS_PROTOCOL_ERROR', 'MODBUS_INVALID_QUANTITY']).toContain(
+          (error as { code?: string }).code,
+        );
       }
     }
   });
@@ -161,7 +168,11 @@ describe('fuzz: policy engine inputs', () => {
     const random = prng(0x5034);
     const rules: PolicyRule[] = [
       { kind: 'numericRange', capability: 'x', field: 'v', min: 0, max: 10 },
-      { kind: 'workspaceBounds', capability: 'y', fields: { x: { min: 0, max: 1 }, y: { min: 0, max: 1 }, z: { min: 0, max: 1 } } },
+      {
+        kind: 'workspaceBounds',
+        capability: 'y',
+        fields: { x: { min: 0, max: 1 }, y: { min: 0, max: 1 }, z: { min: 0, max: 1 } },
+      },
     ];
     for (let i = 0; i < 200; i += 1) {
       const payload: Record<string, unknown> = {};
@@ -174,20 +185,40 @@ describe('fuzz: policy engine inputs', () => {
       }
       for (const rule of rules) {
         try {
-          evaluatePolicies([rule], { deviceId: 'd', capability: rule.capability, payload, operationalState: {} });
+          evaluatePolicies([rule], {
+            deviceId: 'd',
+            capability: rule.capability,
+            payload,
+            operationalState: {},
+          });
         } catch (error) {
-          expect(['POLICY_CONSTRAINT_VIOLATION', 'POLICY_PRECONDITION_FAILED']).toContain((error as { code?: string }).code);
+          expect(['POLICY_CONSTRAINT_VIOLATION', 'POLICY_PRECONDITION_FAILED']).toContain(
+            (error as { code?: string }).code,
+          );
         }
       }
     }
   });
 
   it('state preconditions never pass with hostile state objects', () => {
-    const rules: PolicyRule[] = [{ kind: 'stateEquals', capability: 'x', field: 'mode', equals: 'safe' }];
-    const hostileStates = [null, undefined, { mode: null }, { mode: { toString: () => 'safe' } }, { mode: ['safe'] }];
+    const rules: PolicyRule[] = [
+      { kind: 'stateEquals', capability: 'x', field: 'mode', equals: 'safe' },
+    ];
+    const hostileStates = [
+      null,
+      undefined,
+      { mode: null },
+      { mode: { toString: () => 'safe' } },
+      { mode: ['safe'] },
+    ];
     for (const operationalState of hostileStates) {
       expect(() =>
-        evaluatePolicies(rules, { deviceId: 'd', capability: 'x', payload: {}, operationalState: operationalState as Record<string, unknown> }),
+        evaluatePolicies(rules, {
+          deviceId: 'd',
+          capability: 'x',
+          payload: {},
+          operationalState: operationalState as Record<string, unknown>,
+        }),
       ).toThrowError(/POLICY_PRECONDITION_FAILED|requires/);
     }
   });
@@ -196,7 +227,11 @@ describe('fuzz: policy engine inputs', () => {
 describe('fuzz: idempotency key store', () => {
   it('adversarial key floods stay bounded and consistent', () => {
     let now = 0;
-    const store = new BoundedIdempotencyStore({ maxEntries: 64, retentionMs: 1000, now: () => now });
+    const store = new BoundedIdempotencyStore({
+      maxEntries: 64,
+      retentionMs: 1000,
+      now: () => now,
+    });
     const random = prng(0x4944);
     for (let i = 0; i < 2000; i += 1) {
       const key = createHash('sha256').update(fuzzBytes(random, 32)).digest('hex');

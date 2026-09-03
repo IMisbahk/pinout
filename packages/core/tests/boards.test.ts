@@ -10,6 +10,12 @@ const boardsDir = join(process.cwd(), 'firmware', 'boards');
 const loaded = loadBoardDescriptors(boardsDir);
 
 describe('board descriptors', () => {
+  it.each([[2, 2], [2, -1], [2, 1.5], ['2'], '2', null])(
+    'rejects malformed GPIO lists: %j',
+    (gpioPins) => {
+      expect(() => validateBoardDescriptor({ ...loaded.boards[0], gpioPins })).toThrow();
+    },
+  );
   it('loads the committed descriptors without errors', () => {
     expect(loaded.errors).toEqual([]);
     const ids = loaded.boards.map((board) => board.boardId);
@@ -80,10 +86,28 @@ describe('board descriptors', () => {
 
   it('rejects unknown schema versions and families', () => {
     expect(() =>
-      validateBoardDescriptor({ schemaVersion: '9', boardId: 'x', family: 'esp32', mcu: 'x', gpioPins: [2], reservedPins: [], voltage: { logic: 3.3 }, support: 'PLANNED' }),
+      validateBoardDescriptor({
+        schemaVersion: '9',
+        boardId: 'x',
+        family: 'esp32',
+        mcu: 'x',
+        gpioPins: [2],
+        reservedPins: [],
+        voltage: { logic: 3.3 },
+        support: 'PLANNED',
+      }),
     ).toThrowError(/schemaVersion/);
     expect(() =>
-      validateBoardDescriptor({ schemaVersion: '1', boardId: 'x', family: 'toaster', mcu: 'x', gpioPins: [2], reservedPins: [], voltage: { logic: 3.3 }, support: 'PLANNED' }),
+      validateBoardDescriptor({
+        schemaVersion: '1',
+        boardId: 'x',
+        family: 'toaster',
+        mcu: 'x',
+        gpioPins: [2],
+        reservedPins: [],
+        voltage: { logic: 3.3 },
+        support: 'PLANNED',
+      }),
     ).toThrowError(/family/);
   });
 });

@@ -31,7 +31,6 @@ import { runDoctor } from './doctor.js';
 import { registerDaemonCommands } from './daemonCommands.js';
 import { registerRecordCommands } from './recordCommands.js';
 import { registerModuleIntegrityCommands } from './moduleIntegrityCommands.js';
-import { registerDiscoverCommand } from './discoverCommand.js';
 import { createOutput, type CliOutput } from './output.js';
 import { esp32PinGroups } from './pinsTable.js';
 import { readScriptFile, readScriptSteps, runScript } from './runScript.js';

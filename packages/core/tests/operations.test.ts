@@ -163,6 +163,30 @@ describe('OperationManager', () => {
     expect(snapshot.error?.code).toBe('OPERATION_TIMEOUT');
   });
 
+  it.each(['resolve', 'reject'])('keeps timeout terminal after a late %s', async (outcome) => {
+    const manager = new OperationManager();
+    let finish!: () => void;
+    const late = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const { handle } = manager.begin({
+      deviceId: 'arm',
+      capability: 'move',
+      timeoutMs: 5,
+      run: async () => {
+        await late;
+        if (outcome === 'reject') throw new Error('late fault');
+        return { moved: true };
+      },
+    });
+    await expect(handle.waitForResult()).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
+    finish();
+    await tick();
+    expect(handle.snapshot().status).toBe('timed_out');
+    expect(handle.snapshot().result).toBeUndefined();
+    expect(handle.snapshot().error?.code).toBe('OPERATION_TIMEOUT');
+  });
+
   it('records a failure with the structured error code', async () => {
     const manager = new OperationManager();
     const { handle } = manager.begin({

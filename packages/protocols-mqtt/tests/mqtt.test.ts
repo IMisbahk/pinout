@@ -31,7 +31,6 @@ function tcpTransport(port: number): Transport {
       socket?.write(data);
     },
     get readable(): AsyncIterable<Uint8Array> {
-      const self = this;
       return {
         async *[Symbol.asyncIterator]() {
           const queue: Uint8Array[] = [];
@@ -49,7 +48,6 @@ function tcpTransport(port: number): Transport {
             }
             yield queue.shift()!;
           }
-          void self;
         },
       };
     },
@@ -90,22 +88,45 @@ describe('MQTT wire codec', () => {
 
 describe('MQTT mapping', () => {
   it('decodes numeric ingestion payloads', () => {
-    const mapped = decodeIngestion({ topic: 't', as: { kind: 'state', field: 'temperature', unit: 'C' }, codec: 'number' }, Buffer.from('21.5'));
+    const mapped = decodeIngestion(
+      { topic: 't', as: { kind: 'state', field: 'temperature', unit: 'C' }, codec: 'number' },
+      Buffer.from('21.5'),
+    );
     expect(mapped.value).toBe(21.5);
   });
 
   it('rejects non-numeric payloads when the codec demands numbers', () => {
-    expect(() => decodeIngestion({ topic: 't', as: { kind: 'state', field: 'x' }, codec: 'number' }, Buffer.from('hot'))).toThrowError(MqttError);
+    expect(() =>
+      decodeIngestion(
+        { topic: 't', as: { kind: 'state', field: 'x' }, codec: 'number' },
+        Buffer.from('hot'),
+      ),
+    ).toThrowError(MqttError);
   });
 
   it('extracts json fields for ingestion', () => {
-    const mapped = decodeIngestion({ topic: 't', as: { kind: 'event', event: 'door.opened' }, codec: 'json', jsonField: 'state' }, Buffer.from('{"state":"open"}'));
+    const mapped = decodeIngestion(
+      {
+        topic: 't',
+        as: { kind: 'event', event: 'door.opened' },
+        codec: 'json',
+        jsonField: 'state',
+      },
+      Buffer.from('{"state":"open"}'),
+    );
     expect(mapped.value).toBe('open');
   });
 
   it('interpolates publish payloads and refuses missing args', () => {
-    expect(encodePublishPayload({ capability: 'pump.start', topic: 'pump/cmd', payload: '{"run":{value},"rate":{rate}}' }, { value: true, rate: 2 })).toBe('{"run":true,"rate":2}');
-    expect(() => encodePublishPayload({ capability: 'c', topic: 't', payload: '{speed}' }, {})).toThrowError(/requires argument 'speed'/);
+    expect(
+      encodePublishPayload(
+        { capability: 'pump.start', topic: 'pump/cmd', payload: '{"run":{value},"rate":{rate}}' },
+        { value: true, rate: 2 },
+      ),
+    ).toBe('{"run":true,"rate":2}');
+    expect(() =>
+      encodePublishPayload({ capability: 'c', topic: 't', payload: '{speed}' }, {}),
+    ).toThrowError(/requires argument 'speed'/);
   });
 });
 
@@ -146,7 +167,7 @@ describe('MqttClient against the broker simulator', () => {
     await publisher.close();
   });
 
-  it('times out when the broker never answers', async () => {
+  it('rejects when the transport ends before the broker answers', async () => {
     const silent = new MqttClient({
       transport: {
         kind: 'loopback',
@@ -158,6 +179,6 @@ describe('MqttClient against the broker simulator', () => {
       clientId: 'timeout',
       timeoutMs: 60,
     });
-    await expect(silent.connect()).rejects.toMatchObject({ code: 'MQTT_TIMEOUT' });
+    await expect(silent.connect()).rejects.toMatchObject({ code: 'MQTT_CLOSED' });
   });
 });

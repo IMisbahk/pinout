@@ -6,7 +6,13 @@ import {
   validateCandidate,
   type DiscoveredCandidate,
 } from '../src/core.js';
-import { encodeMdnsQuery, mdnsDiscoveryPlugin, networkProbePlugin, parseMdnsResponse, serialDiscoveryPlugin } from '../src/plugins.js';
+import {
+  encodeMdnsQuery,
+  mdnsDiscoveryPlugin,
+  networkProbePlugin,
+  parseMdnsResponse,
+  serialDiscoveryPlugin,
+} from '../src/plugins.js';
 import { createServer } from 'node:net';
 import type { AddressInfo } from 'node:net';
 
@@ -24,12 +30,22 @@ function candidate(overrides: Partial<DiscoveredCandidate>): DiscoveredCandidate
 
 describe('candidate honesty rules', () => {
   it('rejects candidates with no evidence', () => {
-    expect(() => validateCandidate(candidate({ evidence: [] }))).toThrowError(CandidateValidationError);
+    expect(() => validateCandidate(candidate({ evidence: [] }))).toThrowError(
+      CandidateValidationError,
+    );
   });
 
   it('caps single-weak-heuristic confidence at 0.5', () => {
-    expect(() => validateCandidate(candidate({ confidence: 0.8, evidence: [{ source: 's', detail: 'd', weight: 0.4 }] }))).toThrowError(/weak evidence/);
-    expect(validateCandidate(candidate({ confidence: 0.5, evidence: [{ source: 's', detail: 'd', weight: 0.4 }] }))).toBeDefined();
+    expect(() =>
+      validateCandidate(
+        candidate({ confidence: 0.8, evidence: [{ source: 's', detail: 'd', weight: 0.4 }] }),
+      ),
+    ).toThrowError(/weak evidence/);
+    expect(
+      validateCandidate(
+        candidate({ confidence: 0.5, evidence: [{ source: 's', detail: 'd', weight: 0.4 }] }),
+      ),
+    ).toBeDefined();
   });
 
   it('allows near-certainty only with device-confirmed evidence (weight >= 0.9)', () => {
@@ -38,7 +54,14 @@ describe('candidate honesty rules', () => {
       evidence: [{ source: 'http-health', detail: 'answered {"ok":true}', weight: 0.9 }],
     });
     expect(validateCandidate(confirmed).confidence).toBe(0.9);
-    expect(() => validateCandidate(candidate({ confidence: 0.96, evidence: [{ source: 'http-health', detail: 'ok', weight: 0.95 }] }))).toThrowError(/0.95/);
+    expect(() =>
+      validateCandidate(
+        candidate({
+          confidence: 0.96,
+          evidence: [{ source: 'http-health', detail: 'ok', weight: 0.95 }],
+        }),
+      ),
+    ).toThrowError(/0.95/);
   });
 });
 
@@ -76,10 +99,14 @@ describe('mDNS codec', () => {
     // answer name "My Device._pinout._udp.local" (with compression-free labels),
     // type PTR, class IN, no data.
     const name = Buffer.concat([
-      Buffer.from([9]), Buffer.from('My Device', 'utf8'),
-      Buffer.from([7]), Buffer.from('_pinout', 'utf8'),
-      Buffer.from([4]), Buffer.from('_udp', 'utf8'),
-      Buffer.from([5]), Buffer.from('local', 'utf8'),
+      Buffer.from([9]),
+      Buffer.from('My Device', 'utf8'),
+      Buffer.from([7]),
+      Buffer.from('_pinout', 'utf8'),
+      Buffer.from([4]),
+      Buffer.from('_udp', 'utf8'),
+      Buffer.from([5]),
+      Buffer.from('local', 'utf8'),
       Buffer.from([0]),
     ]);
     const packet = Buffer.concat([
@@ -121,7 +148,9 @@ describe('network probe (opt-in)', () => {
   it('probes only explicitly supplied endpoints and detects a pinout daemon', async () => {
     server = createServer((socket) => {
       socket.on('data', () => {
-        socket.write('HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\r\n{"ok":true,"devices":1}');
+        socket.write(
+          'HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\r\n{"ok":true,"devices":1}',
+        );
         socket.end();
       });
     });
@@ -130,9 +159,16 @@ describe('network probe (opt-in)', () => {
 
     const plugin = networkProbePlugin();
     // Opt-out: nothing probed.
-    expect(await plugin.discover({ network: { enabled: false, endpoints: [{ host: '127.0.0.1', port }] } })).toEqual([]);
+    expect(
+      await plugin.discover({
+        network: { enabled: false, endpoints: [{ host: '127.0.0.1', port }] },
+      }),
+    ).toEqual([]);
 
-    const candidates = await plugin.discover({ network: { enabled: true, endpoints: [{ host: '127.0.0.1', port }] }, timeoutMs: 300 });
+    const candidates = await plugin.discover({
+      network: { enabled: true, endpoints: [{ host: '127.0.0.1', port }] },
+      timeoutMs: 300,
+    });
     expect(candidates).toHaveLength(1);
     expect(candidates[0]!.possibleIdentity[0]!.moduleId).toBe('pinout/daemon');
     expect(candidates[0]!.confidence).toBe(0.9);
@@ -159,13 +195,22 @@ describe('runDiscovery', () => {
     const goodPlugin = {
       name: 'good',
       discover: async () => [
-        candidate({ id: 'cand_1', endpoint: { kind: 'serial', address: '/dev/x' }, confidence: 0.4 }),
+        candidate({
+          id: 'cand_1',
+          endpoint: { kind: 'serial', address: '/dev/x' },
+          confidence: 0.4,
+        }),
       ],
     };
     const duplicatingPlugin = {
       name: 'dup',
       discover: async () => [
-        candidate({ id: 'cand_1b', endpoint: { kind: 'serial', address: '/dev/x' }, confidence: 0.5, evidence: [{ source: 'dup', detail: 'second view', weight: 0.5 }] }),
+        candidate({
+          id: 'cand_1b',
+          endpoint: { kind: 'serial', address: '/dev/x' },
+          confidence: 0.5,
+          evidence: [{ source: 'dup', detail: 'second view', weight: 0.5 }],
+        }),
       ],
     };
     const brokenPlugin = {
@@ -184,8 +229,27 @@ describe('runDiscovery', () => {
   it('sorts candidates by confidence', async () => {
     const run = await runDiscovery({
       plugins: [
-        { name: 'a', discover: async () => [candidate({ id: 'low', endpoint: { kind: 'serial', address: '/dev/low' }, confidence: 0.3 })] },
-        { name: 'b', discover: async () => [candidate({ id: 'high', endpoint: { kind: 'serial', address: '/dev/high' }, confidence: 0.5, evidence: [{ source: 's', detail: 'd', weight: 0.5 }] })] },
+        {
+          name: 'a',
+          discover: async () => [
+            candidate({
+              id: 'low',
+              endpoint: { kind: 'serial', address: '/dev/low' },
+              confidence: 0.3,
+            }),
+          ],
+        },
+        {
+          name: 'b',
+          discover: async () => [
+            candidate({
+              id: 'high',
+              endpoint: { kind: 'serial', address: '/dev/high' },
+              confidence: 0.5,
+              evidence: [{ source: 's', detail: 'd', weight: 0.5 }],
+            }),
+          ],
+        },
       ],
     });
     expect(run.candidates.map((c) => c.id)).toEqual(['high', 'low']);
@@ -195,7 +259,10 @@ describe('runDiscovery', () => {
 describe('formatCandidatesTable', () => {
   it('prints the operator-facing format', () => {
     const lines = formatCandidatesTable([
-      candidate({ endpoint: { kind: 'serial', address: '/dev/cu.usbserial-1420' }, confidence: 0.5 }),
+      candidate({
+        endpoint: { kind: 'serial', address: '/dev/cu.usbserial-1420' },
+        confidence: 0.5,
+      }),
     ]);
     const text = lines.join('\n');
     expect(text).toContain('FOUND 1 CANDIDATE DEVICES');

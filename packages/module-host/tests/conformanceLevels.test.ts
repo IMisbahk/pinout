@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CONFORMANCE_LEVELS, LEVEL_NAMES, evaluateConformanceLevel, conformanceRecord, type ConformanceEvidence } from '../src/index.js';
+import {
+  CONFORMANCE_LEVELS,
+  LEVEL_NAMES,
+  evaluateConformanceLevel,
+  conformanceRecord,
+  type ConformanceEvidence,
+} from '../src/index.js';
 
 const full: ConformanceEvidence = {
   manifestValid: true,
@@ -19,13 +25,21 @@ describe('conformance levels', () => {
     expect(
       evaluateConformanceLevel({
         ...full,
-        hardwareRecord: { date: '2026-09-02', hardware: 'ESP32 DevKit', firmwareVersion: '0.3.0', moduleVersion: '0.1.0', testSuiteVersion: '1' },
+        hardwareRecord: {
+          date: '2026-09-02',
+          hardware: 'ESP32 DevKit',
+          firmwareVersion: '0.3.0',
+          moduleVersion: '0.1.0',
+          testSuiteVersion: '1',
+        },
       }),
     ).toBe('L5');
   });
 
   it('throws below L0 — an invalid manifest counts as nothing', () => {
-    expect(() => evaluateConformanceLevel({ ...full, manifestValid: false })).toThrowError(/Nothing else counts/);
+    expect(() => evaluateConformanceLevel({ ...full, manifestValid: false })).toThrowError(
+      /Nothing else counts/,
+    );
   });
 
   it('names every level', () => {
@@ -37,7 +51,13 @@ describe('conformance levels', () => {
   it('serializes records with the dated hardware test when present', () => {
     const record = conformanceRecord({ id: 'test/x', version: '1.0.0' }, 'L5', {
       ...full,
-      hardwareRecord: { date: '2026-09-02', hardware: 'Pico W', firmwareVersion: 'mp-1.21', moduleVersion: '1.0.0', testSuiteVersion: '1' },
+      hardwareRecord: {
+        date: '2026-09-02',
+        hardware: 'Pico W',
+        firmwareVersion: 'mp-1.21',
+        moduleVersion: '1.0.0',
+        testSuiteVersion: '1',
+      },
     });
     expect(record).toMatchObject({ level: 'L5', levelName: 'HARDWARE_VERIFIED' });
     expect(record.hardwareTested).toBeDefined();

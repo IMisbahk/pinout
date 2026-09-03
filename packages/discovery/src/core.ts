@@ -51,7 +51,9 @@ export interface DiscoveryOptions {
   /** Opt-in network probing. Off by default; bounded and never a subnet scan. */
   network?: { enabled: boolean; endpoints?: Array<{ host: string; port: number }> };
   /** Injectable serial-port lister for tests. */
-  listSerialPorts?: () => Promise<Array<{ path: string; manufacturer?: string; vendorId?: string; productId?: string }>>;
+  listSerialPorts?: () => Promise<
+    Array<{ path: string; manufacturer?: string; vendorId?: string; productId?: string }>
+  >;
 }
 
 export interface DiscoveryPlugin {
@@ -130,7 +132,9 @@ export interface DiscoveryRun {
 }
 
 /** Run plugins in parallel, merge, validate. Plugin failures are isolated. */
-export async function runDiscovery(options: DiscoveryOptions & { plugins?: DiscoveryPlugin[] } = {}): Promise<DiscoveryRun> {
+export async function runDiscovery(
+  options: DiscoveryOptions & { plugins?: DiscoveryPlugin[] } = {},
+): Promise<DiscoveryRun> {
   const started = Date.now();
   const plugins = options.plugins ?? [];
   const errors: DiscoveryRun['errors'] = [];
@@ -144,11 +148,17 @@ export async function runDiscovery(options: DiscoveryOptions & { plugins?: Disco
         try {
           candidates.push(validateCandidate(candidate));
         } catch (error) {
-          errors.push({ plugin: plugin.name, message: error instanceof Error ? error.message : String(error) });
+          errors.push({
+            plugin: plugin.name,
+            message: error instanceof Error ? error.message : String(error),
+          });
         }
       }
     } else {
-      errors.push({ plugin: plugin.name, message: result.reason instanceof Error ? result.reason.message : String(result.reason) });
+      errors.push({
+        plugin: plugin.name,
+        message: result.reason instanceof Error ? result.reason.message : String(result.reason),
+      });
     }
   });
 

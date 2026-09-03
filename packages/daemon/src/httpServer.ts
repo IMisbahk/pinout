@@ -14,6 +14,7 @@
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { attachStreamSockets } from './streamSocket.js';
 import {
   Journal,
   LeaseManager,
@@ -24,6 +25,8 @@ import {
   toStructuredError,
   UnsupportedCapabilityError,
   validateInputSchema,
+  ValidationError,
+  PinoutError,
   FileJournalStorage,
   type PinoutRuntime,
   type RuntimeEventEnvelope,
@@ -225,9 +228,13 @@ function readBody(req: IncomingMessage): Promise<Record<string, unknown> | undef
     req.on('end', () => {
       if (chunks.length === 0) return resolve(undefined);
       try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
+        const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          throw new Error('Expected object.');
+        }
+        resolve(parsed as Record<string, unknown>);
       } catch {
-        reject(new Error('Request body must be valid JSON.'));
+        reject(new ValidationError('Request body must be a JSON object.'));
       }
     });
     req.on('error', reject);
@@ -247,6 +254,7 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
 export class DaemonHttpServer {
   private readonly routes: Route[] = [];
   private server: Server | undefined;
+  private closeStreamSockets: (() => void) | undefined;
   private readonly ctx!: DaemonContext;
 
   constructor(private readonly context: DaemonContext) {
@@ -313,7 +321,9 @@ export class DaemonHttpServer {
         return;
       }
 
-      const body = req.method === 'POST' || req.method === 'PUT' ? await readBody(req) : undefined;
+      const body = ['POST', 'PUT', 'DELETE'].includes(req.method ?? '')
+        ? await readBody(req)
+        : undefined;
       await match.route.handler(this.context, req, res, { params: match.params }, body);
     } catch (error) {
       const structured = toStructuredError(error);
@@ -374,28 +384,51 @@ export class DaemonHttpServer {
       const idempotencyKey =
         typeof body?.idempotencyKey === 'string' ? body.idempotencyKey : undefined;
 
+      // A retry observes an existing operation, even after its approval was
+      // consumed or the machine halted. It must never spend policy state again.
+      const existing =
+        !dryRun && idempotencyKey
+          ? c.operations.idempotencyStore.lookup(deviceId, capability, owner, idempotencyKey)
+          : undefined;
+      if (existing?.operationId && c.operations.get(existing.operationId)) {
+        const handle = c.operations.getHandle(existing.operationId);
+        if (waitFor === 'result') {
+          const result = await handle.waitForResult();
+          sendJson(res, 200, { operation: handle.snapshot(), result, deduped: true });
+        } else {
+          sendJson(res, 202, { operation: handle.snapshot(), deduped: true });
+        }
+        return;
+      }
+
       // Dry-run plans without executing; the halt gate applies to execution.
       if (!dryRun) {
         c.halt.enforceGate();
       }
-      const decision = c.safety.check({
-        deviceId,
-        capability,
-        payload: args,
-        operationalState: device.getOperationalStateSnapshot(),
-        ...(owner !== undefined ? { owner } : {}),
-      });
-      if (!decision.allowed) {
-        c.journal.append('policy.rejected', { deviceId }, { capability, decision });
-        throw Object.assign(new Error(decision.message ?? 'Rejected by policy.'), {
-          code: decision.code ?? 'POLICY_ACTION_DENIED',
-        });
-      }
-
       const validated = validateInputSchema(
         device.capabilities.find((cap) => cap.name === capability)!.inputSchema,
         args,
       );
+      // Include the device's own baseline/deployment policies in planning.
+      await device.invoke(capability, validated, {
+        dryRun: true,
+        ...(owner !== undefined ? { owner } : {}),
+      });
+      const safetyContext = {
+        deviceId,
+        capability,
+        payload: validated,
+        operationalState: device.getOperationalStateSnapshot(),
+        ...(owner !== undefined ? { owner } : {}),
+      };
+      const decision = c.safety.preview(safetyContext);
+      if (!decision.allowed) {
+        c.journal.append('policy.rejected', { deviceId }, { capability, decision });
+        throw new PinoutError(
+          decision.code ?? 'POLICY_ACTION_DENIED',
+          decision.message ?? 'Rejected by policy.',
+        );
+      }
 
       if (dryRun) {
         sendJson(res, 200, {
@@ -413,10 +446,19 @@ export class DaemonHttpServer {
       const { handle, deduped } = c.operations.begin({
         deviceId,
         capability,
+        ...(owner !== undefined ? { owner } : {}),
         ...(idempotencyKey !== undefined ? { idempotencyKey } : {}),
         ...(typeof body?.timeoutMs === 'number' ? { timeoutMs: body.timeoutMs } : {}),
         run: async (runCtx) => {
-          const result = await c.runtime.invoke(deviceId, capability, validated);
+          runCtx.throwIfCancelled();
+          c.halt.enforceGate();
+          c.safety.enforce({
+            ...safetyContext,
+            operationalState: device.getOperationalStateSnapshot(),
+          });
+          const result = await c.runtime.invoke(deviceId, capability, validated, {
+            ...(owner !== undefined ? { owner } : {}),
+          });
           runCtx.reportProgress(1, 'completed');
           return result;
         },
@@ -458,11 +500,8 @@ export class DaemonHttpServer {
       const owner = requiredString(body, 'owner');
       const scope = body?.scope as LeaseScopeInput | undefined;
       if (!scope || (scope.kind !== 'device' && scope.kind !== 'capability')) {
-        throw Object.assign(
-          new Error(
-            "body.scope must be { kind: 'device', deviceId } or { kind: 'capability', deviceId, capabilities }.",
-          ),
-          { code: 'VALIDATION_ERROR' },
+        throw new ValidationError(
+          "body.scope must be { kind: 'device', deviceId } or { kind: 'capability', deviceId, capabilities }.",
         );
       }
       const mode = body?.mode === 'shared-read' ? 'shared-read' : 'exclusive';
@@ -559,7 +598,7 @@ export class DaemonHttpServer {
       });
     });
 
-    // -- Streams (control plane metadata only; frames stay in-process) ---------
+    // -- Streams (metadata/snapshot; raw frames use the WebSocket endpoint) -----
     this.route('GET', '/v1/streams', async (c, req, res) => {
       const url = new URL(req.url ?? '/', 'http://localhost');
       const deviceId = url.searchParams.get('deviceId');
@@ -625,6 +664,7 @@ export class DaemonHttpServer {
     });
 
     this.server = server;
+    this.closeStreamSockets = attachStreamSockets(server, this.context.streams, token);
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject);
       if (config.socketPath) {
@@ -640,6 +680,7 @@ export class DaemonHttpServer {
   }
 
   async close(): Promise<void> {
+    this.closeStreamSockets?.();
     await new Promise<void>((resolve) => {
       if (!this.server) return resolve();
       this.server.close(() => resolve());
@@ -669,16 +710,13 @@ function deviceSummary(device: ReturnType<PinoutRuntime['getDevice']>): Record<s
 function requiredString(body: Record<string, unknown> | undefined, field: string): string {
   const value = body?.[field];
   if (typeof value !== 'string' || value.length === 0) {
-    throw Object.assign(
-      new Error(`Body field '${field}' is required and must be a non-empty string.`),
-      { code: 'VALIDATION_ERROR' },
-    );
+    throw new ValidationError(`Body field '${field}' is required and must be a non-empty string.`);
   }
   return value;
 }
 
 function notFound(message: string): Error {
-  return Object.assign(new Error(message), { code: 'DEVICE_NOT_FOUND' });
+  return new PinoutError('DEVICE_NOT_FOUND', message);
 }
 
 function encodeFrameData(data: unknown): unknown {
