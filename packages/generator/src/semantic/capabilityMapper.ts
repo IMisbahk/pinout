@@ -101,8 +101,73 @@ const VENDOR_PATTERNS: Array<{ pattern: RegExp; capabilityId: string; confidence
     confidence: 0.88,
   },
   {
-    pattern: /\b(read[_-]?distance|get[_-]?distance|ultrasonic[_-]?read)\b/i,
+    pattern: /\b(read[_-]?distance|get[_-]?distance|ultrasonic[_-]?read|distance[_-]?read)\b/i,
     capabilityId: 'distance.read',
+    confidence: 0.9,
+  },
+  {
+    pattern: /(\bset[_-]?voltage\b|\bvoltage[_-]?set\b|(?<!MEAS:)\bVOLT\b(?!\?))/i,
+    capabilityId: 'voltage.set',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?voltage|measure[_-]?voltage|voltage[_-]?read|MEAS:VOLT)\b/i,
+    capabilityId: 'voltage.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /(\bset[_-]?current\b|\bcurrent[_-]?set\b|(?<!MEAS:)\bCURR\b(?!\?))/i,
+    capabilityId: 'current.set',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(read[_-]?current|measure[_-]?current|current[_-]?read|MEAS:CURR)\b/i,
+    capabilityId: 'current.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(output[_-]?enable|enable[_-]?output|\bOUTP\b)\b/i,
+    capabilityId: 'power.output.enable',
+    confidence: 0.85,
+  },
+  {
+    pattern: /\b(read[_-]?temperature|temperature[_-]?read|get[_-]?setpoint|read[_-]?setpoint)\b/i,
+    capabilityId: 'temperature.read',
+    confidence: 0.85,
+  },
+  {
+    pattern: /\b(set[_-]?point|setpoint[_-]?set|set[_-]?setpoint|write[_-]?setpoint)\b/i,
+    capabilityId: 'temperature.set',
+    confidence: 0.78,
+  },
+  {
+    pattern: /\bpump[._-]?run\b|\bpump[_-]?start\b/i,
+    capabilityId: 'pump.run',
+    confidence: 0.8,
+  },
+  {
+    pattern: /\b(start[_-]?cycle|cycle[_-]?start)\b/i,
+    capabilityId: 'cycle.start',
+    confidence: 0.82,
+  },
+  {
+    pattern: /\b(set[_-]?payload|payload[_-]?set)\b/i,
+    capabilityId: 'payload.set',
+    confidence: 0.8,
+  },
+  {
+    pattern: /\b(move[_-]?joint|joint[_-]?move)\b/i,
+    capabilityId: 'motion.move_joint',
+    confidence: 0.9,
+  },
+  {
+    pattern: /\b(get[_-]?pose|read[_-]?pose|pose[_-]?read|get[_-]?position)\b/i,
+    capabilityId: 'pose.read',
+    confidence: 0.88,
+  },
+  {
+    pattern: /\b(set[_-]?pwm|pwm[_-]?write|pwm[_-]?configure)\b/i,
+    capabilityId: 'pwm.write',
     confidence: 0.9,
   },
   {

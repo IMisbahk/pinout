@@ -1,17 +1,80 @@
+# Dependencies
 node_modules/
+
+# Build outputs
 dist/
-coverage/
+build/
+out/
 *.tsbuildinfo
-.DS_Store
-*.log
+
+# Coverage
+coverage/
+
+# Environment / secrets
 .env
 .env.*
 !.env.example
-.pio/
-.vscode/.pio
-.idea/
+*.key
+*.pem
+*.p12
+secrets/
+credentials/
+
+# Python
+.venv/
+venv/
+__pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+sdk/python/dist/
+sdk/python/build/
+
+# PlatformIO / firmware build outputs
+.platformio/
+.pio/
+.pioenvs/
+.piolibdeps/
+firmware/**/*.bin
+firmware/**/*.elf
+firmware/**/*.hex
+firmware/**/*.uf2
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Temp / caches
+tmp/
+temp/
 .cache/
+.cache-loader/
 
+# Benchmarks and evaluation results (reproducible reports go here)
+benchmarks/results/
+evaluations/results/
 
+# Generated artifacts
+generated/
+artifacts/
+*.pinout-journal
+
+# Agent state
+.agent/
+MEGA_SPRINT_STATE.local.md
+
+# Local overrides
+*.local
+*.pid
+*.sock
+
+# Cursor
 .cursor

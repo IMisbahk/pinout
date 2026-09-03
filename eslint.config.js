@@ -4,11 +4,24 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', 'firmware/**', 'coverage/**'],
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'firmware/**',
+      'coverage/**',
+      'sdk/**',
+      'benchmarks/**',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   prettier,
+  {
+    files: ['packages/module-host/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', setTimeout: 'readonly', setInterval: 'readonly' },
+    },
+  },
   {
     files: ['scripts/**/*.js'],
     languageOptions: {

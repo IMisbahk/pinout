@@ -4,6 +4,34 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added (platform v1 sprint)
+
+- **Spec v1 layer** (`packages/core/src/spec`): canonical versioned contracts — device identity/health/descriptors, capability kinds with danger levels and units, operations, leases, frames/poses, safety constraints with provenance, module manifest shape, support statuses. Deterministic unit conversions that refuse ambiguous conversions. Documented under `docs/spec/`.
+- **Long-running operations** (`OperationManager`): queued/running/completed/failed/cancelled/timed_out/rejected lifecycle, idempotency keys that permanently dedupe client retries, deadlines, cooperative cancellation that only reports cancelled when the run acknowledges it, progress reporting with per-operation snapshots and `AsyncIterable` streams.
+- **Resource leases** (`LeaseManager`): exclusive and shared-read modes, device- and capability-scoped leases, TTL/renew/release/expiry so crashed agents cannot hold hardware.
+- **Safety engine v2** (`SafetyEngine`): rate, interlock, sequence, approval, lease, deadman, and resource-budget policies on top of the legacy range/state/workspace rules, with structured `SAFETY_*` codes and `mergeModuleAndDeploymentRules` that only lets deployments tighten module baselines (widening/contradictions become conflicts for human review).
+- **Halt/E-stop coordinator** (`HaltCoordinator`): `NORMAL | RESTRICTED | HALTED | ESTOP_REQUESTED | FAULTED` with sticky estop (clear then resume), audited state transitions, and honest non-certification documentation.
+- **DeviceGraph**: composition with parent/child links, cycle rejection, dotted addressing across vendors (`robot-cell-01.arm.motion.move_to`), and queries by class/capability/module/tag/parent/simulation.
+- **Control journal** (`Journal`): append-only record of invocations, policy rejections, operations, faults, safety transitions, and lease activity; secret-shaped keys redacted, oversized payloads truncated; memory + JSONL storage, replay loading, and sequence hydration after restart.
+- **Stream bus** (`StreamBus`): data-plane frame fan-out with `drop-oldest` / `drop-latest` / `latest-only` backpressure, snapshots, stream registration and close semantics.
+- **`pinoutd` daemon** (`packages/daemon`): loopback-only local execution service with HTTP API (devices, invoke with dry-run and idempotency, operations, leases, halt/estop, SSE events, stream metadata, journal), bearer-token auth, refusal to bind non-loopback without explicit remote opt-in plus token.
+- **Python SDK** (`sdk/python`): stdlib-only sync client plus asyncio client (httpx extra) with typed errors, operations with progress/cancel, leases, safety controls, SSE event streams; tested against an in-process mock daemon.
+- **Modbus adapter** (`packages/protocols-modbus`): zero-dependency Modbus TCP (MBAP) and RTU (CRC16) clients, exception mapping to stable codes, and declarative register maps where unknown/read-only registers never become writable.
+- **SCPI layer** (`packages/protocols-scpi`): SCPI parser with mnemonic abbreviation and channel syntax, sequential-queue client over any transport with error-queue draining, and reference instrument classes (power supply, DMM, function generator, conservative oscilloscope) with an explicit-opt-in raw escape hatch.
+- **UDP and WebSocket transports** in core, with datagram exchange, idle close, reconnect with exponential backoff (never on explicit close), and structured logging.
+- **MicroPython bridge** (`firmware/micropython-bridge`): board-agnostic NDJSON bridge with runtime capability detection, software pin-state shadow, UART (hardware) and stdio (host) modes, host-side protocol validation (`validate.js`), and a data-driven board descriptor.
+- **CLI daemon commands**: `daemon status`, `halt`, `resume`, `estop`, `estop-clear`, `lease acquire/list/release`, `operations`, `logs`, plus a global `--url` flag talking to `pinoutd`.
+- **Protocol-neutral tool export** (`runtimeToToolDefinitions`): every capability as a tool definition with derived danger classification for any AI vendor's function-call format.
+- **Runtime integration**: `DeviceInstance.invoke` now runs the halt gate, v2 safety rules, and lease checks, and supports `dryRun` and `owner` options.
+- **CI**: OS (Linux/macOS/Windows) × Node (20/22) matrix, Python SDK job (3.10/3.12), and MicroPython bridge protocol validation.
+- Baseline record in `docs/mega-sprint-baseline.md`; spec docs in `docs/spec/`; daemon guide in `docs/daemon.md`.
+
+### Changed (platform v1 sprint)
+
+- License changed from MIT to Apache-2.0; repository metadata points at `pinoutlabs/pinout`; NOTICE, Code of Conduct, and Support documents added.
+- README updated to describe the full platform surface with an honest hardware support catalog; support statuses never conflate simulated, implemented, and hardware-verified.
+
+
 ### Added (hardware intelligence platform)
 
 - Multi-driver composite devices with explicit capability routing, driver-attributed events, aggregated operational state, and fail-closed route validation.
@@ -99,5 +127,5 @@ All notable changes to this project are documented here. The format follows [Kee
 - ESP32 bridge firmware speaking protocol v1 over UART.
 - `examples/blink.ts` sample.
 
-[Unreleased]: https://github.com/imisbahk/pinout/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/imisbahk/pinout/releases/tag/v0.1.0
+[Unreleased]: https://github.com/pinoutlabs/pinout/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/pinoutlabs/pinout/releases/tag/v0.1.0

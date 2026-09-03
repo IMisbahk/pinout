@@ -5,6 +5,11 @@ export { simulatedEsp32 } from './drivers/esp32/simulatedTransport.js';
 export { listSerialPorts, serialPort } from './serial.js';
 export { loopbackTransport, LoopbackTransport } from './transports/loopbackTransport.js';
 export { tcpTransport } from './transports/tcpTransport.js';
+export { udpTransport, UdpTransport, type UdpTransportOptions } from './transports/udpTransport.js';
+export {
+  webSocketTransport,
+  type WebSocketTransportOptions,
+} from './transports/webSocketTransport.js';
 export {
   capabilityCatalog,
   describeCapabilities,
@@ -44,7 +49,35 @@ export {
   DisconnectedError,
   DeviceError,
   AbortedError,
+  PinoutStructuredError,
+  toStructuredError,
+  RETRYABLE_CODES,
 } from './errors.js';
+export type { StructuredError, ErrorCategory } from './errors.js';
+export type {
+  Capability,
+  ActionCapability,
+  SensorCapability,
+  StreamCapability,
+  StateCapability,
+  EventCapability,
+  DangerLevel,
+  OperationSnapshot,
+  OperationStatus,
+  Lease,
+  LeaseMode,
+  SupportStatus,
+  DeviceClass as SpecDeviceClass,
+  DeviceHealthStatus,
+  Unit as SpecUnit,
+} from './spec/types.js';
+export {
+  SPEC_VERSION,
+  isCompatibleSpecVersion,
+  convert as convertUnit,
+  toCanonical as toCanonicalUnit,
+  requiresLease,
+} from './spec/index.js';
 export {
   PolicyError,
   PolicyConstraintViolation,
@@ -182,6 +215,16 @@ export {
   buildMcpToolName,
   type RuntimeAgentTool,
 } from './runtime/agentTools.js';
+export { runtimeToToolDefinitions, classifyToolDanger } from './runtime/toolExport.js';
+export {
+  validateBoardDescriptor,
+  loadBoardDescriptors,
+  pinRole,
+  BoardDescriptorError,
+} from './boards/descriptors.js';
+export type { BoardDescriptor } from './boards/descriptors.js';
+export type { ToolDefinition, ToolDanger } from './runtime/toolExport.js';
+export type { InvokeOptions } from './runtime/deviceInstance.js';
 export { getModule, listModules, registerModule } from './modules/registry.js';
 export {
   esp32Module,
@@ -225,6 +268,83 @@ export { createSimulatedLimitSwitchBackend } from './modules/limitSwitch/simulat
 export { createSimulatedForceBackend } from './modules/force/simulator.js';
 export { createSimulatedMobileBaseBackend } from './modules/mobileBase/simulator.js';
 export { evaluatePolicies } from './policy/engine.js';
+export { SafetyEngine, mergeModuleAndDeploymentRules } from './policy/safety.js';
+export type {
+  SafetyRule,
+  RateRule,
+  InterlockRule,
+  SequenceRule,
+  ApprovalRule,
+  LeaseRule,
+  DeadmanRule,
+  ResourceRule,
+  ConstraintConflict,
+  ApprovalRecord,
+} from './policy/safety.js';
+export { OperationManager, isTerminalOperationStatus } from './operation/operationManager.js';
+export { BoundedIdempotencyStore } from './operation/idempotencyStore.js';
+export type {
+  IdempotencyStoreOptions,
+  IdempotencyTombstone,
+  IdempotencyLookup,
+} from './operation/idempotencyStore.js';
+export type {
+  OperationHandle,
+  OperationRunContext,
+  BeginOperationOptions,
+  OperationBeginResult,
+} from './operation/operationManager.js';
+export { LeaseManager } from './lease/leaseManager.js';
+export type {
+  LeaseScopeInput,
+  AcquireLeaseOptions,
+  LeaseConflictDetails,
+} from './lease/leaseManager.js';
+export { HaltCoordinator, safetyStateEventName } from './halt/haltCoordinator.js';
+export type { SafetyStateName, SafetyStateChange, HaltVerdict } from './halt/haltCoordinator.js';
+export { DeviceGraph } from './graph/deviceGraph.js';
+export type { DeviceGraphNodeInput, GraphQuery, ResolvedAddress } from './graph/deviceGraph.js';
+export {
+  Journal,
+  MemoryJournalStorage,
+  FileJournalStorage,
+  loadJournalEntries,
+  redactPayload,
+} from './journal/journal.js';
+export { buildReplaySession, replayJournal, formatReplaySession } from './journal/replay.js';
+export type { ReplaySession, ReplayTimelineEntry, ReplayHandler } from './journal/replay.js';
+export type {
+  JournalEntry,
+  JournalEntryKind,
+  JournalQuery,
+  JournalStorage,
+  JournalOptions,
+} from './journal/journal.js';
+export {
+  vector3,
+  quaternion,
+  quaternionFromAxisAngle,
+  quaternionMultiply,
+  quaternionConjugate,
+  pose,
+  frameReference,
+  makeTransform,
+  rotateVector,
+  applyTransform,
+  composeTransforms,
+  invertTransform,
+  transformChain,
+  transformFrameReference,
+} from './frames/frames.js';
+export { StreamBus } from './stream/streamBus.js';
+export type {
+  StreamDescriptor,
+  StreamFrame,
+  StreamHandle,
+  StreamStats,
+  BackpressurePolicy,
+  SubscribeOptions,
+} from './stream/streamBus.js';
 
 export type {
   Transport,

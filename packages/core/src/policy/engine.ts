@@ -55,7 +55,13 @@ function evaluateStateEquals(
   rule: Extract<PolicyRule, { kind: 'stateEquals' }>,
   context: PolicyContext,
 ): void {
-  const actual = context.operationalState[rule.field];
+  // Hostile/malformed state objects must produce a precondition failure, not
+  // a TypeError that escapes the policy layer.
+  const state = context.operationalState;
+  const actual =
+    state !== null && typeof state === 'object'
+      ? (state as Record<string, unknown>)[rule.field]
+      : undefined;
   if (actual !== rule.equals) {
     throw new PolicyPreconditionFailed(
       rule.message ??

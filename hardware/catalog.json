@@ -1,0 +1,216 @@
+{
+  "schemaVersion": "1",
+  "note": "Hardware support catalog. Statuses are TRUTHFUL and must never be inflated. HARDWARE_VERIFIED requires a dated hardware test record. SIMULATED means the contract runs against a fake backend. Nothing in this repository has been verified against physical industrial equipment or robots.",
+  "statuses": [
+    "PLANNED",
+    "SPEC_ONLY",
+    "IMPLEMENTED",
+    "COMPILE_TESTED",
+    "SIMULATED",
+    "INTEGRATION_VERIFIED",
+    "HARDWARE_VERIFIED",
+    "EXPERIMENTAL"
+  ],
+  "entries": [
+    {
+      "category": "embedded",
+      "target": "ESP32 (classic DevKit, WROOM)",
+      "integration": "firmware/esp32-bridge + @pinout/core esp32 driver",
+      "status": "IMPLEMENTED",
+      "testedHow": "unit tests against simulator; TCP/serial transport tests; compile-only CI",
+      "notes": "The hardware path (serial handshake, GPIO/PWM/ADC/I2C/SPI) is exercised by the SDK + firmware, but per-board behavior depends on deployment. Not certified."
+    },
+    {
+      "category": "embedded",
+      "target": "ESP32-S2 / S3 / C3 / C6",
+      "integration": "planned family descriptors; current pin maps cover classic ESP32 only",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "Do not assume identical pin maps across variants."
+    },
+    {
+      "category": "embedded",
+      "target": "MicroPython / CircuitPython boards (generic)",
+      "integration": "firmware/micropython-bridge",
+      "status": "EXPERIMENTAL",
+      "testedHow": "host-side protocol validation (node validate.js) in software mode",
+      "notes": "No hardware verification. Runtime capability detection guards machine.* usage."
+    },
+    {
+      "category": "embedded",
+      "target": "Raspberry Pi Pico / Pico W (RP2040)",
+      "integration": "reachable via micropython-bridge; native bridge",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "USB VID 0x2e8a is recognized by discovery."
+    },
+    {
+      "category": "embedded",
+      "target": "Arduino Uno / Nano / Mega",
+      "integration": "protocol/firmata (planned)",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "Firmata protocol adapter not yet implemented; discovery recognizes Arduino VID."
+    },
+    {
+      "category": "embedded",
+      "target": "Linux SBC GPIO (libgpiod)",
+      "integration": "planned",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "libgpiod-first design; sysfs only as documented fallback."
+    },
+    {
+      "category": "protocol",
+      "target": "Modbus TCP",
+      "integration": "@pinout/protocols-modbus ModbusTcpClient",
+      "status": "IMPLEMENTED",
+      "testedHow": "in-process mock server tests; MBAP/CRC vectors verified against independent implementation",
+      "notes": "Not verified against physical Modbus equipment."
+    },
+    {
+      "category": "protocol",
+      "target": "Modbus RTU",
+      "integration": "@pinout/protocols-modbus ModbusRtuClient",
+      "status": "IMPLEMENTED",
+      "testedHow": "scripted-transport tests with CRC validation",
+      "notes": "Bring-your-own transport (serial). Single-master, one-inflight semantics."
+    },
+    {
+      "category": "protocol",
+      "target": "SCPI instruments (serial/TCP)",
+      "integration": "@pinout/protocols-scpi",
+      "status": "IMPLEMENTED",
+      "testedHow": "scripted loopback transport tests; exact-command assertions per instrument class",
+      "notes": "Power supply, DMM, function generator classes; conservative oscilloscope subset. Vendor-specific acquisition not implemented."
+    },
+    {
+      "category": "protocol",
+      "target": "MQTT",
+      "integration": "@pinout/protocols-mqtt (Wave 2, in progress)",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "Declarative topic\u2192state/event mapping design exists in spec docs."
+    },
+    {
+      "category": "protocol",
+      "target": "OPC UA",
+      "integration": "none",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "browse/read/subscribe/methods design sketch only."
+    },
+    {
+      "category": "protocol",
+      "target": "Firmata (Arduino)",
+      "integration": "none",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": ""
+    },
+    {
+      "category": "protocol",
+      "target": "MAVLink / autopilots",
+      "integration": "none (simulation-first design mandated)",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "Arm/disarm must sit behind explicit approval policies when implemented."
+    },
+    {
+      "category": "robotics",
+      "target": "Generic robot arm semantics",
+      "integration": "pinout/robot-arm module + simulator",
+      "status": "SIMULATED",
+      "testedHow": "simulator unit tests (deterministic)",
+      "notes": "motion.home/move_to/stop, pose.read, joints.read."
+    },
+    {
+      "category": "robotics",
+      "target": "Universal Robots",
+      "integration": "planned RTDE client (official documented interface only)",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "No physical UR available; nothing will be labeled hardware-verified."
+    },
+    {
+      "category": "robotics",
+      "target": "Dynamixel servos",
+      "integration": "planned (official control table only)",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": ""
+    },
+    {
+      "category": "robotics",
+      "target": "ODrive",
+      "integration": "planned",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "Safety defaults must not fabricate motor limits."
+    },
+    {
+      "category": "robotics",
+      "target": "GRBL / CNC class",
+      "integration": "@pinout/protocols-grbl",
+      "status": "IMPLEMENTED",
+      "testedHow": "deterministic GRBL simulator (status, homing, motion, soft limits, typed errors)",
+      "notes": "Simulator-tested only. Physical CNC requires independent hardware safeguards; never HARDWARE_VERIFIED without a dated hardware record."
+    },
+    {
+      "category": "robotics",
+      "target": "ROS 2 bridge",
+      "integration": "planned sidecar design",
+      "status": "PLANNED",
+      "testedHow": "none",
+      "notes": "High-rate ROS traffic must not traverse MCP."
+    },
+    {
+      "category": "lab",
+      "target": "Simulated instruments (chamber, PSU, pump, valve, relay)",
+      "integration": "@pinout/core first-party modules",
+      "status": "SIMULATED",
+      "testedHow": "simulator unit tests; policy-engine integration tests",
+      "notes": ""
+    },
+    {
+      "category": "platform",
+      "target": "Module out-of-process hosting (Node + Python)",
+      "integration": "@pinout/module-host + pinout-module SDK",
+      "status": "IMPLEMENTED",
+      "testedHow": "cross-language integration tests (Node host \u2194 Python heatlamp), crash/heartbeat/restart tests",
+      "notes": "Crash isolation only; NOT a security sandbox (see module-host README)."
+    },
+    {
+      "category": "platform",
+      "target": "Module integrity/signing",
+      "integration": "@pinout/module-host integrity + CLI `module verify`",
+      "status": "IMPLEMENTED",
+      "testedHow": "tamper detection, trusted-publisher flows, CLI tests",
+      "notes": "UNSIGNED modules work in development; never displayed as verified."
+    },
+    {
+      "category": "platform",
+      "target": "Device discovery",
+      "integration": "@pinout/discovery + `pinout discover`",
+      "status": "IMPLEMENTED",
+      "testedHow": "mDNS codec vectors, USB/serial mapper tests, opt-in probe tests; no live-device discovery run",
+      "notes": "Never actuates hardware; confidence honesty enforced."
+    },
+    {
+      "category": "platform",
+      "target": "pinoutd daemon",
+      "integration": "@pinout/daemon",
+      "status": "IMPLEMENTED",
+      "testedHow": "HTTP API integration tests (invoke, dry-run, leases, halt/estop, SSE, journal)",
+      "notes": "Loopback-only by default; refuses non-loopback without explicit opt-in + token."
+    },
+    {
+      "category": "platform",
+      "target": "Generator reality check",
+      "integration": "@pinout/generator pipeline + evaluations corpus",
+      "status": "IMPLEMENTED",
+      "testedHow": "7-target evaluation corpus with human ground truth; zero fabricated hard constraints measured",
+      "notes": "Corpus is authored in-repo (no copyrighted manuals); PDF ingestion is dependency-free text extraction only."
+    }
+  ]
+}

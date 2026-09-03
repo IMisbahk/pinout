@@ -28,6 +28,9 @@ import {
   type ConnectionFlags,
 } from './connectionArgs.js';
 import { runDoctor } from './doctor.js';
+import { registerDaemonCommands } from './daemonCommands.js';
+import { registerRecordCommands } from './recordCommands.js';
+import { registerModuleIntegrityCommands } from './moduleIntegrityCommands.js';
 import { createOutput, type CliOutput } from './output.js';
 import { esp32PinGroups } from './pinsTable.js';
 import { readScriptFile, readScriptSteps, runScript } from './runScript.js';
@@ -159,6 +162,12 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
     .action(async (deviceId: string | undefined, options: { yes?: boolean }) =>
       runEmergencyStop(program, deviceId, options.yes === true, io, outputFor),
     );
+
+  registerDaemonCommands(program, () => outputFor(program, io));
+  registerRecordCommands(program, () => outputFor(program, io));
+  registerModuleIntegrityCommands(findExistingCommand(program, 'module'), () =>
+    outputFor(program, io),
+  );
 
   program
     .command('doctor')
@@ -522,6 +531,14 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function findExistingCommand(program: Command, name: string): Command {
+  const found = program.commands.find((command) => command.name() === name);
+  if (!found) {
+    throw new Error(`Internal error: command '${name}' is not registered yet.`);
+  }
+  return found;
 }
 
 function readPackageVersion(): string {
