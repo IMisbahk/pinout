@@ -1,0 +1,19 @@
+firmware/esp32-bridge/src/main.cpp
+  s_dea85c565656c1::t_8da51055bca183 887
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "0ca496709a849fc1342816fc25ee75f535b80038",
+  "prompts": {},
+  "sessions": {
+    "s_dea85c565656c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a068a1-01d6-79c3-8491-2a6243ffe091",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
