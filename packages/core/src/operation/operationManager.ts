@@ -16,6 +16,8 @@
 import { AbortedError, PinoutStructuredError, toStructuredError } from '../errors.js';
 import type { OperationProgress, OperationSnapshot, OperationStatus } from '../spec/types.js';
 import { BoundedIdempotencyStore } from './idempotencyStore.js';
+import type { IdempotencyTombstone } from './idempotencyStore.js';
+import type { Journal } from '../journal/journal.js';
 
 export type { OperationSnapshot, OperationStatus, OperationProgress };
 
@@ -108,15 +110,79 @@ export class OperationManager {
   >();
   private readonly events: OperationManagerEvents;
   private sequence = 0;
+  private readonly journal: Journal | undefined;
+  private readonly retentionMs: number;
+  private readonly maxOperations: number;
 
   readonly idempotencyStore: BoundedIdempotencyStore;
 
   constructor(
     events: OperationManagerEvents = {},
     idempotencyStore: BoundedIdempotencyStore = new BoundedIdempotencyStore(),
+    options: { journal?: Journal; retentionMs?: number; maxOperations?: number } = {},
   ) {
     this.events = events;
     this.idempotencyStore = idempotencyStore;
+    this.journal = options.journal;
+    this.retentionMs = options.retentionMs ?? 24 * 60 * 60 * 1000;
+    this.maxOperations = options.maxOperations ?? 10_000;
+  }
+
+  /** Restore journaled idempotency tombstones before accepting work after restart. */
+  async hydrate(): Promise<void> {
+    if (!this.journal) return;
+    const entries = await this.journal.query({
+      kinds: [
+        'operation.requested',
+        'operation.completed',
+        'operation.failed',
+        'operation.cancelled',
+        'operation.timed_out',
+        'operation.rejected',
+      ],
+    });
+    const records = new Map<string, IdempotencyTombstone>();
+    for (const entry of entries) {
+      if (!entry.operationId || !entry.deviceId || !entry.payload) continue;
+      if (entry.kind === 'operation.requested') {
+        const key =
+          typeof entry.payload.idempotencyKey === 'string'
+            ? entry.payload.idempotencyKey
+            : undefined;
+        if (!key) continue;
+        records.set(entry.operationId, {
+          operationId: entry.operationId,
+          deviceId: entry.deviceId,
+          capability:
+            typeof entry.payload.capability === 'string' ? entry.payload.capability : 'unknown',
+          owner: typeof entry.payload.owner === 'string' ? entry.payload.owner : undefined,
+          idempotencyKey: key,
+          status: 'queued',
+          createdAt: entry.at,
+          lastUsedAt: entry.at,
+        });
+      } else {
+        const record = records.get(entry.operationId);
+        if (!record) continue;
+        record.status = entry.kind.slice('operation.'.length);
+        if (entry.payload.result && typeof entry.payload.result === 'object')
+          record.result = entry.payload.result as Record<string, unknown>;
+        if (entry.payload.error && typeof entry.payload.error === 'object') {
+          const error = entry.payload.error as Record<string, unknown>;
+          if (typeof error.code === 'string' && typeof error.message === 'string') {
+            record.error = {
+              code: error.code,
+              message: error.message,
+              retryable: typeof error.retryable === 'boolean' ? error.retryable : false,
+              ...(error.details && typeof error.details === 'object'
+                ? { details: error.details as Record<string, unknown> }
+                : {}),
+            };
+          }
+        }
+      }
+    }
+    this.idempotencyStore.hydrate([...records.values()]);
   }
 
   /**
@@ -144,6 +210,28 @@ export class OperationManager {
         // outcome, so a client retry can never re-trigger the side effect.
         return { deduped: true, handle: this.getHandle(lookup.operationId) };
       }
+      if (
+        lookup.hit &&
+        lookup.tombstone &&
+        isTerminalOperationStatus(lookup.tombstone.status as OperationStatus)
+      ) {
+        const tombstone = lookup.tombstone;
+        const restored: OperationSnapshot & { owner?: string } = {
+          id: tombstone.operationId,
+          deviceId: tombstone.deviceId,
+          capability: tombstone.capability,
+          status: tombstone.status as OperationStatus,
+          idempotencyKey: tombstone.idempotencyKey,
+          ...(tombstone.owner !== undefined ? { owner: tombstone.owner } : {}),
+          createdAt: tombstone.createdAt,
+          finishedAt: tombstone.lastUsedAt,
+          progress: null,
+          ...(tombstone.result ? { result: tombstone.result } : {}),
+          ...(tombstone.error ? { error: tombstone.error } : {}),
+        };
+        this.operations.set(restored.id, restored);
+        return { deduped: true, handle: this.getHandle(restored.id) };
+      }
       void scopedKey;
     }
 
@@ -164,7 +252,11 @@ export class OperationManager {
       progress: null,
     };
     this.operations.set(id, snapshot);
-    this.emit('operation.requested', id, options.deviceId, options.capability, now);
+    this.emit('operation.requested', id, options.deviceId, options.capability, now, {
+      idempotencyKey: options.idempotencyKey,
+      owner: options.owner,
+      capability: options.capability,
+    });
 
     if (options.idempotencyKey) {
       this.idempotencyStore.recordUnder(
@@ -179,6 +271,7 @@ export class OperationManager {
           deviceId: options.deviceId,
           capability: options.capability,
           owner: options.owner,
+          idempotencyKey: options.idempotencyKey,
           status: 'queued',
           createdAt: now,
         },
@@ -344,7 +437,9 @@ export class OperationManager {
               retryable: true,
             },
           });
-          this.emit('operation.timed_out', op.id, op.deviceId, op.capability, Date.now());
+          this.emit('operation.timed_out', op.id, op.deviceId, op.capability, Date.now(), {
+            error: op.error,
+          });
           this.settle(op.id);
         }
       }, remaining);
@@ -366,7 +461,7 @@ export class OperationManager {
         if (isTerminalOperationStatus(op.status)) return;
         // If the run finished despite a cancel request, report completed honestly.
         this.transition(op, 'completed', { result });
-        this.emit('operation.completed', op.id, op.deviceId, op.capability, Date.now());
+        this.emit('operation.completed', op.id, op.deviceId, op.capability, Date.now(), { result });
         this.settle(op.id);
       } catch (error) {
         clearTimeout(deadlineTimer);
@@ -381,6 +476,7 @@ export class OperationManager {
           });
           this.emit('operation.cancelled', op.id, op.deviceId, op.capability, Date.now(), {
             reason: String(error instanceof Error ? error.message : error),
+            error: op.error,
           });
         } else {
           const structured = toStructuredError(error, {
@@ -400,6 +496,7 @@ export class OperationManager {
           });
           this.emit('operation.failed', op.id, op.deviceId, op.capability, Date.now(), {
             code: structured.code,
+            error: op.error,
           });
         }
         this.settle(op.id);
@@ -426,6 +523,17 @@ export class OperationManager {
     op.finishedAt = Date.now();
     if (extra.result) op.result = extra.result;
     if (extra.error) op.error = extra.error;
+    if (op.idempotencyKey) {
+      this.idempotencyStore.updateUnder(
+        BoundedIdempotencyStore.keyFor(op.deviceId, op.capability, op.owner, op.idempotencyKey),
+        {
+          status,
+          ...(extra.result ? { result: extra.result } : {}),
+          ...(extra.error ? { error: extra.error } : {}),
+        },
+      );
+    }
+    this.retainOperations();
   }
 
   /** Notify waiters once terminal. */
@@ -563,14 +671,36 @@ export class OperationManager {
     at: number,
     data?: Record<string, unknown>,
   ): void {
-    this.events.onOperationEvent?.({
+    const event = {
       kind,
       operationId,
       deviceId,
       capability,
       at,
       ...(data ? { data } : {}),
-    });
+    } as const;
+    this.events.onOperationEvent?.(event);
+    this.journal?.append(kind, { deviceId, operationId }, data ?? {});
+  }
+
+  private retainOperations(): void {
+    const now = Date.now();
+    for (const [id, op] of this.operations) {
+      if (
+        isTerminalOperationStatus(op.status) &&
+        op.finishedAt !== undefined &&
+        now - op.finishedAt > this.retentionMs
+      ) {
+        this.operations.delete(id);
+      }
+    }
+    while (this.operations.size > this.maxOperations) {
+      const oldest = this.operations.keys().next().value;
+      if (oldest === undefined) break;
+      const op = this.operations.get(oldest);
+      if (op && !isTerminalOperationStatus(op.status)) break;
+      this.operations.delete(oldest);
+    }
   }
 
   private publicSnapshot(

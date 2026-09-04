@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AbortedError } from '../src/errors.js';
+import { Journal } from '../src/journal/journal.js';
 import {
   OperationManager,
   isTerminalOperationStatus,
@@ -22,6 +23,38 @@ describe('isTerminalOperationStatus', () => {
 });
 
 describe('OperationManager', () => {
+  it('rehydrates terminal idempotency outcomes from a journal after restart', async () => {
+    const journal = new Journal();
+    const first = new OperationManager({}, undefined, { journal });
+    const original = first.begin({
+      deviceId: 'arm-01',
+      capability: 'motion.move_to',
+      owner: 'operator',
+      idempotencyKey: 'durable-1',
+      run: async () => {
+        throw new Error('driver fault');
+      },
+    });
+    await expect(original.handle.waitForResult()).rejects.toThrow('driver fault');
+
+    const restored = new OperationManager({}, undefined, { journal });
+    await restored.hydrate();
+    let executed = false;
+    const retry = restored.begin({
+      deviceId: 'arm-01',
+      capability: 'motion.move_to',
+      owner: 'operator',
+      idempotencyKey: 'durable-1',
+      run: async () => {
+        executed = true;
+        return { unsafe: true };
+      },
+    });
+    expect(retry.deduped).toBe(true);
+    expect(retry.handle.snapshot().status).toBe('failed');
+    expect(executed).toBe(false);
+  });
+
   it('runs to completion with result and timestamps', async () => {
     const manager = new OperationManager();
     const { handle, deduped } = manager.begin({
