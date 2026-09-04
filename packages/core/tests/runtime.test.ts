@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   DuplicateDeviceError,
   DeviceNotFoundError,
+  PinoutRuntime,
+  relayModule,
   PolicyConstraintViolation,
   PolicyPreconditionFailed,
   createHeterogeneousRuntime,
   defaultHeterogeneousDeviceIds,
+  HaltCoordinator,
+  SafetyEngine,
 } from '@pinout/core';
 
 const ids = defaultHeterogeneousDeviceIds;
@@ -93,6 +97,38 @@ describe('PinoutRuntime heterogeneous', () => {
       await expect(runtime.invoke('missing', 'status.read', {})).rejects.toBeInstanceOf(
         DeviceNotFoundError,
       );
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('blocks module devices through the runtime halt gate', async () => {
+    const runtime = await createHeterogeneousRuntime({ motionDelayMs: 0 });
+    try {
+      // The runtime owns the coordinator used by all module-created devices.
+      expect(runtime.halt).toBeDefined();
+      runtime.halt.halt('operator requested halt');
+      await expect(
+        runtime.invoke(ids.esp32, 'gpio.write', { pin: 2, value: true }),
+      ).rejects.toThrow(/operator requested halt/i);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('uses injected governance for registered devices', async () => {
+    const halt = new HaltCoordinator();
+    const safetyEngine = new SafetyEngine({ rules: [] });
+    const runtime = new PinoutRuntime({ halt, safetyEngine });
+    try {
+      const device = await runtime.registerModuleDevice(relayModule, {
+        id: 'esp-injected',
+        simulated: true,
+      });
+      expect(runtime.halt).toBe(halt);
+      expect(runtime.safetyEngine).toBe(safetyEngine);
+      halt.halt('injected halt');
+      await expect(device.invoke('relay.set', { on: true })).rejects.toThrow(/injected halt/i);
     } finally {
       await runtime.close();
     }

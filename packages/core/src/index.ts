@@ -126,6 +126,7 @@ export {
 } from './drivers/esp32/pins.js';
 export { esp32DevKitPinMap, resolveEsp32DevKitPin } from './drivers/esp32/boardMap.js';
 export { PinoutRuntime, DuplicateDeviceError, DeviceNotFoundError } from './runtime/runtime.js';
+export type { PinoutRuntimeOptions } from './runtime/runtime.js';
 export { createRuntimeFromConfig, type FromConfigOptions } from './runtime/fromConfig.js';
 export { PINOUT_VERSION } from './version.js';
 export {

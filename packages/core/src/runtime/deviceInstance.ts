@@ -54,8 +54,8 @@ export class DeviceInstance {
 
   private readonly backend: DeviceBackend;
   private readonly policies: PolicyRule[];
-  private readonly halt: HaltCoordinator | undefined;
-  private readonly safetyEngine: SafetyEngine | undefined;
+  private halt: HaltCoordinator | undefined;
+  private safetyEngine: SafetyEngine | undefined;
   private readonly getOperationalState: () => Record<string, unknown>;
   private readonly runtimeEventHandlers = new Set<RuntimeEventHandler>();
   private health: DeviceHealth;
@@ -89,6 +89,17 @@ export class DeviceInstance {
       }
       this.emitRuntimeEvent(event, payload);
     });
+  }
+
+  /**
+   * Attach the runtime-owned governance boundary to this device.
+   *
+   * Runtime registration deliberately overwrites any device-local wiring so
+   * a device cannot bypass the runtime halt or safety engine.
+   */
+  attachGovernance(halt: HaltCoordinator, safetyEngine: SafetyEngine): void {
+    this.halt = halt;
+    this.safetyEngine = safetyEngine;
   }
 
   get id(): string {

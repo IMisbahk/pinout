@@ -1,6 +1,8 @@
 import { PinoutError } from '../errors.js';
+import { HaltCoordinator } from '../halt/haltCoordinator.js';
 import { mergeModulePolicies } from '../module/policies.js';
 import { getModule } from '../modules/registry.js';
+import { SafetyEngine } from '../policy/safety.js';
 import { DeviceInstance, type InvokeOptions } from './deviceInstance.js';
 import { ProtocolDeviceBackend } from './protocolBackend.js';
 import { createRuntimeFromConfig, type FromConfigOptions } from './fromConfig.js';
@@ -12,6 +14,13 @@ import type {
   RuntimeEventEnvelope,
   RuntimeEventHandler,
 } from './types.js';
+
+export interface PinoutRuntimeOptions {
+  /** Shared software halt gate for every registered device. */
+  halt?: HaltCoordinator;
+  /** Shared v2 safety engine for every registered device. */
+  safetyEngine?: SafetyEngine;
+}
 
 export class DuplicateDeviceError extends PinoutError {
   constructor(id: string) {
@@ -26,9 +35,16 @@ export class DeviceNotFoundError extends PinoutError {
 }
 
 export class PinoutRuntime {
+  readonly halt: HaltCoordinator;
+  readonly safetyEngine: SafetyEngine;
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
   private readonly deviceEventUnsubscribers = new Map<string, () => void>();
+
+  constructor(options: PinoutRuntimeOptions = {}) {
+    this.halt = options.halt ?? new HaltCoordinator();
+    this.safetyEngine = options.safetyEngine ?? new SafetyEngine({ rules: [] });
+  }
 
   static async fromConfig(options: FromConfigOptions = {}): Promise<PinoutRuntime> {
     const { runtime } = await createRuntimeFromConfig(options);
@@ -133,6 +149,8 @@ export class PinoutRuntime {
       activeTransportKind: options.transport?.kind ?? backend.kind,
       transportKinds: module.supportedTransportKinds,
       getOperationalState: () => backend.getOperationalState?.() ?? {},
+      halt: this.halt,
+      safetyEngine: this.safetyEngine,
     });
 
     if (backend instanceof ProtocolDeviceBackend) {
@@ -152,6 +170,7 @@ export class PinoutRuntime {
     if (this.deviceMap.has(device.id)) {
       throw new DuplicateDeviceError(device.id);
     }
+    device.attachGovernance(this.halt, this.safetyEngine);
     const unsubscribe = device.subscribeRuntimeEvents((event) => this.emit(event));
     this.deviceEventUnsubscribers.set(device.id, unsubscribe);
     this.deviceMap.set(device.id, device);
