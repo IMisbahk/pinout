@@ -74,6 +74,11 @@ Events have `event` and no `id`.
 
 The ESP32 bridge emits `ready` after `Serial.begin`. Opening a USB serial port often resets the chip, so a host listens briefly for this event before its `sys.hello` probe. Native USB Serial/JTAG devices can already be running when opened; `sys.hello` is the fallback handshake in that case.
 
+The host does not toggle DTR or RTS after a serial port opens. USB-UART adapters
+can reset classic ESP32 boards as a side effect of opening their port; callers
+must treat every serial connect as a possible reset. Native USB targets remain
+experimental until their target-specific pin map and hardware record exist.
+
 ## Actions
 
 ### `sys.hello`

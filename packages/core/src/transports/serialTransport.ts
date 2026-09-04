@@ -77,12 +77,6 @@ class NodeSerialTransport implements Transport {
       });
     });
 
-    try {
-      await setSignals(port, { dtr: false, rts: false });
-    } catch {
-      // Some USB-UART adapters reject signal changes. Opening still succeeded.
-    }
-
     this.port = port;
   }
 
@@ -131,16 +125,4 @@ class NodeSerialTransport implements Transport {
       });
     });
   }
-}
-
-function setSignals(port: SerialPort, signals: { dtr: boolean; rts: boolean }): Promise<void> {
-  return new Promise((resolve, reject) => {
-    port.set(signals, (error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
 }
