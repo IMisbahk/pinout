@@ -5,6 +5,8 @@ import { PINOUT_VERSION, runtimeToAgentTools, type RuntimeAgentTool } from '@pin
 
 const listDevicesToolName = 'pinout__list_devices';
 const describeDeviceToolName = 'pinout__describe_device';
+const readStateToolName = 'pinout__read_state';
+const safetyStatusToolName = 'pinout__safety_status';
 
 export interface RuntimeMcpServerOptions {
   /** Principal associated with this MCP transport for lease-aware policies. */
@@ -49,6 +51,18 @@ export function createRuntimeMcpServer(
         return formatToolError(error);
       }
     }
+    if (request.params.name === readStateToolName) {
+      const args = (request.params.arguments ?? {}) as Record<string, unknown>;
+      if (typeof args.deviceId !== 'string' || args.deviceId.length === 0) {
+        return formatToolError(new Error('deviceId must be a non-empty string.'));
+      }
+      try {
+        return success({ deviceId: args.deviceId, state: runtime.getDevice(args.deviceId).getOperationalStateSnapshot() });
+      } catch (error) { return formatToolError(error); }
+    }
+    if (request.params.name === safetyStatusToolName) {
+      return success({ state: runtime.halt.state });
+    }
 
     // Resolve on every call so devices registered after server creation are visible.
     const tools = runtimeTools(runtime);
@@ -77,6 +91,18 @@ export function createRuntimeMcpServer(
 
 function controlPlaneTools() {
   return [
+    {
+      name: readStateToolName, description: 'Read the latest operational state for one device; inspect observedAt before acting.',
+      inputSchema: { type: 'object' as const, additionalProperties: false, required: ['deviceId'], properties: { deviceId: { type: 'string', minLength: 1 } } },
+      outputSchema: { type: 'object' as const, properties: { deviceId: { type: 'string' }, state: { type: 'object' } }, required: ['deviceId', 'state'] },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, title: 'Read Pinout device state' },
+    },
+    {
+      name: safetyStatusToolName, description: 'Read the shared Pinout safety-halt state. This tool cannot halt or resume a device.',
+      inputSchema: { type: 'object' as const, additionalProperties: false, properties: {} },
+      outputSchema: { type: 'object' as const, properties: { state: { type: 'string' } }, required: ['state'] },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, title: 'Read Pinout safety status' },
+    },
     {
       name: listDevicesToolName,
       description: 'List every device currently registered in the Pinout runtime.',
