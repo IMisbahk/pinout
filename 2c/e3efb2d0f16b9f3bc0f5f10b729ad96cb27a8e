@@ -1,0 +1,39 @@
+packages/core/src/modules/coffeeMachine/simulator.ts
+  s_5b48326d004dcf::t_99ac1e25ca532e 171-179
+  s_5b48326d004dcf::t_5115c329c1437b 1-2,33-34,65,67-70,75-79,106,125,129-131,149-152,159,163-170,180
+  s_5b48326d004dcf::t_50eec73501d5dd 145-147
+packages/core/tests/coffeeMachine.test.ts
+  s_5b48326d004dcf::t_4cf1f018fc1860 10,40,62,70
+  s_5b48326d004dcf::t_732b7288cc8e38 41,43
+packages/core/src/modules/coffeeMachineModule.ts
+  s_5b48326d004dcf::t_3f9197a8642391 10-13,54,58,62-63
+  s_5b48326d004dcf::t_03ba2b6f8f6529 64
+examples/coffee-machine.ts
+  s_5b48326d004dcf::t_c057e83cadf972 1-45
+packages/core/src/modules/coffeeMachine/esp32Backend.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 167-173
+  s_5b48326d004dcf::t_ab0f61167ed106 62,132,144
+  s_5b48326d004dcf::t_3f9197a8642391 1-61,63-131,133-143,145-166,174-175,177-184
+  s_5b48326d004dcf::t_9852576ee8eece 176
+packages/core/src/modules/coffeeMachine/capabilities.ts
+  s_5b48326d004dcf::t_78c7a5ea5b81e6 78
+packages/daemon/tests/coffeeMachineContract.test.ts
+  s_5b48326d004dcf::t_5c2965117344a8 2
+  s_5b48326d004dcf::t_c057e83cadf972 1,3-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2ce3efb2d0f16b9f3bc0f5f10b729ad96cb27a8e",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
