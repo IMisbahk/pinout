@@ -19,7 +19,7 @@ import {
   PolicyPreconditionFailed,
 } from './errors.js';
 import type { PolicyContext, PolicyRule as LegacyPolicyRule } from './types.js';
-import { evaluatePolicies } from './engine.js';
+import { assertFreshState, evaluatePolicies } from './engine.js';
 
 // ---------------------------------------------------------------------------
 // Rule kinds
@@ -62,6 +62,8 @@ export interface InterlockRule {
   interlock: string;
   /** Value the interlock must hold. Default true. */
   mustBe?: boolean | string | number;
+  /** Maximum acceptable age of the operational state, in milliseconds. */
+  maxStateAgeMs?: number;
   message?: string;
 }
 
@@ -318,6 +320,9 @@ export class SafetyEngine {
   }
 
   private enforceInterlock(rule: InterlockRule, context: PolicyContext): void {
+    if (rule.maxStateAgeMs !== undefined) {
+      assertFreshState(context.operationalState, rule.maxStateAgeMs, context, this.nowFn());
+    }
     const expected = rule.mustBe ?? true;
     const actual = this.interlocks.get(rule.interlock);
     if (actual !== expected) {

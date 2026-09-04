@@ -14,6 +14,22 @@ beforeEach(() => {
 });
 
 describe('SafetyEngine: rate', () => {
+  it('rejects an interlock backed by stale operational state', () => {
+    const engine = new SafetyEngine({
+      rules: [{ kind: 'interlock', capability: 'move', interlock: 'door', maxStateAgeMs: 50 }],
+      now: clock,
+    });
+    engine.setInterlock('door', true);
+    const result = engine.check({
+      deviceId: 'arm',
+      capability: 'move',
+      payload: {},
+      operationalState: { observedAt: now - 51 },
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.code).toBe('SAFETY_STATE_STALE');
+  });
+
   it('previews without spending approvals or rate slots and rolls back rejected checks', () => {
     const engine = new SafetyEngine({
       rules: [
