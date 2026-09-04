@@ -43,6 +43,8 @@ export interface DeviceBackend {
   close(): Promise<void>;
   subscribe(handler: (event: string, payload: Record<string, unknown>) => void): () => void;
   getOperationalState?(): Record<string, unknown>;
+  /** Best-effort command that places this backend in its module-defined safe state. */
+  safeState?(): Promise<Record<string, unknown> | void>;
 }
 
 export interface PinoutModuleDefinition {

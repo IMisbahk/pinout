@@ -29,4 +29,12 @@ export class ProtocolDeviceBackend implements DeviceBackend {
       protocol: this.device.info.protocol,
     };
   }
+
+  async safeState(): Promise<Record<string, unknown>> {
+    if (!this.device.supports('gpio.stopAll')) {
+      return { applied: false, reason: 'safe-state-not-supported' };
+    }
+    const stoppedPins = await this.device.gpio.stopAll();
+    return { applied: true, stoppedPins };
+  }
 }

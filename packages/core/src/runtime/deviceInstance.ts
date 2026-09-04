@@ -220,6 +220,12 @@ export class DeviceInstance {
     }
   }
 
+  /** Apply this backend's explicit safe state outside normal actuation gates. */
+  async applySafeState(): Promise<Record<string, unknown> | undefined> {
+    const result = await this.backend.safeState?.();
+    return result === undefined ? undefined : result;
+  }
+
   async close(): Promise<void> {
     if (this.closing || this.health.lifecycle === 'disconnected') {
       return;

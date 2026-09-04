@@ -116,6 +116,29 @@ describe('PinoutRuntime heterogeneous', () => {
     }
   });
 
+  it('drives ESP32 backends to their safe state on halt', async () => {
+    const runtime = await createHeterogeneousRuntime({
+      motionDelayMs: 0,
+      includeArm: false,
+      includeChamber: false,
+    });
+    const safeStateEvents: Array<Record<string, unknown>> = [];
+    runtime.on((event) => {
+      if (event.deviceId === ids.esp32 && event.event === 'device.safe_state_applied') {
+        safeStateEvents.push(event.payload);
+      }
+    });
+    try {
+      await runtime.invoke(ids.esp32, 'gpio.mode', { pin: 2, mode: 'output' });
+      await runtime.invoke(ids.esp32, 'gpio.write', { pin: 2, value: true });
+      runtime.halt.halt('safe state test');
+      await runtime.waitForSafeState();
+      expect(safeStateEvents).toEqual([{ applied: true, stoppedPins: [2] }]);
+    } finally {
+      await runtime.close();
+    }
+  });
+
   it('uses injected governance for registered devices', async () => {
     const halt = new HaltCoordinator();
     const safetyEngine = new SafetyEngine({ rules: [] });

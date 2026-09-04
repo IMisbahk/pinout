@@ -1,5 +1,5 @@
 import { PinoutError } from '../errors.js';
-import { HaltCoordinator } from '../halt/haltCoordinator.js';
+import { HaltCoordinator, type SafetyStateChange } from '../halt/haltCoordinator.js';
 import { mergeModulePolicies } from '../module/policies.js';
 import { getModule } from '../modules/registry.js';
 import { SafetyEngine } from '../policy/safety.js';
@@ -40,10 +40,12 @@ export class PinoutRuntime {
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
   private readonly deviceEventUnsubscribers = new Map<string, () => void>();
+  private safeStateChain: Promise<void> = Promise.resolve();
 
   constructor(options: PinoutRuntimeOptions = {}) {
     this.halt = options.halt ?? new HaltCoordinator();
     this.safetyEngine = options.safetyEngine ?? new SafetyEngine({ rules: [] });
+    this.halt.subscribe((change) => this.onSafetyStateChange(change));
   }
 
   static async fromConfig(options: FromConfigOptions = {}): Promise<PinoutRuntime> {
@@ -201,6 +203,37 @@ export class PinoutRuntime {
     for (const id of ids) {
       await this.unregister(id);
     }
+  }
+
+  /** Wait until safe-state work requested by halt/estop has completed. */
+  async waitForSafeState(): Promise<void> {
+    await this.safeStateChain;
+  }
+
+  private onSafetyStateChange(change: SafetyStateChange): void {
+    if (change.to !== 'HALTED' && change.to !== 'ESTOP_REQUESTED') return;
+    this.safeStateChain = this.safeStateChain.then(async () => {
+      await Promise.all(
+        [...this.deviceMap.values()].map(async (device) => {
+          try {
+            const result = await device.applySafeState();
+            this.emit({
+              deviceId: device.id,
+              event: 'device.safe_state_applied',
+              payload: result ?? { applied: false, reason: 'safe-state-not-supported' },
+              timestamp: Date.now(),
+            });
+          } catch (error) {
+            this.emit({
+              deviceId: device.id,
+              event: 'device.safe_state_failed',
+              payload: { message: error instanceof Error ? error.message : String(error) },
+              timestamp: Date.now(),
+            });
+          }
+        }),
+      );
+    });
   }
 
   private emit(event: RuntimeEventEnvelope): void {
