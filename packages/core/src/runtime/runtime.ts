@@ -1,9 +1,9 @@
-import { PinoutError } from '../errors.js';
+import { PinoutError, PinoutStructuredError } from '../errors.js';
 import { HaltCoordinator, type SafetyStateChange } from '../halt/haltCoordinator.js';
 import { Journal } from '../journal/journal.js';
-import { mergeModulePolicies } from '../module/policies.js';
+import { mergeModuleAndDeploymentRules, SafetyEngine } from '../policy/safety.js';
+import type { PolicyRule } from '../policy/types.js';
 import { getModule } from '../modules/registry.js';
-import { SafetyEngine } from '../policy/safety.js';
 import { DeviceInstance, type InvokeOptions } from './deviceInstance.js';
 import { ProtocolDeviceBackend } from './protocolBackend.js';
 import { createRuntimeFromConfig, type FromConfigOptions } from './fromConfig.js';
@@ -148,11 +148,24 @@ export class PinoutRuntime {
       identity.label = options.label;
     }
 
+    const mergedPolicies = mergeModuleAndDeploymentRules(
+      module.policies,
+      options.deploymentPolicies ?? [],
+    );
+    if (mergedPolicies.conflicts.length > 0) {
+      throw new PinoutStructuredError(
+        'POLICY_CONSTRAINT_CONFLICT',
+        'POLICY',
+        `Deployment policies conflict with module '${module.id}' safety constraints.`,
+        { details: { conflicts: mergedPolicies.conflicts } },
+      );
+    }
+
     const instance = new DeviceInstance({
       identity,
       backend,
       capabilities: module.capabilities,
-      policies: mergeModulePolicies(module.policies, options.deploymentPolicies ?? []),
+      policies: mergedPolicies.rules as PolicyRule[],
       simulated,
       activeTransportKind: options.transport?.kind ?? backend.kind,
       transportKinds: module.supportedTransportKinds,

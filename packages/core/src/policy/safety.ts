@@ -131,6 +131,13 @@ export interface SafetyEngineOptions {
   onRejection?: (decision: PolicyDecision, context: PolicyContext) => void;
 }
 
+export interface SafetyReservation {
+  /** Keep consumable policy effects after the backend accepts the action. */
+  commit(): void;
+  /** Restore approvals, rate slots, and resource budgets after backend failure. */
+  rollback(): void;
+}
+
 interface RateWindow {
   timestamps: number[];
 }
@@ -180,7 +187,6 @@ export class SafetyEngine {
           message: error.message,
           ...(ruleId !== undefined ? { ruleId } : {}),
         };
-        this.onRejection?.(decision, context);
         return decision;
       }
       throw error;
@@ -189,13 +195,33 @@ export class SafetyEngine {
 
   /** Throwing evaluation; rejects with typed policy errors. */
   enforce(context: PolicyContext & { owner?: string }): void {
+    this.reserve(context).commit();
+  }
+
+  /**
+   * Enforce all rules while retaining a rollback point for a physical backend
+   * failure. Callers must commit once the backend has accepted the action.
+   */
+  reserve(context: PolicyContext & { owner?: string }): SafetyReservation {
     const saved = this.snapshotConsumables();
     try {
       this.enforceRules(context);
     } catch (error) {
       this.restoreConsumables(saved);
+      this.notifyRejection(error, context);
       throw error;
     }
+    let active = true;
+    return {
+      commit: () => {
+        active = false;
+      },
+      rollback: () => {
+        if (!active) return;
+        active = false;
+        this.restoreConsumables(saved);
+      },
+    };
   }
 
   /** Evaluate without consuming approvals, rate slots, or resource budgets. */
@@ -220,6 +246,27 @@ export class SafetyEngine {
     this.rateWindows = saved.rateWindows;
     this.approvals = saved.approvals;
     this.budgets = saved.budgets;
+  }
+
+  private notifyRejection(error: unknown, context: PolicyContext): void {
+    if (
+      !(error instanceof PolicyConstraintViolation) &&
+      !(error instanceof PolicyPreconditionFailed) &&
+      !(error instanceof PolicyActionDenied) &&
+      !(error instanceof PinoutStructuredError)
+    ) {
+      return;
+    }
+    const ruleId = (error as { ruleId?: string }).ruleId;
+    this.onRejection?.(
+      {
+        allowed: false,
+        code: error.code,
+        message: error.message,
+        ...(ruleId !== undefined ? { ruleId } : {}),
+      },
+      context,
+    );
   }
 
   private enforceRules(context: PolicyContext & { owner?: string }): void {
@@ -468,10 +515,6 @@ export class SafetyEngine {
         capability: context.capability,
         details: { ...(details ?? {}), ruleId: rule.id },
       },
-    );
-    this.onRejection?.(
-      { allowed: false, code, message, ...(rule.id !== undefined ? { ruleId: rule.id } : {}) },
-      context,
     );
     throw error;
   }

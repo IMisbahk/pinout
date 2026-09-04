@@ -4,6 +4,7 @@ import {
   DeviceNotFoundError,
   PinoutRuntime,
   relayModule,
+  pumpModule,
   PolicyConstraintViolation,
   PolicyPreconditionFailed,
   createHeterogeneousRuntime,
@@ -152,6 +153,30 @@ describe('PinoutRuntime heterogeneous', () => {
       expect(runtime.safetyEngine).toBe(safetyEngine);
       halt.halt('injected halt');
       await expect(device.invoke('relay.set', { on: true })).rejects.toThrow(/injected halt/i);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('fails closed when deployment policy widens a module constraint', async () => {
+    const runtime = new PinoutRuntime();
+    try {
+      await expect(
+        runtime.registerModuleDevice(pumpModule, {
+          id: 'pump-conflict',
+          simulated: true,
+          deploymentPolicies: [
+            {
+              kind: 'numericRange',
+              capability: 'pump.set',
+              field: 'speed',
+              min: 0,
+              max: 120,
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: 'POLICY_CONSTRAINT_CONFLICT' });
+      expect(runtime.hasDevice('pump-conflict')).toBe(false);
     } finally {
       await runtime.close();
     }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LeaseManager } from '../src/lease/leaseManager.js';
 import {
   SafetyEngine,
@@ -318,6 +318,25 @@ describe('SafetyEngine: legacy rule compatibility', () => {
       allowed: false,
       code: 'POLICY_PRECONDITION_FAILED',
     });
+  });
+
+  it('reports each rejection exactly once', () => {
+    const onRejection = vi.fn();
+    const engine = new SafetyEngine({
+      rules: [
+        { kind: 'numericRange', capability: 'temperature.set', field: 'target', min: 0, max: 80 },
+      ],
+      onRejection,
+    });
+    const decision = engine.check({
+      deviceId: 'chamber-01',
+      capability: 'temperature.set',
+      payload: { target: 90 },
+      operationalState: {},
+    });
+
+    expect(decision.allowed).toBe(false);
+    expect(onRejection).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,6 +1,7 @@
 import { DisconnectedError, UnsupportedCapabilityError, PinoutError } from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
 import type { SafetyEngine } from '../policy/safety.js';
+import type { SafetyReservation } from '../policy/safety.js';
 import type { PolicyRule } from '../policy/types.js';
 import type { HaltCoordinator } from '../halt/haltCoordinator.js';
 import { validateInputSchema, validateOutputSchema } from '../schema.js';
@@ -175,6 +176,7 @@ export class DeviceInstance {
       payload,
       operationalState: this.getOperationalState(),
     });
+    let safetyReservation: SafetyReservation | undefined;
     if (this.safetyEngine) {
       const context = {
         deviceId: this.id,
@@ -191,7 +193,7 @@ export class DeviceInstance {
             decision.message ?? 'Rejected by policy.',
           );
       } else {
-        this.safetyEngine.enforce(context);
+        safetyReservation = this.safetyEngine.reserve(context);
       }
     }
 
@@ -210,7 +212,14 @@ export class DeviceInstance {
     this.activeInvocations += 1;
     this.setLifecycle('busy');
     try {
-      const result = await this.backend.invoke(capability, payload);
+      let result: Record<string, unknown>;
+      try {
+        result = await this.backend.invoke(capability, payload);
+      } catch (error) {
+        safetyReservation?.rollback();
+        throw error;
+      }
+      safetyReservation?.commit();
       return validateOutputSchema(descriptor.outputSchema, result);
     } finally {
       this.activeInvocations -= 1;
