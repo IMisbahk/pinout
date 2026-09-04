@@ -1,0 +1,25 @@
+packages/core/src/lineReader.ts
+  s_d5247e323998d9::t_eb7c08b78f4a1c 3,7,15,18,21-26,31
+packages/core/src/session.ts
+  s_d5247e323998d9::t_eb7c08b78f4a1c 236-241
+firmware/esp32-bridge/src/main.cpp
+  s_d5247e323998d9::t_eb7c08b78f4a1c 432-447,449-452
+packages/core/tests/lineReader.test.ts
+  s_d5247e323998d9::t_c69636f868da49 16-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "0ec467c421cd4b5fe4988efec14e28ac78586143",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
