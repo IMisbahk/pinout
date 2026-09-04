@@ -257,6 +257,15 @@ export { relayModuleId } from './modules/relayModule.js';
 export { valveModuleId } from './modules/valveModule.js';
 export { pumpModuleId } from './modules/pumpModule.js';
 export { powerSupplyModuleId } from './modules/powerSupplyModule.js';
+export {
+  coffeeMachineModule,
+  coffeeMachineModuleId,
+  coffeeMachineSafetyRules,
+} from './modules/coffeeMachineModule.js';
+export {
+  createSimulatedCoffeeMachineBackend,
+  SimulatedCoffeeMachineBackend,
+} from './modules/coffeeMachine/simulator.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
 export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';
