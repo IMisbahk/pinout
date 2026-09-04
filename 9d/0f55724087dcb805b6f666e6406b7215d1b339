@@ -1,0 +1,29 @@
+packages/daemon/src/httpServer.ts
+  s_d5247e323998d9::t_1ef78f7da31bef 263-278,590-603,606-613,615-617,620-625,690-694,696-697,699-701,704
+  s_d5247e323998d9::t_4ee05b58150df4 695
+  s_d5247e323998d9::t_9bb8c487712278 698
+  s_d5247e323998d9::t_53169af4c261c0 16
+  s_d5247e323998d9::t_e26e8db9b58a00 604-605,614,618-619
+packages/daemon/src/main.ts
+  s_d5247e323998d9::t_6bb7d07c2ad416 10-13,16,24,34,59-61,69-92,95,104-105,107,111-114
+packages/daemon/tests/api.test.ts
+  s_d5247e323998d9::t_2a84bd5469268b 380-424
+packages/daemon/src/streamSocket.ts
+  s_d5247e323998d9::t_53169af4c261c0 3,9-15,45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9d0f55724087dcb805b6f666e6406b7215d1b339",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
