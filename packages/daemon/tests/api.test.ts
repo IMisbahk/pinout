@@ -293,7 +293,10 @@ describe('pinoutd HTTP API', () => {
       headers: { 'content-type': 'application/json' },
       body: '{}',
     });
-    safety = (await (await fetch(`${base}/v1/safety`)).json()) as { state: string };
+    safety = (await (await fetch(`${base}/v1/safety`)).json()) as {
+      state: string;
+      estopRequested: boolean;
+    };
     expect(safety.state).toBe('HALTED');
     await fetch(`${base}/v1/resume`, {
       method: 'POST',

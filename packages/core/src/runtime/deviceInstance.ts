@@ -15,6 +15,8 @@ import type {
   RuntimeEventHandler,
 } from './types.js';
 
+export type { DeviceBackend } from './types.js';
+
 export interface DeviceInstanceOptions {
   identity: DeviceIdentity;
   backend: DeviceBackend;

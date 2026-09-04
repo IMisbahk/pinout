@@ -62,7 +62,7 @@ describe('stream bus stress', () => {
     const received = await consumer.sample(1);
     // The data plane preserves raw binary verbatim.
     expect(received[0]!.data).toBe(frame);
-    expect(received[0]!.data.length).toBe(921600);
+    expect((received[0]!.data as Uint8Array).length).toBe(921600);
     consumer.close();
   });
 

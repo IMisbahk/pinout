@@ -102,9 +102,10 @@ describe('@pinout/mcp server', () => {
         arguments: { pin: 34, value: true },
       });
       expect(result.isError).toBe(true);
-      expect(result.content[0]?.type).toBe('text');
-      if (result.content[0]?.type === 'text') {
-        expect(result.content[0].text).toMatch(/input-only|cannot be driven/i);
+      const content = (result as { content: Array<{ type: string; text?: string }> }).content;
+      expect(content[0]?.type).toBe('text');
+      if (content[0]?.type === 'text') {
+        expect(content[0].text).toMatch(/input-only|cannot be driven/i);
       }
     } finally {
       await client.close();

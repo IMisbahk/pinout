@@ -211,7 +211,7 @@ describe('SafetyEngine: leases', () => {
       capability: 'motion.move_to',
       payload: {},
       operationalState: {},
-      owner,
+      ...(owner === undefined ? {} : { owner }),
     });
 
     expect(engine.check(ctx()).allowed).toBe(false);
@@ -327,7 +327,7 @@ describe('mergeModuleAndDeploymentRules', () => {
     ];
     const { rules, conflicts } = mergeModuleAndDeploymentRules(moduleRules, deployment);
     expect(conflicts).toHaveLength(1);
-    expect(conflicts[0].kind).toBe('range-widening');
+    expect(conflicts[0]!.kind).toBe('range-widening');
     // Only the module rule survived.
     expect(rules.filter((r) => r.kind === 'numericRange')).toHaveLength(1);
   });
@@ -340,7 +340,7 @@ describe('mergeModuleAndDeploymentRules', () => {
       { kind: 'stateEquals', capability: 'pump.start', field: 'valve', equals: 'closed' },
     ];
     const { conflicts } = mergeModuleAndDeploymentRules(moduleRules, deployment);
-    expect(conflicts[0].kind).toBe('state-mismatch');
+    expect(conflicts[0]!.kind).toBe('state-mismatch');
   });
 
   it('marks merged deployment rules as CONFIGURED provenance', () => {
@@ -348,7 +348,7 @@ describe('mergeModuleAndDeploymentRules', () => {
       [],
       [{ kind: 'rate', capability: 'gpio.write', maxPerWindow: 10 }],
     );
-    expect(rules[0].provenance).toBe('CONFIGURED');
+    expect(rules[0]!.provenance).toBe('CONFIGURED');
   });
 
   it('allows deployment rules on unconstrained capabilities', () => {

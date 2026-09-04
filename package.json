@@ -19,6 +19,7 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty",
+    "typecheck:tests": "tsc -p tsconfig.test.json --pretty",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "pinout": "npm run build --silent && node packages/cli/dist/index.js",

@@ -114,7 +114,7 @@ describe('StreamBus', () => {
     bus.publish('cam-01:rgb', 3);
     await tick();
     const frames = await handle.sample(1);
-    expect(frames[0].data).toBe(3);
+    expect(frames[0]!.data).toBe(3);
     handle.close();
   });
 
