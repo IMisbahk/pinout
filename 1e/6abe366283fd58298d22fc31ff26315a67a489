@@ -1,0 +1,51 @@
+packages/core/src/runtime/runtime.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 238-241,243-244,246-258,261-271
+packages/core/src/device.ts
+  s_5b48326d004dcf::t_fae243e91a8ff3 65,73
+packages/core/src/runtime/types.ts
+  s_5b48326d004dcf::t_fae243e91a8ff3 40-44,47-51
+packages/core/package.json
+  s_5b48326d004dcf::t_ef96ee485a86e6 35-36
+  s_5b48326d004dcf::t_c87ae49cbdaf38 20-21
+  s_5b48326d004dcf::t_0d652e29df810e 37
+packages/daemon/src/httpServer.ts
+  s_5b48326d004dcf::t_31c77e12816c42 465
+  s_5b48326d004dcf::t_caaa64f87f4199 130-139,145-157,159-161,294-298,410,633-643,651-659,729-736,739-743,746-753
+  s_5b48326d004dcf::t_fae243e91a8ff3 493-494
+  s_5b48326d004dcf::t_8fe9b2aa6c7ca9 53-54,106,127-129,141,162,351
+packages/daemon/tests/api.test.ts
+  s_5b48326d004dcf::t_8fe9b2aa6c7ca9 20,65,116-149,423-427,447
+  s_5b48326d004dcf::t_f4793c65d39d8e 453-460,463-465,467-469
+packages/core/src/runtime/protocolBackend.ts
+  s_5b48326d004dcf::t_ab0f61167ed106 18
+  s_5b48326d004dcf::t_fae243e91a8ff3 2,13-17
+packages/daemon/src/start.ts
+  s_5b48326d004dcf::t_8fe9b2aa6c7ca9 23
+packages/daemon/src/main.ts
+  s_5b48326d004dcf::t_8fe9b2aa6c7ca9 104-105
+  s_5b48326d004dcf::t_7cfab6e158ecd1 116
+  s_5b48326d004dcf::t_dbefefb53437b9 74-78,83-87,121-123,125-127
+packages/core/src/runtime/deviceInstance.ts
+  s_5b48326d004dcf::t_fae243e91a8ff3 47-50,221-224
+packages/daemon/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 13
+  s_5b48326d004dcf::t_73f3e74825f91c 14-18,26-31
+packages/core/src/index.ts
+  s_5b48326d004dcf::t_4cf1f018fc1860 271-275
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1e6abe366283fd58298d22fc31ff26315a67a489",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
