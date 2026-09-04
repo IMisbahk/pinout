@@ -429,12 +429,27 @@ void handleGpioWatch(const char* id, const JsonVariantConst& payload) {
     sendError(id, "INVALID_PIN", "Pin is not a valid ESP32 GPIO.");
     return;
   }
-  if (watchCount < 8) {
-    watches[watchCount].pin = pin;
-    watches[watchCount].lastValue = digitalRead(pin) == HIGH;
-    watches[watchCount].active = true;
-    watchCount++;
+  for (size_t i = 0; i < watchCount; i++) {
+    if (watches[i].active && watches[i].pin == pin) {
+      JsonDocument result;
+      result["pin"] = pin;
+      result["watching"] = true;
+      sendSuccess(id, result);
+      return;
+    }
   }
+  size_t slot = watchCount;
+  for (size_t i = 0; i < watchCount; i++) {
+    if (!watches[i].active) { slot = i; break; }
+  }
+  if (slot >= 8) {
+    sendError(id, "WATCH_TABLE_FULL", "No watch slots are available.");
+    return;
+  }
+  watches[slot].pin = pin;
+  watches[slot].lastValue = digitalRead(pin) == HIGH;
+  watches[slot].active = true;
+  if (slot == watchCount) watchCount++;
   JsonDocument result;
   result["pin"] = pin;
   result["watching"] = true;

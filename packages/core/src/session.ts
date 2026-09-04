@@ -233,8 +233,12 @@ export class Session {
         try {
           message = parseLine(line);
         } catch (error) {
-          this.rejectAll(error instanceof Error ? error : new ProtocolError(String(error)));
-          return;
+          // Boot noise and one malformed serial frame must not tear down a
+          // healthy session or reject unrelated in-flight requests.
+          this.logger.warn('discarded malformed protocol line', {
+            message: error instanceof Error ? error.message : String(error),
+          });
+          continue;
         }
 
         if (message === null) {
