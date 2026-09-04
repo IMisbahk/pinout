@@ -190,8 +190,16 @@ class Device:
         })
         return payload["lease"]
 
-    def release_lease(self, lease_id: str) -> None:
-        self._http.request("DELETE", f"/v1/leases/{lease_id}?owner=", {})
+    def release_lease(self, lease_id: str, owner: str) -> None:
+        """Release a lease using the same owner principal that acquired it."""
+        self._http.request("DELETE", f"/v1/leases/{lease_id}?owner={owner}", {})
+
+    def renew_lease(self, lease_id: str, owner: str, ttl: float = 60.0) -> dict:
+        payload = self._http.request("POST", f"/v1/leases/{lease_id}/renew", {
+            "owner": owner,
+            "ttlMs": int(ttl * 1000),
+        })
+        return payload["lease"]
 
 
 class Pinout:
