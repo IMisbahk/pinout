@@ -1,0 +1,61 @@
+packages/generator/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 13
+  s_5b48326d004dcf::t_4089bc547da988 14,17
+eslint.config.js
+  s_5b48326d004dcf::t_ab743d0bab1549 34-42
+  s_5b48326d004dcf::t_aaaecb0b3167d7 33
+packages/protocols-grbl/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 22
+package.json
+  s_5b48326d004dcf::t_c057e83cadf972 47
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 28
+  s_5b48326d004dcf::t_c6538a6b313b03 3
+packages/protocols-modbus/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 22
+packages/discovery/package.json
+  s_5b48326d004dcf::t_e9365862cf2a23 17
+  s_5b48326d004dcf::t_254d08c5bd2c67 13,18
+  s_5b48326d004dcf::t_d394c594cbe0b1 14-16,23-28
+.github/workflows/ci.yml
+  s_5b48326d004dcf::t_c057e83cadf972 35-37
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 38-40
+packages/protocols-mqtt/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 22
+.github/workflows/release-alpha.yml
+  s_5b48326d004dcf::t_fb37db96c640cf 109-110
+  s_5b48326d004dcf::t_f8c057d3dbae80 1,4-15,35-38,40-43,47,50,53-54,63,69,72-82,84-108,111-112
+  s_5b48326d004dcf::t_254e5c1077cea5 45-46,49,51,55-62,64-66,70
+packages/module-host/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 17-18
+  s_5b48326d004dcf::t_10a5eea96a7c49 19-20,28
+scripts/docs-check.mjs
+  s_5b48326d004dcf::t_23c761d56c531c 37-39
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-14,20-36
+  s_5b48326d004dcf::t_cd0eff362a3668 15-19
+packages/protocols-scpi/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 20
+scripts/release-check.mjs
+  s_5b48326d004dcf::t_52af119f7cf265 97
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 28-31,38-40,44-46,87-89,98-101,108-110,115-117,125-127
+  s_5b48326d004dcf::t_ab743d0bab1549 96
+  s_5b48326d004dcf::t_ef96ee485a86e6 17-18
+  s_5b48326d004dcf::t_e9365862cf2a23 90-95,102-105
+package-lock.json
+  s_5b48326d004dcf::t_94d101cecef5c8 3,9,1368,1383,1403,1416,1432,1450,1460,1473,1486,1499,1512,1522,1538,1551,1564,1577,1590,1607,3864,3874,4347,4376,5378-5380,5397-5399,5408-5410,5445-5447
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2d7d4f6bf309d180247a1a5c74470c724abb0ec4",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
