@@ -1,0 +1,71 @@
+sdk/python-module/src/pinout_module/__init__.py
+  s_d5247e323998d9::t_3ecf012e64d3da 13,46
+firmware/esp32-bridge/src/main.cpp
+  s_d5247e323998d9::t_3ecf012e64d3da 10
+sdk/python/pyproject.toml
+  s_d5247e323998d9::t_3ecf012e64d3da 6-7,31
+packages/mcp/src/createRuntimeServer.ts
+  s_d5247e323998d9::t_3ecf012e64d3da 4,19
+sdk/python/src/pinout/__init__.py
+  s_d5247e323998d9::t_3ecf012e64d3da 45
+sdk/python-module/pyproject.toml
+  s_d5247e323998d9::t_3ecf012e64d3da 7,27
+packages/core/src/version.ts
+  s_d5247e323998d9::t_3ecf012e64d3da 2
+CHANGELOG.md
+  s_d5247e323998d9::t_c9da7c01bcdb12 130-131
+CODE_OF_CONDUCT.md
+  s_d5247e323998d9::t_2d5110c87788ba 54
+MEGA_SPRINT_REPORT.md
+  s_d5247e323998d9::t_f47b1f92ea59bd 139
+NOTICE
+  s_d5247e323998d9::t_b71880279d51f2 5
+README.md
+  s_d5247e323998d9::t_f59aa84f2db650 13,500
+SUPPORT.md
+  s_d5247e323998d9::t_2b36cf0d308d63 5
+package-lock.json
+  s_d5247e323998d9::t_7adccf7d354b99 5327,5330-5334,5346,5361,5364,5377,5380,5385,5388,5396,5400,5411,5414,5419,5422,5427,5430,5435,5438,5443,5446
+package.json
+  s_d5247e323998d9::t_d95ed4631773aa 7
+packages/cli/package.json
+  s_d5247e323998d9::t_4d96f153977998 3,27,33,36-37,39-48
+packages/core/package.json
+  s_d5247e323998d9::t_afe7b9ad03b171 3,23,29,37-39
+packages/daemon/package.json
+  s_d5247e323998d9::t_6c92cbb3eda797 3,7,23,29-32
+packages/discovery/package.json
+  s_d5247e323998d9::t_59b34d7ce64de6 3,7,20-24
+packages/generator/package.json
+  s_d5247e323998d9::t_af29326fc641d0 3,16,21-32
+packages/mcp/package.json
+  s_d5247e323998d9::t_3eb2a8f2652104 3,16,22,26-29
+packages/module-host/package.json
+  s_d5247e323998d9::t_e71b14fced3495 3-4,7,21-25
+packages/protocols-grbl/package.json
+  s_d5247e323998d9::t_99a89028a7f4b5 3,7,20-24
+packages/protocols-modbus/package.json
+  s_d5247e323998d9::t_abc7d68c3c0e44 3,7,20-24
+packages/protocols-mqtt/package.json
+  s_d5247e323998d9::t_af5a65ce2bae49 3,7,20-24
+packages/protocols-scpi/package.json
+  s_d5247e323998d9::t_56f814445be56f 3,20,26,29-32
+sdk/python/README.md
+  s_d5247e323998d9::t_9924208312056e 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "637275872e2a67ddf25e1bb7c518f002f206f424",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
