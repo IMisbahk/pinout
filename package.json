@@ -1,5 +1,6 @@
 {
   "name": "pinout",
+  "version": "0.0.1-alpha.1",
   "private": true,
   "description": "Hardware abstraction layer for programmable devices — SDK, CLI, firmware, and MCP adapter.",
   "repository": {
@@ -24,6 +25,7 @@
     "format:check": "prettier --check .",
     "release:check": "node scripts/release-check.mjs --strict",
     "release:dry-run": "node scripts/release-check.mjs",
+    "docs:check": "node scripts/docs-check.mjs",
     "pinout": "npm run build --silent && node packages/cli/dist/index.js",
     "example:blink": "npm run build --silent && tsx examples/blink.ts",
     "example:pwm": "npm run build --silent && tsx examples/pwm.ts",
@@ -42,6 +44,7 @@
     "mcp:heterogeneous": "npm run build --silent && PINOUT_DEMO=heterogeneous node packages/mcp/dist/index.js",
     "demo:physical-intelligence": "npm run build --silent && tsx examples/physical-intelligence.ts",
     "demo:generate-device": "npm run build --silent && tsx examples/generate-device.ts",
+    "demo:coffee": "npm run build --silent && tsx examples/coffee-machine.ts",
     "bench": "npm run build --silent && tsx scripts/benchmark.ts"
   },
   "engines": {

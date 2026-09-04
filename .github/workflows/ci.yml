@@ -32,6 +32,12 @@ jobs:
       - run: npm run typecheck:tests
       - run: npm test
       - run: npm run build
+      - name: Governed coffee-machine demo (Linux, Node 20 only)
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '20'
+        run: npm run demo:coffee
+      - name: Documentation and catalog gate (Linux, Node 20 only)
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '20'
+        run: npm run docs:check
       - name: Format check (Linux, Node 20 only)
         if: matrix.os == 'ubuntu-latest' && matrix.node == '20'
         run: npm run format:check

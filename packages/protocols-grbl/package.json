@@ -19,7 +19,7 @@
   "dependencies": {
     "@pinout/core": "0.0.1-alpha.1"
   },
-  "private": false,
+  "private": true,
   "publishConfig": {
     "access": "public"
   }

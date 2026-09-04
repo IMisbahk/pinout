@@ -17,7 +17,7 @@
     "test": "vitest run"
   },
   "license": "Apache-2.0",
-  "private": false,
+  "private": true,
   "engines": {
     "node": ">=20"
   },

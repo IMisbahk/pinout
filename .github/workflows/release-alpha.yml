@@ -1,9 +1,18 @@
-name: Release v0.0.1-alpha artifacts
+name: Prepare or publish v0.0.1-alpha
 
 on:
-  push:
-    tags:
-      - 'v0.0.1-alpha*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing approved prerelease tag
+        required: true
+        default: v0.0.1-alpha.1
+        type: string
+      publish:
+        description: Publish packages and create the GitHub prerelease
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -23,28 +32,81 @@ jobs:
         with:
           python-version: '3.12'
       - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run typecheck:tests
+      - run: npm test
       - run: npm run build
-      - run: npm run release:check -- --version "${GITHUB_REF_NAME#v}"
-      - run: python -m pip install --disable-pip-version-check build
-      - name: Build Python distributions
+      - run: npm run docs:check
+      - run: npm run release:check -- --version "${{ inputs.release_tag }}"
+      - run: python -m pip install --disable-pip-version-check build platformio
+      - name: Build Python client distributions
         run: |
-          python -m build --sdist --wheel --outdir "$RUNNER_TEMP/pinout-python" sdk/python
-          python -m build --sdist --wheel --outdir "$RUNNER_TEMP/pinout-python" sdk/python-module
-      - name: Collect npm dry-run metadata
+          mkdir -p "$RUNNER_TEMP/release/python"
+          python -m build --sdist --wheel --outdir "$RUNNER_TEMP/release/python" sdk/python
+      - name: Pack public npm workspaces
         run: |
-          mkdir -p "$RUNNER_TEMP/pinout-npm"
-          for workspace in packages/*; do
-            if [ -f "$workspace/package.json" ] && [ "$(node -p "require('./$workspace/package.json').private === true")" != "true" ]; then
-              npm pack --dry-run --json --workspace "$workspace" > "$RUNNER_TEMP/pinout-npm/$(basename "$workspace").json"
-            fi
+          mkdir -p "$RUNNER_TEMP/release/npm"
+          for workspace in core cli daemon mcp discovery; do
+            npm pack --workspace "packages/$workspace" --pack-destination "$RUNNER_TEMP/release/npm"
           done
+      - name: Compile classic and experimental C3 firmware
+        working-directory: firmware/esp32-bridge
+        run: |
+          pio run -e esp32dev -e esp32-c3-supermini
+          mkdir -p "$RUNNER_TEMP/release/firmware/esp32-bridge/esp32dev"
+          mkdir -p "$RUNNER_TEMP/release/firmware/esp32-bridge/esp32-c3-supermini"
+          cp .pio/build/esp32dev/firmware.bin .pio/build/esp32dev/firmware.elf \
+            "$RUNNER_TEMP/release/firmware/esp32-bridge/esp32dev/"
+          cp .pio/build/esp32-c3-supermini/firmware.bin .pio/build/esp32-c3-supermini/firmware.elf \
+            "$RUNNER_TEMP/release/firmware/esp32-bridge/esp32-c3-supermini/"
+      - name: Generate CycloneDX SBOM
+        run: |
+          mkdir -p "$RUNNER_TEMP/release"
+          npm sbom --package-lock-only --sbom-format cyclonedx > "$RUNNER_TEMP/release/pinout.cdx.json"
       - uses: actions/upload-artifact@v4
         with:
-          name: pinout-v0.0.1-alpha-python
-          path: ${{ runner.temp }}/pinout-python/*
+          name: pinout-alpha-release-candidate
+          path: ${{ runner.temp }}/release
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+
+  publish:
+    if: ${{ inputs.publish }}
+    needs: artifacts
+    runs-on: ubuntu-latest
+    environment: alpha-release
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: pinout-v0.0.1-alpha-npm-dry-run
-          path: ${{ runner.temp }}/pinout-npm/*.json
-          if-no-files-found: error
+          fetch-depth: 0
+      - name: Verify explicit existing release tag
+        run: |
+          git rev-parse --verify "refs/tags/${{ inputs.release_tag }}"
+          test "$(git rev-list -n 1 "${{ inputs.release_tag }}")" = "$GITHUB_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: pinout-alpha-release-candidate
+          path: dist/release
+      - name: Publish npm packages with provenance
+        run: for archive in dist/release/npm/*.tgz; do npm publish "$archive" --access public --provenance; done
+      - name: Publish Python client with trusted publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/release/python
+      - name: Create GitHub prerelease from the approved tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${{ inputs.release_tag }}"
+          dist/release/npm/*.tgz dist/release/python/*
+          dist/release/firmware/esp32-bridge/*/firmware.bin
+          dist/release/firmware/esp32-bridge/*/firmware.elf
+          dist/release/pinout.cdx.json
+          --verify-tag --prerelease --generate-notes

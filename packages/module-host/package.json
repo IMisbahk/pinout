@@ -14,14 +14,17 @@
     "dist",
     "workers"
   ],
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "vitest run"
   },
   "dependencies": {
     "@pinout/core": "0.0.1-alpha.1"
   },
-  "private": false,
   "publishConfig": {
-    "access": "public"
+    "access": "restricted"
   }
 }
