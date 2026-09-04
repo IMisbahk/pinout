@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Optional PR number to test at its current merge ref
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -14,6 +21,9 @@ concurrency:
 
 jobs:
   check:
+    if: >-
+      ${{ github.event_name != 'pull_request' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'ci:run') }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +32,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number != '' && format('refs/pull/{0}/merge', inputs.pr_number) || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -43,6 +55,9 @@ jobs:
         run: npm run format:check
 
   python-sdk:
+    if: >-
+      ${{ github.event_name != 'pull_request' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'ci:run') }}
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +68,8 @@ jobs:
         working-directory: sdk/python
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number != '' && format('refs/pull/{0}/merge', inputs.pr_number) || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
@@ -66,9 +83,14 @@ jobs:
         run: pytest ../python-module/tests -q
 
   micropython-bridge:
+    if: >-
+      ${{ github.event_name != 'pull_request' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'ci:run') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number != '' && format('refs/pull/{0}/merge', inputs.pr_number) || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -80,9 +102,14 @@ jobs:
         run: node validate.js
 
   firmware:
+    if: >-
+      ${{ github.event_name != 'pull_request' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'ci:run') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number != '' && format('refs/pull/{0}/merge', inputs.pr_number) || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'

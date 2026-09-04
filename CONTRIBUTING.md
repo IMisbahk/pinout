@@ -20,7 +20,7 @@ Copy [.env.example](.env.example) when working with serial hardware.
 
 - `packages/core` — SDK, protocol, transports, ESP32 pin rules, simulator
 - `packages/cli` — `pinout` CLI
-- `packages/mcp` — MCP stdio server (wraps `connect()` + `invoke()`)
+- `packages/mcp` — MCP stdio adapter over the daemon control plane (embedded mode is for demos)
 - `packages/generator` — hardware documentation → candidate module compiler
 - `firmware/esp32-bridge` — ESP32 firmware
 - `docs/` — architecture, protocol, capabilities, CLI, testing, generator
@@ -64,7 +64,10 @@ See [docs/testing.md](docs/testing.md). Put tests under `packages/<name>/tests`.
 
 Do not mock away the protocol just to assert that a mock was called.
 
-Firmware compile (`pio run` in `firmware/esp32-bridge`) is optional locally. CI attempts it but does not block merges if PlatformIO is unavailable.
+Firmware compile (`pio run` in `firmware/esp32-bridge`) is optional locally. The
+selected CI run compiles the reference classic target and uploads its artifacts;
+the experimental C3 target is compiled only by the manual release-candidate
+workflow.
 
 ## Hardware
 
@@ -74,4 +77,24 @@ If you change the protocol, update firmware, simulator, SDK, tests, and docs in 
 
 ## Pull requests
 
-Target `main`. Wait for CI. Do not merge your own experimental work without review while the project is this small.
+Target `main` and keep each PR focused. A maintainer reviews the proposal first;
+CI is intentionally gated to conserve Actions minutes. After review, the
+maintainer applies the `ci:run` label (or manually dispatches the CI workflow)
+to run the full matrix against the PR merge ref. Do not treat a skipped check
+as approval, and do not merge until the selected run is green and a maintainer
+has approved the PR.
+
+The gated workflow deliberately has no deployment or release secrets. Fork PRs
+are still untrusted code: never add credentials to a test workflow or ask a PR
+to print environment variables.
+
+## Issues and triage
+
+Open one issue per focused bug or proposal. Include a safe reproduction, the
+commit/package version, and the evidence level (`SIMULATED`, `COMPILE_TESTED`,
+or hardware-recorded). Do not disclose vulnerabilities or credentials in an
+issue; use the private security route in [SECURITY.md](SECURITY.md).
+
+Maintainers use the `triage` label while reviewing scope, then add `ci:run`
+only when a PR is ready for the Actions gate. See the [maintainer guide](docs/maintainers.md)
+for the full review sequence.

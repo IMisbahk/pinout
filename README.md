@@ -6,7 +6,7 @@
 
 **A universal runtime for software, AI agents, and physical hardware.**
 
-[Documentation](./docs/architecture.md) · [Build a Module](./docs/build-a-module.md) · [Contributing](./CONTRIBUTING.md) · [Research](#research)
+[Documentation](./docs/index.md) · [Build a Module](./docs/build-a-module.md) · [Contributing](./CONTRIBUTING.md) · [Security](./SECURITY.md) · [Research](#research)
 
 <br />
 

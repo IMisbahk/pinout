@@ -24,7 +24,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Protocol-neutral tool export** (`runtimeToToolDefinitions`): every capability as a tool definition with derived danger classification for any AI vendor's function-call format.
 - **Runtime integration**: `DeviceInstance.invoke` now runs the halt gate, v2 safety rules, and lease checks, and supports `dryRun` and `owner` options.
 - **CI**: OS (Linux/macOS/Windows) × Node (20/22) matrix, Python SDK job (3.10/3.12), and MicroPython bridge protocol validation.
-- Baseline record in `docs/mega-sprint-baseline.md`; spec docs in `docs/spec/`; daemon guide in `docs/daemon.md`.
+- Spec docs live in `docs/spec/`; the daemon guide is `docs/daemon.md`.
 
 ### Changed (platform v1 sprint)
 

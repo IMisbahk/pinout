@@ -14,6 +14,7 @@ const required = [
   'docs/troubleshooting.md',
   'docs/mcp.md',
   'docs/coffee-machine.md',
+  'docs/maintainers.md',
   'docs/adr/0001-governed-runtime.md',
   'docs/adr/0002-control-plane-topology.md',
   'docs/adr/0003-serial-reset-and-handshake.md',
