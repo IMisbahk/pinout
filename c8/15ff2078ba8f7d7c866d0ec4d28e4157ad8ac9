@@ -1,0 +1,27 @@
+packages/cli/src/moduleScaffold.ts
+  s_d5247e323998d9::t_cfd77cdd44504d 27
+packages/cli/tests/cli.test.ts
+  s_d5247e323998d9::t_cfd77cdd44504d 44
+docs/build-a-module.md
+  s_d5247e323998d9::t_cfd77cdd44504d 36
+packages/generator/src/emit/moduleEmitter.ts
+  s_d5247e323998d9::t_cfd77cdd44504d 87
+examples/external-module/weird-sensor/pinout.module.json
+  s_d5247e323998d9::t_cfd77cdd44504d 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c815ff2078ba8f7d7c866d0ec4d28e4157ad8ac9",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
