@@ -1,0 +1,42 @@
+packages/cli/src/runScript.ts
+  s_5b48326d004dcf::t_c4d99987eea2ea 2-4,41
+  s_5b48326d004dcf::t_33b32fbcb63f3c 42-44
+packages/cli/tests/cli.test.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 33-38,40-42
+packages/cli/src/moduleIntegrityCommands.ts
+  s_5b48326d004dcf::t_ac880b3c082784 32,73,105,107-113
+  s_5b48326d004dcf::t_ab743d0bab1549 12,106
+  s_5b48326d004dcf::t_23fa21aae6c5ea 114
+packages/cli/package.json
+  s_5b48326d004dcf::t_c87ae49cbdaf38 24-25
+packages/cli/tsconfig.json
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 9
+packages/cli/src/generateCommands.ts
+  s_5b48326d004dcf::t_ab743d0bab1549 2,93
+  s_5b48326d004dcf::t_ac880b3c082784 34,92,94-100
+  s_5b48326d004dcf::t_8046e59582cfd1 101
+packages/cli/src/runCli.ts
+  s_5b48326d004dcf::t_c4d99987eea2ea 7-12,226,250-253,277,279,303,316,331,344,362,390,414,432,445,476-498,502-503,507-518,520
+  s_5b48326d004dcf::t_075eca5d3220ab 6
+packages/cli/src/enrollCommand.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 41-43,71-78,93-97,114-117,124-126,128-129
+packages/cli/src/pinoutHomeCommands.ts
+  s_5b48326d004dcf::t_c4d99987eea2ea 458
+  s_5b48326d004dcf::t_576f9fefca1ee7 60-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "502a48223b3987a5099894437c9d65fd93ad58fc",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
