@@ -3,7 +3,6 @@ import {
   AbortedError,
   DeviceError,
   DisconnectedError,
-  ProtocolError,
   TimeoutError,
   TransportError,
 } from './errors.js';

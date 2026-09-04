@@ -78,7 +78,9 @@ export async function installModuleFromPath(
   }
   const manifest = readModuleManifestFromFile(manifestPath);
   if (manifest.status === 'CANDIDATE' && !options.allowCandidate) {
-    throw new ModuleInvalidError(`Module '${manifest.id}' is CANDIDATE; pass --allow-candidate after review.`);
+    throw new ModuleInvalidError(
+      `Module '${manifest.id}' is CANDIDATE; pass --allow-candidate after review.`,
+    );
   }
   const home = ensurePinoutHome(options.home);
   const index = readModulesIndex(home);
@@ -87,7 +89,9 @@ export async function installModuleFromPath(
     throw new ModuleAlreadyInstalledError(manifest.id);
   }
   if (existing && compareVersions(manifest.version, existing.version) < 0 && !options.downgrade) {
-    throw new ModuleInvalidError(`Refusing downgrade of '${manifest.id}' from ${existing.version} to ${manifest.version}; pass --downgrade.`);
+    throw new ModuleInvalidError(
+      `Refusing downgrade of '${manifest.id}' from ${existing.version} to ${manifest.version}; pass --downgrade.`,
+    );
   }
   if (existing) {
     assertSafeInstallPath(existing.installPath, home);
@@ -115,22 +119,31 @@ export async function installModuleFromPath(
 
 function compareVersions(a: string, b: string): number {
   const parse = (value: string) => (value.split('-')[0] ?? '').split('.').map(Number);
-  const av = parse(a); const bv = parse(b);
-  for (let i = 0; i < 3; i += 1) if ((av[i] ?? 0) !== (bv[i] ?? 0)) return (av[i] ?? 0) - (bv[i] ?? 0);
+  const av = parse(a);
+  const bv = parse(b);
+  for (let i = 0; i < 3; i += 1)
+    if ((av[i] ?? 0) !== (bv[i] ?? 0)) return (av[i] ?? 0) - (bv[i] ?? 0);
   return 0;
 }
-function hash(value: string | Buffer): string { return createHash('sha256').update(value).digest('hex'); }
+function hash(value: string | Buffer): string {
+  return createHash('sha256').update(value).digest('hex');
+}
 function directoryHash(root: string): string {
   const files: string[] = [];
   const walk = (dir: string): void => {
-    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-      if (['node_modules', 'dist', '.git', 'coverage', '.pinout-cache'].includes(entry.name)) continue;
+    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )) {
+      if (['node_modules', 'dist', '.git', 'coverage', '.pinout-cache'].includes(entry.name))
+        continue;
       const full = join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.isFile() && entry.name !== 'pinout.module.sig') files.push(`${relative(root, full).split(sep).join('/')}:${hash(readFileSync(full))}`);
+      else if (entry.isFile() && entry.name !== 'pinout.module.sig')
+        files.push(`${relative(root, full).split(sep).join('/')}:${hash(readFileSync(full))}`);
     }
   };
-  walk(root); return hash(files.sort().join('\n'));
+  walk(root);
+  return hash(files.sort().join('\n'));
 }
 
 export function uninstallModule(moduleId: string, home?: string): void {

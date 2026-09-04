@@ -27,7 +27,11 @@ function makeDevice(
   const identity: DeviceIdentity = { id: 'esp-01', moduleId: 'pinout/esp32', deviceClass: 'gpio' };
   const backend: DeviceBackend = overrides.backend ?? {
     kind: 'simulated',
-    invoke: async (action: string, payload: Record<string, unknown>) => ({ ok: true, action, payload }),
+    invoke: async (action: string, payload: Record<string, unknown>) => ({
+      ok: true,
+      action,
+      payload,
+    }),
     close: async () => undefined,
     subscribe: () => () => undefined,
   };

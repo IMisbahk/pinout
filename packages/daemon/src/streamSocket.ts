@@ -42,7 +42,10 @@ export function attachStreamSockets(
       const url = new URL(request.url ?? '/', 'http://localhost');
       const match = /^\/v1\/streams\/([^/]+)\/frames$/.exec(url.pathname);
       if (!match) return reject(socket, '404 Not Found');
-      if (token && !bearerMatches((request.headers.authorization ?? '').replace(/^Bearer\s+/i, ''), token)) {
+      if (
+        token &&
+        !bearerMatches((request.headers.authorization ?? '').replace(/^Bearer\s+/i, ''), token)
+      ) {
         return reject(socket, '401 Unauthorized');
       }
       const streamId = decodeURIComponent(match[1]!);

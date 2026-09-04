@@ -132,12 +132,16 @@ describe('module ecosystem', () => {
   it('gates generated candidates and records integrity metadata', async () => {
     const candidate = join(pinoutHome, 'candidate');
     cpSync(weirdSensorPath, candidate, { recursive: true });
-    const manifest = JSON.parse(readFileSync(join(candidate, 'pinout.module.json'), 'utf8')) as Record<string, unknown>;
+    const manifest = JSON.parse(
+      readFileSync(join(candidate, 'pinout.module.json'), 'utf8'),
+    ) as Record<string, unknown>;
     manifest.status = 'CANDIDATE';
     manifest.capabilities = ['temperature.read'];
     manifest.simulation = { provided: true };
     writeFileSync(join(candidate, 'pinout.module.json'), `${JSON.stringify(manifest)}\n`);
-    await expect(installModuleFromPath(candidate, { home: pinoutHome })).rejects.toThrow(/CANDIDATE/);
+    await expect(installModuleFromPath(candidate, { home: pinoutHome })).rejects.toThrow(
+      /CANDIDATE/,
+    );
     await installModuleFromPath(candidate, { home: pinoutHome, allowCandidate: true });
     const record = readModulesIndex(pinoutHome).modules.find((entry) => entry.id === manifest.id);
     expect(record?.status).toBe('CANDIDATE');
