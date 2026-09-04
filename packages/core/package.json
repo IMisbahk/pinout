@@ -1,6 +1,6 @@
 {
   "name": "@pinout/core",
-  "version": "0.2.0",
+  "version": "0.0.1-alpha.1",
   "description": "Hardware abstraction core for Pinout — devices, capabilities, transports, and protocol.",
   "type": "module",
   "exports": {
@@ -20,13 +20,13 @@
     "build": "tsc -b"
   },
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=20"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pinoutlabs/pinout.git"
+    "url": "git+https://github.com/IMisbahk/pinout.git"
   },
   "dependencies": {
     "serialport": "^13.0.0",
@@ -34,5 +34,8 @@
   },
   "devDependencies": {
     "@types/ws": "^8.5.10"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

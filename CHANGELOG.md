@@ -127,5 +127,5 @@ All notable changes to this project are documented here. The format follows [Kee
 - ESP32 bridge firmware speaking protocol v1 over UART.
 - `examples/blink.ts` sample.
 
-[Unreleased]: https://github.com/pinoutlabs/pinout/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/pinoutlabs/pinout/releases/tag/v0.1.0
+[Unreleased]: https://github.com/IMisbahk/pinout/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/IMisbahk/pinout/releases/tag/v0.1.0

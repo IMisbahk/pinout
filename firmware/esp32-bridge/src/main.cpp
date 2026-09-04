@@ -7,7 +7,7 @@ constexpr uint32_t baudRate = 115200;
 constexpr size_t lineMax = 512;
 constexpr int protocolVersion = 1;
 constexpr const char* firmwareName = "esp32-bridge";
-constexpr const char* firmwareVersion = "0.3.0";
+constexpr const char* firmwareVersion = "0.0.1-alpha.1";
 constexpr size_t maxBusPayloadBytes = 32;
 
 char lineBuffer[lineMax];

@@ -4,7 +4,7 @@
   "description": "Hardware abstraction layer for programmable devices — SDK, CLI, firmware, and MCP adapter.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pinoutlabs/pinout.git"
+    "url": "git+https://github.com/IMisbahk/pinout.git"
   },
   "license": "Apache-2.0",
   "type": "module",

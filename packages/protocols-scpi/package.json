@@ -1,6 +1,6 @@
 {
   "name": "@pinout/protocols-scpi",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha.1",
   "description": "SCPI instrument layer for Pinout — command parser, client over any Transport, and reference instrument classes.",
   "type": "module",
   "exports": {
@@ -17,15 +17,18 @@
     "test": "vitest run"
   },
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=20"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pinoutlabs/pinout.git"
+    "url": "git+https://github.com/IMisbahk/pinout.git"
   },
   "dependencies": {
-    "@pinout/core": "*"
+    "@pinout/core": "0.0.1-alpha.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

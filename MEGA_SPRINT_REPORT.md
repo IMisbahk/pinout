@@ -136,7 +136,7 @@ Marketing website, SaaS, billing, humanoid hardware, fake vendor modules, CANope
 ## 33. Exact reproduction commands
 
 ```
-git clone https://github.com/pinoutlabs/pinout && cd pinout
+git clone https://github.com/IMisbahk/pinout && cd pinout
 git checkout feat/pinout-platform-v1
 npm install && npm test          # 545 tests
 npm run demo:physical-intelligence

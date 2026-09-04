@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pinout-module"
-version = "0.1.0"
+version = "0.0.1a1"
 description = "Python module-development SDK for Pinout — write hardware modules in Python, host them out-of-process via ModuleIPC."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,7 +24,7 @@ dependencies = []
 dev = ["pytest>=8"]
 
 [project.urls]
-Repository = "https://github.com/pinoutlabs/pinout"
+Repository = "https://github.com/IMisbahk/pinout"
 
 [tool.setuptools.packages.find]
 where = ["src"]

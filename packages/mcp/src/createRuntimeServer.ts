@@ -1,7 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import type { PinoutRuntime } from '@pinout/core';
-import { runtimeToAgentTools, type RuntimeAgentTool } from '@pinout/core';
+import { PINOUT_VERSION, runtimeToAgentTools, type RuntimeAgentTool } from '@pinout/core';
 
 const listDevicesToolName = 'pinout__list_devices';
 const describeDeviceToolName = 'pinout__describe_device';
@@ -16,7 +16,7 @@ export function createRuntimeMcpServer(
   options: RuntimeMcpServerOptions = {},
 ): Server {
   const server = new Server(
-    { name: 'pinout-runtime', version: '0.2.0' },
+    { name: 'pinout-runtime', version: PINOUT_VERSION },
     { capabilities: { tools: {} } },
   );
 
