@@ -206,7 +206,13 @@ function numericConflict(
       message: `Bounds for '${a.capability}.${a.argument}' are stated in incompatible units (${a.unit} vs ${b.unit}); semantic comparison impossible.`,
     };
   }
-  if (a.unit !== b.unit && familyA !== familyB) return undefined;
+  // An omitted unit is incomplete provenance, but it is not evidence that the
+  // two bounds are incomparable. Preserve the numeric disagreement so a
+  // reviewer sees it; only two explicit, incompatible units are a
+  // unit-conflict (handled above).
+  if (a.unit !== undefined && b.unit !== undefined && a.unit !== b.unit && familyA !== familyB) {
+    return undefined;
+  }
 
   const argMatch = a.argument === b.argument;
   // An undefined argument means the bound applies to the capability as a
