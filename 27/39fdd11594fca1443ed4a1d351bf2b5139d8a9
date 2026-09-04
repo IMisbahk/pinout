@@ -1,0 +1,28 @@
+packages/cli/src/enrollCommand.ts
+  s_d5247e323998d9::t_20640d48875e51 1-41,43-112
+  s_d5247e323998d9::t_06c9ea1b21ca45 42
+packages/cli/src/runCli.ts
+  s_d5247e323998d9::t_c85e8d1d92a937 37-38,113-114
+packages/core/src/home/deviceStore.ts
+  s_d5247e323998d9::t_5e2a1f0fdb913b 1,19-29,38-39,69-70,82-100,167-188
+packages/cli/tests/cli.test.ts
+  s_d5247e323998d9::t_95a359a61f16a7 1
+  s_d5247e323998d9::t_b3ddbb5dc1b531 2-4,7-12,24-37
+  s_d5247e323998d9::t_b173f58a5fa756 38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2739fdd11594fca1443ed4a1d351bf2b5139d8a9",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
