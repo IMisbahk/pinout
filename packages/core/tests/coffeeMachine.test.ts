@@ -7,7 +7,7 @@ import {
 
 describe('coffee-machine simulator', () => {
   it('exposes the semantic contract and safe state', async () => {
-    const backend = createSimulatedCoffeeMachineBackend({ temperature: 92 });
+    const backend = createSimulatedCoffeeMachineBackend({ temperature: 92, brewDurationMs: 5 });
     const device = new DeviceInstance({
       identity: {
         id: 'coffee',
@@ -37,8 +37,10 @@ describe('coffee-machine simulator', () => {
       enabled: true,
     });
     await device.invoke('brew.start', { shots: 1 });
-    expect((await device.invoke('status.read')).status).toBe('brewing');
+    expect((await device.invoke('status.read')).brew).toMatchObject({ status: 'completed' });
+    const interrupted = device.invoke('brew.start', { shots: 1 });
     await device.applySafeState();
+    await expect(interrupted).rejects.toThrow(/safe state/i);
     expect(await device.invoke('status.read')).toMatchObject({
       status: 'ready',
       pump: 'off',
@@ -57,7 +59,7 @@ describe('coffee-machine simulator', () => {
       code: 'INTERLOCK_OPEN',
     });
     const good = createSimulatedCoffeeMachineBackend({ brewDurationMs: 1000, now: () => 0 });
-    await good.invoke('brew.start', {});
+    const brewing = good.invoke('brew.start', {});
     good.advance(500);
     expect(good.getOperationalState()).toMatchObject({
       status: 'brewing',
@@ -65,6 +67,7 @@ describe('coffee-machine simulator', () => {
       pump: 'running',
     });
     good.injectFault('disconnect mid-brew');
+    await expect(brewing).rejects.toThrow(/safe state|disconnect|fault/i);
     expect(good.getOperationalState()).toMatchObject({
       status: 'faulted',
       pump: 'off',

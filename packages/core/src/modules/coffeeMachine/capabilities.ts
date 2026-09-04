@@ -75,7 +75,7 @@ export const brewStartCapability: CapabilityDescriptor = {
     type: 'object',
     required: ['status', 'progress'],
     properties: {
-      status: { type: 'string', enum: ['brewing'] },
+      status: { type: 'string', enum: ['completed'] },
       progress: { type: 'number', minimum: 0, maximum: 1 },
     },
   },

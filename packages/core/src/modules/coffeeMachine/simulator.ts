@@ -1,5 +1,5 @@
-import { DeviceError } from '../../errors.js';
-import type { DeviceBackend } from '../../runtime/types.js';
+import { AbortedError, DeviceError } from '../../errors.js';
+import type { BackendInvocationContext, DeviceBackend } from '../../runtime/types.js';
 
 export type CoffeeWaterState = 'ok' | 'low';
 export interface CoffeeSimulatorOptions {
@@ -30,6 +30,8 @@ export class SimulatedCoffeeMachineBackend implements DeviceBackend {
   private readonly duration: number;
   private startedAt = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
+  private finishBrew: ((result: Record<string, unknown>) => void) | undefined;
+  private failBrew: ((error: unknown) => void) | undefined;
   private state: CoffeeMachineState;
   constructor(options: CoffeeSimulatorOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -60,13 +62,21 @@ export class SimulatedCoffeeMachineBackend implements DeviceBackend {
     this.clearTimer();
     this.state.pump = 'off';
     this.state.heater = false;
-    if (this.state.brew.status === 'brewing')
+    if (this.state.brew.status === 'brewing') {
       this.state.brew = { ...this.state.brew, status: 'cancelled', reason: 'safe_state' };
+      this.failBrew?.(new AbortedError('Brew stopped by safe state.'));
+      this.finishBrew = undefined;
+      this.failBrew = undefined;
+    }
     this.state.status = 'ready';
     this.emit('safe_state.applied', { pump: 'off', heater: false });
     return { pump: 'off', heater: false };
   }
-  async invoke(action: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async invoke(
+    action: string,
+    payload: Record<string, unknown>,
+    context: BackendInvocationContext = {},
+  ): Promise<Record<string, unknown>> {
     if (this.closed) throw new DeviceError('DISCONNECTED', 'Simulated coffee machine is closed.');
     if (this.state.status === 'faulted')
       throw new DeviceError('DEVICE_FAULT', 'Coffee machine is faulted.');
@@ -93,7 +103,7 @@ export class SimulatedCoffeeMachineBackend implements DeviceBackend {
         this.stopPump();
         return { pump: 'off' };
       case 'brew.start':
-        return this.startBrew(typeof payload.shots === 'number' ? payload.shots : 1);
+        return this.startBrew(typeof payload.shots === 'number' ? payload.shots : 1, context);
       case 'brew.stop':
         await this.safeState();
         this.state.brew.status = 'cancelled';
@@ -112,9 +122,13 @@ export class SimulatedCoffeeMachineBackend implements DeviceBackend {
     if (fraction >= 1) {
       this.clearTimer();
       this.stopPump();
+      this.state.heater = false;
       this.state.brew.status = 'completed';
       this.state.status = 'ready';
       this.emit('brew.completed', { progress: 1 });
+      this.finishBrew?.({ status: 'completed', progress: 1 });
+      this.finishBrew = undefined;
+      this.failBrew = undefined;
     }
   }
   injectFault(reason = 'injected'): void {
@@ -128,19 +142,42 @@ export class SimulatedCoffeeMachineBackend implements DeviceBackend {
     this.stopPump();
     this.state.heater = false;
     this.emit('faulted', { reason });
+    this.failBrew?.(new DeviceError('DEVICE_FAULT', reason));
+    this.finishBrew = undefined;
+    this.failBrew = undefined;
   }
-  private startBrew(shots: number): Record<string, unknown> {
+  private startBrew(
+    shots: number,
+    context: BackendInvocationContext,
+  ): Promise<Record<string, unknown>> {
     if (this.state.water_level.state !== 'ok')
       throw new DeviceError('INTERLOCK_OPEN', 'brew.start requires water_level.state == ok.');
     if (this.state.brew.status === 'brewing')
       throw new DeviceError('BUSY', 'A brew is already running.');
     this.startedAt = this.now();
     this.state.status = 'brewing';
+    this.state.heater = true;
     this.state.pump = 'running';
     this.state.brew = { status: 'brewing', progress: 0, shots };
-    this.timer = setInterval(() => this.advance(0), 100);
     this.emit('brew.started', { shots });
-    return { status: 'brewing', progress: 0 };
+    context.reportProgress?.(0, 'brew started');
+    return new Promise<Record<string, unknown>>((resolve, reject) => {
+      this.finishBrew = resolve;
+      this.failBrew = reject;
+      const abort = (): void => {
+        void this.safeState();
+      };
+      context.signal?.addEventListener('abort', abort, { once: true });
+      this.timer = setInterval(
+        () => {
+          this.advance(0);
+          const progress = this.state.brew.progress;
+          context.reportProgress?.(progress, progress >= 1 ? 'brew completed' : 'brewing');
+          if (progress >= 1) context.signal?.removeEventListener('abort', abort);
+        },
+        Math.min(100, Math.max(1, this.duration)),
+      );
+    });
   }
   private stopPump(): void {
     this.state.pump = 'off';

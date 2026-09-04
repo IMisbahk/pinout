@@ -7,6 +7,10 @@ import {
   coffeeMachineCapabilityNames,
 } from './coffeeMachine/capabilities.js';
 import { createSimulatedCoffeeMachineBackend } from './coffeeMachine/simulator.js';
+import {
+  createEsp32CoffeeMachineBackend,
+  type Esp32CoffeeMachineOptions,
+} from './coffeeMachine/esp32Backend.js';
 
 export const coffeeMachineModuleId = 'pinout/coffee-machine';
 const waterInterlock = {
@@ -47,12 +51,15 @@ export const coffeeMachineModule: PinoutModuleDefinition = {
   version: '0.1.0',
   deviceClass: 'appliance.coffee_machine',
   vendor: 'Pinout',
-  model: 'Simulated Coffee Machine',
+  model: 'Coffee Machine Alpha Contract',
   capabilities: [...coffeeMachineCapabilities],
   capabilityNames: [...coffeeMachineCapabilityNames],
   policies: [waterInterlock],
-  supportedTransportKinds: ['simulated'],
+  supportedTransportKinds: ['simulated', 'serial', 'tcp', 'simulated-esp32'],
   createSimulatedBackend(options = {}): DeviceBackend {
     return createSimulatedCoffeeMachineBackend(options);
+  },
+  async createProtocolBackend(options): Promise<DeviceBackend> {
+    return createEsp32CoffeeMachineBackend(options as unknown as Esp32CoffeeMachineOptions);
   },
 };
