@@ -388,22 +388,19 @@ export class SafetyEngine {
       );
       return;
     }
-    // The owner must hold an active lease covering this device+capability.
-    const holding = this.leaseManager.list({ owner }).some((lease) => {
-      if (lease.scope.kind === 'capability') {
-        return (
-          lease.scope.deviceId === context.deviceId &&
-          lease.scope.capabilities.includes(context.capability)
-        );
-      }
-      return lease.scope.deviceId === context.deviceId;
-    });
-    if (!holding) {
+    const verdict = this.leaseManager.permits(
+      owner,
+      context.deviceId,
+      context.capability,
+      'exclusive',
+    );
+    if (!verdict.permitted) {
       this.reject(
         rule,
         `'${context.capability}' requires a lease held by the caller on device '${context.deviceId}'.`,
         context,
         'SAFETY_LEASE_REQUIRED',
+        verdict.conflict ? { conflictingLease: verdict.conflict } : undefined,
       );
     }
   }

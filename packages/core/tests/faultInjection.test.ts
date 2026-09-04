@@ -42,7 +42,7 @@ describe('fault injection: operations', () => {
     await runtime.close();
   });
 
-  it('lease expiry mid-operation surfaces LEASE_EXPIRED on the next gated invocation', async () => {
+  it('lease expiry mid-operation denies the old owner until a new lease is acquired', async () => {
     let now = 1_000_000;
     const leases = new LeaseManager({ now: () => now });
     const engineLease = leases.acquire({
@@ -60,9 +60,9 @@ describe('fault injection: operations', () => {
         await tick(5);
         // …time passes; the lease expires while work is in flight…
         now += 2000;
-        // …the next gated call must not pass.
+        // …the old owner no longer holds a lease.
         const verdict = leases.permits('agent-a', 'relay-x', 'relay.set', 'exclusive');
-        if (!verdict.permitted) throw new Error('should be permitted after expiry');
+        if (verdict.permitted) throw new Error('expired lease must not permit invocation');
         const fresh = leases.acquire({
           scope: { kind: 'device', deviceId: 'relay-x' },
           owner: 'agent-b',
@@ -72,7 +72,7 @@ describe('fault injection: operations', () => {
     });
 
     await handle.waitForResult();
-    // agent-b can now acquire; agent-a's old lease is gone.
+    // agent-b now owns the newly acquired lease; agent-a's old lease is gone.
     expect(leases.permits('agent-b', 'relay-x', 'relay.set', 'exclusive').permitted).toBe(true);
     expect(leases.get(engineLease.id)).toBeUndefined();
   });
@@ -105,7 +105,7 @@ describe('fault injection: operations', () => {
       { reason: 'halt requested' },
     );
     const entries = await journal.query({ kinds: ['operation.cancelled'] });
-    expect(entries[0].operationId).toBe(handle.id);
+    expect(entries[0]!.operationId).toBe(handle.id);
   });
 
   it('journal captures the full failure story without leaking secrets', async () => {
