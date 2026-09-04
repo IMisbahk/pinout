@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { mkdtempSync, readFileSync, statSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import { runCli } from '../src/runCli.js';
+
+const enrollmentHomes: string[] = [];
+afterEach(() => {
+  for (const home of enrollmentHomes.splice(0)) rmSync(home, { recursive: true, force: true });
+  delete process.env.PINOUT_HOME;
+});
 
 describe('cli', () => {
   it('prints help for gpio and top-level commands', async () => {
@@ -10,6 +19,22 @@ describe('cli', () => {
     const gpioHelp = captureIo();
     expect(await runCli(['node', 'pinout', 'gpio', '--help'], gpioHelp)).toBe(0);
     expect(gpioHelp.logs.join('\n')).toMatch(/mode|toggle|pulse|pwm|analog|watch/);
+  });
+
+  it('registers discover and enrolls the simulator with a 0600 identity registry', async () => {
+    const home = mkdtempSync(join(tmpdir(), 'pinout-enroll-'));
+    enrollmentHomes.push(home);
+    process.env.PINOUT_HOME = home;
+    const help = captureIo();
+    expect(await runCli(['node', 'pinout', 'discover', '--help'], help)).toBe(0);
+    expect(help.logs.join('\n')).toContain('candidate devices');
+
+    const io = captureIo();
+    expect(await runCli(['node', 'pinout', '--json', 'enroll', '--mock', '--id', 'lab-esp', '--yes'], io)).toBe(0);
+    const file = join(home, 'devices.json');
+    const parsed = JSON.parse(readFileSync(file, 'utf8')) as { devices: Array<{ identity: { firmware: string } }> };
+    expect(parsed.devices[0]?.identity.firmware).toBe('esp32-bridge');
+    expect(statSync(file).mode & 0o777).toBe(0o600);
   });
 
   it('prints version', async () => {

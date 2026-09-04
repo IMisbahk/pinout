@@ -34,6 +34,8 @@ import { registerModuleIntegrityCommands } from './moduleIntegrityCommands.js';
 import { createOutput, type CliOutput } from './output.js';
 import { esp32PinGroups } from './pinsTable.js';
 import { readScriptFile, readScriptSteps, runScript } from './runScript.js';
+import { registerDiscoverCommand } from './discoverCommand.js';
+import { registerEnrollCommand } from './enrollCommand.js';
 
 export interface CliIo {
   log: (message: string) => void;
@@ -108,6 +110,8 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   registerModuleCommands(program, outputFor, io);
   registerDeviceCommands(program, outputFor, io);
   registerGenerateCommands(program, outputFor, io);
+  registerDiscoverCommand(program, () => outputFor(program, io));
+  registerEnrollCommand(program, outputFor, io);
 
   const runtime = program.command('runtime').description('Multi-device Pinout runtime commands.');
 
