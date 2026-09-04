@@ -84,7 +84,7 @@ function buildManifest(moduleId: string, ir: HardwareInterfaceIR) {
     name: ir.device.model ?? moduleId,
     vendor: ir.device.vendor,
     model: ir.device.model,
-    pinout: { minimumVersion: '0.2.0' },
+    pinout: { minimumVersion: '0.0.1-alpha.1' },
   };
 }
 

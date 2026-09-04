@@ -41,7 +41,7 @@ describe('cli', () => {
     const io = captureIo();
     const code = await runCli(['node', 'pinout', '--version'], io);
     expect(code).toBe(0);
-    expect(io.logs.join('\n')).toMatch(/0\.1\.0/);
+    expect(io.logs.join('\n')).toContain('0.0.1-alpha.1');
   });
 
   it('handshakes with the simulator', async () => {
