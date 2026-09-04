@@ -1,11 +1,36 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createHeterogeneousRuntime, esp32Module, loadPinoutConfig, PinoutRuntime } from '@pinout/core';
+import {
+  createHeterogeneousRuntime,
+  esp32Module,
+  loadPinoutConfig,
+  PinoutRuntime,
+} from '@pinout/core';
 import { createMcpTransport } from './connectDevice.js';
 import { createRuntimeMcpServer } from './createRuntimeServer.js';
+import { createDaemonMcpServer } from './createDaemonServer.js';
 
 export async function runStdioServer(): Promise<void> {
   if (process.env.PINOUT_DEMO === 'heterogeneous') {
     await runHeterogeneousRuntimeServer();
+    return;
+  }
+
+  if (process.env.PINOUT_MCP_EMBEDDED !== '1') {
+    const server = createDaemonMcpServer({
+      ...(process.env.PINOUT_DAEMON_URL ? { baseUrl: process.env.PINOUT_DAEMON_URL } : {}),
+      ...(process.env.PINOUT_TOKEN ? { token: process.env.PINOUT_TOKEN } : {}),
+      owner: process.env.PINOUT_OWNER ?? 'mcp-stdio',
+    });
+    const transport = new StdioServerTransport();
+    let closing = false;
+    const shutdown = async (): Promise<void> => {
+      if (closing) return;
+      closing = true;
+      await server.close().catch(() => undefined);
+    };
+    attachShutdown(shutdown);
+    await server.connect(transport);
+    await shutdown();
     return;
   }
 
