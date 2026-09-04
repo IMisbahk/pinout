@@ -1,0 +1,23 @@
+packages/discovery/src/core.ts
+  s_5b48326d004dcf::t_466e8f0d7cdb04 52-55
+packages/discovery/src/plugins.ts
+  s_5b48326d004dcf::t_466e8f0d7cdb04 537-545
+packages/discovery/tests/discovery.test.ts
+  s_5b48326d004dcf::t_466e8f0d7cdb04 169
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "62b2414432341f2e19a34d023f0db13814c46ca1",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
