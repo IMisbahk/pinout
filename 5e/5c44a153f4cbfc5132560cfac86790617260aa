@@ -1,0 +1,21 @@
+.github/workflows/ci.yml
+  s_d5247e323998d9::t_a931d24ddcd2ae 87-95
+firmware/esp32-bridge/platformio.ini
+  s_d5247e323998d9::t_a931d24ddcd2ae 1-5,7-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "5e5c44a153f4cbfc5132560cfac86790617260aa",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
