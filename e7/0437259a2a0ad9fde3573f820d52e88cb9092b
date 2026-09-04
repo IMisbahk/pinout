@@ -1,0 +1,31 @@
+packages/core/src/runtime/deviceInstance.ts
+  s_d5247e323998d9::t_3722ac20c7eea0 225-226
+  s_d5247e323998d9::t_3ec97c35850e61 223-224,227-228
+packages/core/src/runtime/protocolBackend.ts
+  s_d5247e323998d9::t_3ec97c35850e61 32-39
+packages/core/tests/runtime.test.ts
+  s_d5247e323998d9::t_f05272c6c43156 119-136
+  s_d5247e323998d9::t_aa69b7ed6f0439 137-139
+  s_d5247e323998d9::t_cf209727e0bc4c 140-141
+packages/core/src/runtime/types.ts
+  s_d5247e323998d9::t_3ec97c35850e61 46-47
+packages/core/src/runtime/runtime.ts
+  s_d5247e323998d9::t_3ec97c35850e61 2,43,48,208-237
+  s_d5247e323998d9::t_a51bfccbb02497 238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "e70437259a2a0ad9fde3573f820d52e88cb9092b",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
