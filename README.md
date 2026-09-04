@@ -118,14 +118,13 @@ Applications and agents interact with **Pinout capabilities**, not the underlyin
 
 | Target | Status |
 | --- | --- |
-| ESP32 (bridge firmware: GPIO, PWM, ADC, I2C, SPI, servo/motor) | `IMPLEMENTED` (hardware path exercised; verification is per-deployment) |
+| ESP32 classic DevKit/WROOM (bridge firmware: GPIO, PWM, ADC, I2C, SPI, servo/motor) | `COMPILE_TESTED` reference path (simulator and transport-tested; no hardware-in-the-loop claim) |
 | MicroPython / CircuitPython boards (generic bridge) | `EXPERIMENTAL` — host-validated protocol only |
-| Simulated devices (18+ first-party modules: arm, mobile base, chamber, motors, sensors, …) | `SIMULATED` |
-| Modbus TCP/RTU | `IMPLEMENTED` (in-process tested; not verified against physical equipment) |
-| SCPI instruments (PSU, DMM, function generator) | `IMPLEMENTED` (scripted-transport tests; not hardware-verified) |
+| Simulated devices (arm, mobile base, chamber, coffee machine, motors, sensors, …) | `SIMULATED` |
+| Modbus TCP/RTU, SCPI instruments, MQTT | `IMPLEMENTED` adapter packages (scripted/in-process tests; not physical-equipment verified or automatically registered as runtime devices) |
 | Universal Robots, OPC UA, MAVLink, ROS 2 | `PLANNED` |
 
-Never blur these statuses: `SIMULATED` is not hardware-verified, and a mocked test proves nothing about hardware.
+The architecture is deliberately transport- and module-agnostic; the matrix describes evidence for each concrete adapter, not a platform limit. Never blur these statuses: `SIMULATED` is not hardware-verified, and a mocked test proves nothing about hardware.
 
 ---
 
