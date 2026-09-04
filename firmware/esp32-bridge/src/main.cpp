@@ -1,4 +1,9 @@
 #include <Arduino.h>
+#if defined(PINOUT_ESP32_C3)
+// Arduino-ESP32 2.x exposes the native USB CDC stream from HWCDC.h when
+// ARDUINO_USB_MODE=1; Arduino.h alone does not declare the global Serial.
+#include <HWCDC.h>
+#endif
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <Wire.h>
