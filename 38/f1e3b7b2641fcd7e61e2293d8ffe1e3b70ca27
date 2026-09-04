@@ -1,0 +1,34 @@
+sdk/python/src/pinout/__init__.py
+  s_5b48326d004dcf::t_335f206bc3ca80 23,31-33,48-51
+sdk/python/tests/real_daemon_smoke.py
+  s_5b48326d004dcf::t_fdbeece5390686 1-27
+sdk/python/src/pinout/errors.py
+  s_5b48326d004dcf::t_5d473c81624270 63-78,85-91,105-111
+sdk/python/src/pinout/client.py
+  s_5b48326d004dcf::t_24cf38efc05432 30,42,195-196,214-215,217-218,258,280-282
+  s_5b48326d004dcf::t_c7deb449b98832 283
+packages/daemon/tests/pythonContract.test.ts
+  s_5b48326d004dcf::t_fdbeece5390686 1-33
+sdk/python/src/pinout/async_client.py
+  s_5b48326d004dcf::t_58156cff62d37e 28-29,31-32,79-95,97-106,160-165
+  s_5b48326d004dcf::t_fdbeece5390686 16,36,38,96,142-146
+sdk/python/pyproject.toml
+  s_5b48326d004dcf::t_28e415180842b9 7,15,36-37
+  s_5b48326d004dcf::t_b4a249861b0dfd 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "38f1e3b7b2641fcd7e61e2293d8ffe1e3b70ca27",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
