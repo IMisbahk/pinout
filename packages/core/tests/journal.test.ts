@@ -48,17 +48,17 @@ describe('Journal', () => {
     expect(b.sequence).toBe(2);
   });
 
-  it('filters by device, kind, and sequence', () => {
+  it('filters by device, kind, and sequence', async () => {
     const journal = new Journal();
     journal.append('invocation.requested', { deviceId: 'arm-01' }, {});
     journal.append('invocation.requested', { deviceId: 'chamber-01' }, {});
     journal.append('policy.rejected', { deviceId: 'arm-01' }, {});
 
-    expect(journal.query({ deviceId: 'arm-01' })).resolves.toHaveLength(2);
-    expect(
+    await expect(journal.query({ deviceId: 'arm-01' })).resolves.toHaveLength(2);
+    await expect(
       journal.query({ kinds: ['policy.rejected'] }).then((entries) => entries[0]!.deviceId),
     ).resolves.toBe('arm-01');
-    expect(journal.query({ afterSequence: 2 })).resolves.toHaveLength(1);
+    await expect(journal.query({ afterSequence: 2 })).resolves.toHaveLength(1);
   });
 
   it('redacts secrets before they reach storage', async () => {

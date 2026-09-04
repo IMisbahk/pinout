@@ -304,7 +304,6 @@ export class ModuleProcess {
     switch (message.kind) {
       case 'ready': {
         this.knownCapabilities = message.payload.capabilities;
-        this.restartAttempts = 0;
         this.resetHeartbeatWatch();
         this.setState('ready');
         break;
@@ -340,6 +339,10 @@ export class ModuleProcess {
         break;
       }
       case 'heartbeat': {
+        // A worker that only reaches ready and immediately exits must consume
+        // its restart budget. Treat the first heartbeat—not ready—as proof of
+        // a stable recovery, so a crash loop cannot restart forever.
+        this.restartAttempts = 0;
         this.resetHeartbeatWatch();
         break;
       }
