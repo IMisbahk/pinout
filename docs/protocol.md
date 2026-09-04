@@ -72,7 +72,7 @@ Events have `event` and no `id`.
 }
 ```
 
-The ESP32 bridge emits `ready` after `Serial.begin`. Opening a USB serial port often resets the chip, so the host must wait for this event (or time out) instead of sending commands immediately.
+The ESP32 bridge emits `ready` after `Serial.begin`. Opening a USB serial port often resets the chip, so a host listens briefly for this event before its `sys.hello` probe. Native USB Serial/JTAG devices can already be running when opened; `sys.hello` is the fallback handshake in that case.
 
 ## Actions
 

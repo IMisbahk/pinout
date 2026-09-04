@@ -53,18 +53,20 @@ export class Session {
 
     await this.transport.open();
     this.open = true;
-    const ready = this.waitForReady();
     this.readerTask = this.readLoop();
 
     try {
-      await ready;
-      this.deviceInfo = parseDeviceInfo(
-        await this.request(
-          'sys.hello',
-          {},
-          this.connectSignal ? { signal: this.connectSignal } : {},
-        ),
-      );
+      // Opening a UART commonly resets an ESP32 and produces `ready`, but native
+      // USB Serial/JTAG devices can already be running when their port opens.
+      // Listen briefly for the boot event, then actively probe with sys.hello.
+      try {
+        await this.waitForReady(Math.min(this.timeoutMs, 300));
+      } catch (error) {
+        if (!(error instanceof TimeoutError)) {
+          throw error;
+        }
+      }
+      this.deviceInfo = parseDeviceInfo(await this.requestHello());
       this.logger.info('connected', { firmware: this.deviceInfo.firmware });
       return this.deviceInfo;
     } catch (error) {
@@ -150,7 +152,7 @@ export class Session {
     await this.readerTask?.catch(() => undefined);
   }
 
-  private waitForReady(): Promise<DeviceInfo> {
+  private waitForReady(timeoutMs = this.timeoutMs): Promise<DeviceInfo> {
     if (this.deviceInfo) {
       return Promise.resolve(this.deviceInfo);
     }
@@ -169,10 +171,10 @@ export class Session {
         this.connectSignal?.removeEventListener('abort', abortHandler);
         reject(
           new TimeoutError(
-            `Timed out waiting for the device ready event (${this.timeoutMs}ms). Is firmware running, and is the serial port correct?`,
+            `Timed out waiting for the device ready event (${timeoutMs}ms). Is firmware running, and is the serial port correct?`,
           ),
         );
-      }, this.timeoutMs);
+      }, timeoutMs);
 
       const abortHandler = (): void => {
         clearTimeout(timer);
@@ -194,6 +196,34 @@ export class Session {
 
   private waitersIndex(waiter: (info: DeviceInfo) => void): number {
     return this.readyWaiters.indexOf(waiter);
+  }
+
+  private async requestHello(): Promise<Record<string, unknown>> {
+    const deadline = Date.now() + this.timeoutMs;
+    let lastTimeout: TimeoutError | undefined;
+
+    while (Date.now() < deadline) {
+      const remainingMs = deadline - Date.now();
+      try {
+        return await this.request(
+          'sys.hello',
+          {},
+          {
+            timeoutMs: Math.min(remainingMs, 300),
+            ...(this.connectSignal ? { signal: this.connectSignal } : {}),
+          },
+        );
+      } catch (error) {
+        if (!(error instanceof TimeoutError)) {
+          throw error;
+        }
+        lastTimeout = error;
+      }
+    }
+
+    throw (
+      lastTimeout ?? new TimeoutError(`Timed out waiting for 'sys.hello' (${this.timeoutMs}ms).`)
+    );
   }
 
   private async readLoop(): Promise<void> {

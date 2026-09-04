@@ -896,7 +896,14 @@ void setup() {
   Serial.setRxBufferSize(1024);
   Serial.begin(baudRate);
   bootMillis = millis();
-  delay(100);
+  // Native USB Serial/JTAG boards (such as the ESP32-C3 SuperMini) can boot
+  // before macOS has opened the USB endpoint. Wait briefly so `ready` is not
+  // lost before the host begins the Pinout handshake. Hardware UARTs report
+  // ready immediately and are unaffected.
+  const unsigned long usbHostWaitDeadline = millis() + 3000;
+  while (!Serial && millis() < usbHostWaitDeadline) {
+    delay(10);
+  }
   while (Serial.available() > 0) {
     Serial.read();
   }

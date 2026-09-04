@@ -64,6 +64,17 @@ describe('sdk to simulated ESP32', () => {
     }
   });
 
+  it('falls back to sys.hello when a native USB device was already running', async () => {
+    const device = await connect({ transport: new ReadylessTransport(), timeoutMs: 500 });
+    try {
+      expect(device.info.firmware).toBe('esp32-bridge');
+      await device.gpio.write(2, true);
+      await expect(device.gpio.read(2)).resolves.toBe(true);
+    } finally {
+      await device.close();
+    }
+  });
+
   it('times out when the device never becomes ready', async () => {
     await expect(
       connect({ transport: new SilentTransport(), timeoutMs: 40 }),
@@ -142,6 +153,44 @@ class SilentTransport implements Transport {
   async write(_data: Uint8Array): Promise<void> {}
 
   async close(): Promise<void> {
+    this.inbound.close();
+  }
+}
+
+class ReadylessTransport implements Transport {
+  readonly kind = 'native-usb';
+  private readonly inner = simulatedEsp32();
+  private readonly inbound = new ByteQueue();
+  private pump: Promise<void> | undefined;
+  private droppedReady = false;
+
+  get readable(): AsyncIterable<Uint8Array> {
+    return this.inbound;
+  }
+
+  async open(): Promise<void> {
+    await this.inner.open();
+    this.pump = this.forward();
+  }
+
+  async write(data: Uint8Array): Promise<void> {
+    await this.inner.write(data);
+  }
+
+  async close(): Promise<void> {
+    await this.inner.close();
+    await this.pump?.catch(() => undefined);
+    this.inbound.close();
+  }
+
+  private async forward(): Promise<void> {
+    for await (const chunk of this.inner.readable) {
+      if (!this.droppedReady && new TextDecoder().decode(chunk).includes('"event":"ready"')) {
+        this.droppedReady = true;
+        continue;
+      }
+      this.inbound.push(chunk);
+    }
     this.inbound.close();
   }
 }
