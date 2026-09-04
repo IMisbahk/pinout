@@ -1,0 +1,36 @@
+packages/core/src/modules/coffeeMachine/simulator.ts
+  s_d5247e323998d9::t_3b1428107ffc3c 1-42
+  s_d5247e323998d9::t_7c74d36a05e4fa 43-161
+packages/core/src/index.ts
+  s_d5247e323998d9::t_da35b7776aba5b 261
+  s_d5247e323998d9::t_b848b01211262a 260
+  s_d5247e323998d9::t_0406085f6ea3f9 262-268
+packages/core/src/modules/coffeeMachineModule.ts
+  s_d5247e323998d9::t_da35b7776aba5b 1-2,5-9,11,19-23
+  s_d5247e323998d9::t_b848b01211262a 3-4,10,12-18
+  s_d5247e323998d9::t_75a33b851470d9 24-58
+packages/core/tests/coffeeMachine.test.ts
+  s_d5247e323998d9::t_b848b01211262a 1-27
+  s_d5247e323998d9::t_c6967d7bf80045 28-74
+packages/core/src/modules/registry.ts
+  s_d5247e323998d9::t_da35b7776aba5b 14,37
+packages/core/src/modules/coffeeMachine/capabilities.ts
+  s_d5247e323998d9::t_3b1428107ffc3c 1-54
+  s_d5247e323998d9::t_252bf79e67c2e4 55-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ef5887075d3dac804cc37ec40a0309cc466fe30e",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
