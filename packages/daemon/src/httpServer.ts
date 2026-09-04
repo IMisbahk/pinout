@@ -143,7 +143,11 @@ export class DaemonContext {
     // The daemon is the policy authority for an already-registered runtime.
     // Reattach every device before accepting requests so direct runtime calls
     // cannot retain an ungoverned or stale safety engine.
-    this.runtime.configureGovernance({ halt: this.halt, safetyEngine: this.safety });
+    this.runtime.configureGovernance({
+      halt: this.halt,
+      safetyEngine: this.safety,
+      journal: this.journal,
+    });
 
     this.runtime.on((envelope: RuntimeEventEnvelope) => {
       this.journal.append(

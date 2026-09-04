@@ -156,4 +156,25 @@ describe('PinoutRuntime heterogeneous', () => {
       await runtime.close();
     }
   });
+
+  it('journals requested, completed, and failed runtime invocations', async () => {
+    const runtime = await createHeterogeneousRuntime({
+      motionDelayMs: 0,
+      includeArm: false,
+      includeChamber: false,
+    });
+    try {
+      await runtime.invoke(ids.esp32, 'gpio.read', { pin: 2 });
+      await expect(runtime.invoke(ids.esp32, 'not.a.capability', {})).rejects.toBeDefined();
+      const entries = await runtime.journal.query({ deviceId: ids.esp32 });
+      expect(entries.map((entry) => entry.kind)).toEqual([
+        'invocation.requested',
+        'invocation.completed',
+        'invocation.requested',
+        'invocation.failed',
+      ]);
+    } finally {
+      await runtime.close();
+    }
+  });
 });

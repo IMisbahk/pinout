@@ -1,5 +1,6 @@
 import { PinoutError } from '../errors.js';
 import { HaltCoordinator, type SafetyStateChange } from '../halt/haltCoordinator.js';
+import { Journal } from '../journal/journal.js';
 import { mergeModulePolicies } from '../module/policies.js';
 import { getModule } from '../modules/registry.js';
 import { SafetyEngine } from '../policy/safety.js';
@@ -20,6 +21,8 @@ export interface PinoutRuntimeOptions {
   halt?: HaltCoordinator;
   /** Shared v2 safety engine for every registered device. */
   safetyEngine?: SafetyEngine;
+  /** Shared append-only audit journal for every invocation. */
+  journal?: Journal;
 }
 
 export class DuplicateDeviceError extends PinoutError {
@@ -37,6 +40,7 @@ export class DeviceNotFoundError extends PinoutError {
 export class PinoutRuntime {
   halt: HaltCoordinator;
   safetyEngine: SafetyEngine;
+  journal: Journal;
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
   private readonly deviceEventUnsubscribers = new Map<string, () => void>();
@@ -46,6 +50,7 @@ export class PinoutRuntime {
   constructor(options: PinoutRuntimeOptions = {}) {
     this.halt = options.halt ?? new HaltCoordinator();
     this.safetyEngine = options.safetyEngine ?? new SafetyEngine({ rules: [] });
+    this.journal = options.journal ?? new Journal();
     this.subscribeHalt();
   }
 
@@ -192,6 +197,9 @@ export class PinoutRuntime {
     if (options.safetyEngine) {
       this.safetyEngine = options.safetyEngine;
     }
+    if (options.journal) {
+      this.journal = options.journal;
+    }
     for (const device of this.deviceMap.values()) {
       device.attachGovernance(this.halt, this.safetyEngine);
     }
@@ -214,7 +222,29 @@ export class PinoutRuntime {
     input: Record<string, unknown> = {},
     options: InvokeOptions = {},
   ): Promise<Record<string, unknown>> {
-    return this.getDevice(deviceId).invoke(capability, input, options);
+    this.journal.append('invocation.requested', { deviceId }, {
+      capability,
+      input,
+      ...(options.owner !== undefined ? { owner: options.owner } : {}),
+      ...(options.dryRun ? { dryRun: true } : {}),
+    });
+    try {
+      const result = await this.getDevice(deviceId).invoke(capability, input, options);
+      this.journal.append('invocation.completed', { deviceId }, {
+        capability,
+        result,
+        ...(options.dryRun ? { dryRun: true } : {}),
+      });
+      return result;
+    } catch (error) {
+      this.journal.append('invocation.failed', { deviceId }, {
+        capability,
+        code: error && typeof error === 'object' && 'code' in error ? error.code : 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : String(error),
+        ...(options.dryRun ? { dryRun: true } : {}),
+      });
+      throw error;
+    }
   }
 
   async close(): Promise<void> {
