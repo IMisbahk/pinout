@@ -31,18 +31,32 @@ WatchState watches[8];
 size_t watchCount = 0;
 PulseState pulses[8];
 
+#if defined(PINOUT_ESP32_C3)
+int i2cSda = 8;
+int i2cScl = 9;
+#else
 int i2cSda = 21;
 int i2cScl = 22;
+#endif
 uint32_t i2cFrequency = 100000;
 bool i2cStarted = false;
 
+#if defined(PINOUT_ESP32_C3)
+int spiSck = 4;
+int spiMiso = 5;
+int spiMosi = 6;
+int spiCs = 7;
+#else
 int spiSck = 18;
 int spiMiso = 19;
 int spiMosi = 23;
 int spiCs = 5;
+#endif
 uint32_t spiFrequency = 1000000;
 bool spiStarted = false;
 bool activeOutputs[40] = {};
+int activePwmPins[16] = {-1, -1, -1, -1, -1, -1, -1, -1,
+                         -1, -1, -1, -1, -1, -1, -1, -1};
 
 void cancelPulseForPin(int pin) {
   for (size_t i = 0; i < 8; i++) {
@@ -52,14 +66,32 @@ void cancelPulseForPin(int pin) {
   }
 }
 
+#if defined(PINOUT_ESP32_C3)
+bool isFlashPin(int pin) { return pin >= 11 && pin <= 17; }
+bool isInputOnlyPin(int) { return false; }
+bool isUart0Pin(int pin) { return pin == 20 || pin == 21; }
+bool isStrapPin(int pin) { return pin == 2; }
+bool isAdcPin(int pin) { return pin >= 0 && pin <= 4; }
+bool isUsbPin(int pin) { return pin == 18 || pin == 19; }
+#else
 bool isFlashPin(int pin) { return pin >= 6 && pin <= 11; }
 bool isInputOnlyPin(int pin) { return pin >= 34 && pin <= 39; }
 bool isUart0Pin(int pin) { return pin == 1 || pin == 3; }
 bool isStrapPin(int pin) { return pin == 12; }
 bool isAdcPin(int pin) { return pin >= 32 && pin <= 39; }
+bool isUsbPin(int) { return false; }
+#endif
+
+int maxGpioPin() {
+#if defined(PINOUT_ESP32_C3)
+  return 21;
+#else
+  return 39;
+#endif
+}
 
 bool isReadablePin(int pin) {
-  return pin >= 0 && pin <= 39 && !isFlashPin(pin) && !isUart0Pin(pin) && !isStrapPin(pin);
+  return pin >= 0 && pin <= maxGpioPin() && !isFlashPin(pin) && !isUart0Pin(pin) && !isStrapPin(pin) && !isUsbPin(pin);
 }
 
 bool isWritablePin(int pin) {
@@ -282,6 +314,10 @@ void handleGpioStopAll(const char* id) {
   // Detach PWM channels so motors/servos cannot remain driven after the stop.
   for (int channel = 0; channel < 16; channel++) {
     ledcWrite(channel, 0);
+    if (activePwmPins[channel] >= 0) {
+      ledcDetachPin(activePwmPins[channel]);
+      activePwmPins[channel] = -1;
+    }
   }
   for (size_t i = 0; i < 8; i++) {
     pulses[i].active = false;
@@ -393,7 +429,11 @@ void handleGpioPwm(const char* id, const JsonVariantConst& payload) {
   ledcSetup(channel, frequency, 8);
   cancelPulseForPin(pin);
   activeOutputs[pin] = true;
+  if (activePwmPins[channel] >= 0 && activePwmPins[channel] != pin) {
+    ledcDetachPin(activePwmPins[channel]);
+  }
   ledcAttachPin(pin, channel);
+  activePwmPins[channel] = pin;
   ledcWrite(channel, static_cast<uint32_t>(duty * 255));
   JsonDocument result;
   result["pin"] = pin;
@@ -708,7 +748,11 @@ void handleGpioServo(const char* id, const JsonVariantConst& payload) {
   cancelPulseForPin(pin);
   ledcSetup(channel, 50, 16);
   activeOutputs[pin] = true;
+  if (activePwmPins[channel] >= 0 && activePwmPins[channel] != pin) {
+    ledcDetachPin(activePwmPins[channel]);
+  }
   ledcAttachPin(pin, channel);
+  activePwmPins[channel] = pin;
   const uint32_t pulseUs = 1000 + static_cast<uint32_t>((angle / 180.0f) * 1000.0f);
   ledcWrite(channel, pulseUs * 65535UL / 20000UL);
   JsonDocument result;
@@ -753,7 +797,11 @@ void handleGpioMotor(const char* id, const JsonVariantConst& payload) {
   }
   ledcSetup(channel, 1000, 8);
   activeOutputs[pwmPin] = true;
+  if (activePwmPins[channel] >= 0 && activePwmPins[channel] != pwmPin) {
+    ledcDetachPin(activePwmPins[channel]);
+  }
   ledcAttachPin(pwmPin, channel);
+  activePwmPins[channel] = pwmPin;
   ledcWrite(channel, static_cast<uint32_t>(duty * 255));
   if (dirPin >= 0) {
     pinMode(dirPin, OUTPUT);
