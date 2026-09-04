@@ -38,7 +38,9 @@ export function registerEnrollCommand(
             timeoutMs: Number(options.timeout),
           });
       try {
-        const portInfo = options.mock ? undefined : (await listSerialPorts()).find((entry) => entry.path === port);
+        const portInfo = options.mock
+          ? undefined
+          : (await listSerialPorts()).find((entry) => entry.path === port);
         const identity = {
           firmware: device.info.firmware,
           version: device.info.version,
@@ -66,7 +68,14 @@ export function registerEnrollCommand(
           module: 'pinout/esp32',
           backend: options.mock
             ? ({ type: 'protocol', transport: { type: 'simulated-esp32' as const } } as const)
-            : ({ type: 'protocol', transport: { type: 'serial' as const, path: port as string, baud: Number(options.baud) } } as const),
+            : ({
+                type: 'protocol',
+                transport: {
+                  type: 'serial' as const,
+                  path: port as string,
+                  baud: Number(options.baud),
+                },
+              } as const),
           identity,
           enrolledAt: new Date().toISOString(),
         };
@@ -81,7 +90,11 @@ export function registerEnrollCommand(
         } else {
           addDeviceDefinition(definition, { home: resolvePinoutHome() });
         }
-        output.log(output.json ? { enrolled: true, device: summary } : `Enrolled ${options.id} (${identity.firmware} ${identity.version}).`);
+        output.log(
+          output.json
+            ? { enrolled: true, device: summary }
+            : `Enrolled ${options.id} (${identity.firmware} ${identity.version}).`,
+        );
       } finally {
         await device.close();
       }
@@ -98,15 +111,21 @@ interface EnrollOptions {
   reEnroll?: boolean;
 }
 
-async function resolvePort(candidateArg: string | undefined, options: EnrollOptions): Promise<string | undefined> {
+async function resolvePort(
+  candidateArg: string | undefined,
+  options: EnrollOptions,
+): Promise<string | undefined> {
   if (options.mock) return undefined;
   if (options.port) return options.port;
   if (!candidateArg) throw new Error('Provide a discovery candidate, --port, or --mock.');
   const ports = await listSerialPorts();
   if (ports.some((port) => port.path === candidateArg)) return candidateArg;
   const run = await runDiscovery({ plugins: [serialDiscoveryPlugin()] });
-  const candidate: DiscoveredCandidate | undefined = run.candidates.find((entry) => entry.id === candidateArg);
+  const candidate: DiscoveredCandidate | undefined = run.candidates.find(
+    (entry) => entry.id === candidateArg,
+  );
   if (!candidate) throw new Error(`Discovery candidate '${candidateArg}' was not found.`);
-  if (candidate.endpoint.kind !== 'serial') throw new Error('Only serial candidates can be enrolled by this command.');
+  if (candidate.endpoint.kind !== 'serial')
+    throw new Error('Only serial candidates can be enrolled by this command.');
   return candidate.endpoint.address;
 }

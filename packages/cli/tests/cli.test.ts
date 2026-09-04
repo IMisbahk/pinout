@@ -30,9 +30,16 @@ describe('cli', () => {
     expect(help.logs.join('\n')).toContain('candidate devices');
 
     const io = captureIo();
-    expect(await runCli(['node', 'pinout', '--json', 'enroll', '--mock', '--id', 'lab-esp', '--yes'], io)).toBe(0);
+    expect(
+      await runCli(
+        ['node', 'pinout', '--json', 'enroll', '--mock', '--id', 'lab-esp', '--yes'],
+        io,
+      ),
+    ).toBe(0);
     const file = join(home, 'devices.json');
-    const parsed = JSON.parse(readFileSync(file, 'utf8')) as { devices: Array<{ identity: { firmware: string } }> };
+    const parsed = JSON.parse(readFileSync(file, 'utf8')) as {
+      devices: Array<{ identity: { firmware: string } }>;
+    };
     expect(parsed.devices[0]?.identity.firmware).toBe('esp32-bridge');
     expect(statSync(file).mode & 0o777).toBe(0o600);
   });

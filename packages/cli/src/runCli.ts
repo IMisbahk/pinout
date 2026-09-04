@@ -3,7 +3,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Command } from 'commander';
 import type { Device } from '@pinout/core';
-import { esp32DefaultLedPin, listSerialPorts } from '@pinout/core';
+import {
+  DeviceInstance,
+  esp32DefaultLedPin,
+  listSerialPorts,
+  PinoutRuntime,
+  ProtocolDeviceBackend,
+} from '@pinout/core';
 import {
   registerDeviceCommands,
   registerModuleCommands,
@@ -217,7 +223,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
     async (action: string, options: ConnectionFlags & { payload: Record<string, unknown> }) => {
       const output = outputFor(program, io);
       await withDevice(options, async (device) => {
-        const result = await device.invoke(action, options.payload);
+        const result = await governedInvoke(device, action, options.payload);
         if (output.json) {
           output.log({ action, result });
           return;
@@ -241,7 +247,10 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
         : await readScriptFromStdin();
 
     await withDevice(options, async (device) => {
-      const results = await runScript(device, steps);
+      const results = await runScript(
+        { invoke: (action, payload) => governedInvoke(device, action, payload) },
+        steps,
+      );
       if (output.json) {
         output.log({ results });
         return;
@@ -265,9 +274,9 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
     const halfDelay = connection.mock ? Math.min(options.delay, 50) : options.delay;
     await withDevice(options, async (device) => {
       for (let index = 0; index < options.count; index += 1) {
-        await device.invoke('gpio.write', { pin: options.pin, value: true });
+        await governedInvoke(device, 'gpio.write', { pin: options.pin, value: true });
         await delay(halfDelay);
-        await device.invoke('gpio.write', { pin: options.pin, value: false });
+        await governedInvoke(device, 'gpio.write', { pin: options.pin, value: false });
         if (index < options.count - 1) {
           await delay(halfDelay);
         }
@@ -291,7 +300,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, value: boolean, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.write', { pin, value });
+      const result = await governedInvoke(device, 'gpio.write', { pin, value });
       printInvokeResult(output, 'gpio.write', result, `gpio ${pin} -> ${value ? 'high' : 'low'}`);
     });
   });
@@ -304,7 +313,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.read', { pin });
+      const result = await governedInvoke(device, 'gpio.read', { pin });
       const value = result.value === true;
       printInvokeResult(output, 'gpio.read', result, value ? 'high' : 'low');
     });
@@ -319,7 +328,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, mode: string, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.mode', { pin, mode });
+      const result = await governedInvoke(device, 'gpio.mode', { pin, mode });
       printInvokeResult(output, 'gpio.mode', result, `gpio ${pin} mode -> ${mode}`);
     });
   });
@@ -332,7 +341,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.toggle', { pin });
+      const result = await governedInvoke(device, 'gpio.toggle', { pin });
       printInvokeResult(output, 'gpio.toggle', result, `gpio ${pin} toggled`);
     });
   });
@@ -350,7 +359,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
       if (!output.json) {
         output.log(`pulsing gpio ${pin} ${value ? 'high' : 'low'} for ${options.duration}ms`);
       }
-      const result = await device.invoke('gpio.pulse', {
+      const result = await governedInvoke(device, 'gpio.pulse', {
         pin,
         value,
         durationMs: options.duration,
@@ -378,7 +387,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
     ) => {
       const output = outputFor(program, io);
       await withDevice(options, async (device) => {
-        const result = await device.invoke('gpio.pwm', {
+        const result = await governedInvoke(device, 'gpio.pwm', {
           pin: options.pin,
           duty: options.duty,
           channel: options.channel,
@@ -402,7 +411,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.analogRead', { pin });
+      const result = await governedInvoke(device, 'gpio.analogRead', { pin });
       printInvokeResult(
         output,
         'gpio.analogRead',
@@ -420,7 +429,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.watch', { pin });
+      const result = await governedInvoke(device, 'gpio.watch', { pin });
       printInvokeResult(output, 'gpio.watch', result, `watching gpio ${pin}`);
     });
   });
@@ -433,7 +442,7 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
   ).action(async (pin: number, options: ConnectionFlags) => {
     const output = outputFor(program, io);
     await withDevice(options, async (device) => {
-      const result = await device.invoke('gpio.unwatch', { pin });
+      const result = await governedInvoke(device, 'gpio.unwatch', { pin });
       printInvokeResult(output, 'gpio.unwatch', result, `stopped watching gpio ${pin}`);
     });
   });
@@ -464,15 +473,51 @@ async function withDevice(
 ): Promise<void> {
   const options = resolveConnectionOptions(flags);
   const device = await openDevice(options);
+  const runtime = new PinoutRuntime();
+  const instance = new DeviceInstance({
+    identity: {
+      id: 'direct-device',
+      moduleId: 'pinout/esp32',
+      deviceClass: 'microcontroller',
+      vendor: 'Espressif',
+      model: device.info.firmware,
+    },
+    backend: new ProtocolDeviceBackend(device),
+    capabilities: device.capabilities,
+    policies: [],
+    simulated: options.mock === true,
+    activeTransportKind: options.mock ? 'simulated-esp32' : 'serial',
+    transportKinds: [options.mock ? 'simulated-esp32' : 'serial'],
+    getOperationalState: () => ({
+      firmware: device.info.firmware,
+      version: device.info.version,
+      protocol: device.info.protocol,
+    }),
+  });
+  await runtime.register(instance);
+  directRuntimes.set(device, runtime);
   try {
     await task(device);
   } finally {
-    await device.close();
+    directRuntimes.delete(device);
+    await runtime.close();
   }
 }
 
+const directRuntimes = new WeakMap<Device, PinoutRuntime>();
+
+async function governedInvoke(
+  device: Device,
+  capability: string,
+  payload: Record<string, unknown> = {},
+): Promise<Record<string, unknown>> {
+  const runtime = directRuntimes.get(device);
+  if (!runtime) throw new Error('Direct device is not attached to a governed runtime.');
+  return runtime.invoke('direct-device', capability, payload, { owner: 'cli-direct' });
+}
+
 async function printHello(device: Device, output: CliOutput): Promise<void> {
-  const info = device.supports('sys.info') ? await device.invoke('sys.info') : {};
+  const info = device.supports('sys.info') ? await governedInvoke(device, 'sys.info') : {};
   if (output.json) {
     output.log({
       firmware: device.info.firmware,

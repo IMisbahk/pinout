@@ -9,8 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Command } from 'commander';
-import { auditPermissions } from '@pinout/module-host';
-import { verifyModule } from '@pinout/module-host';
+import type * as ModuleHost from '@pinout/module-host';
 
 export interface IntegrityOutput {
   json: boolean;
@@ -30,6 +29,7 @@ export function registerModuleIntegrityCommands(
     .description('Audit a module directory: manifest, permissions advisory, capabilities.')
     .action(async (dir: string) => {
       const out = outputFor();
+      const { auditPermissions } = await importModuleHost();
       const moduleDir = resolve(dir);
       let manifest: Record<string, unknown>;
       try {
@@ -70,6 +70,7 @@ export function registerModuleIntegrityCommands(
     )
     .action(async (dir: string, options: { publisher?: string[] }) => {
       const out = outputFor();
+      const { verifyModule } = await importModuleHost();
       const moduleDir = resolve(dir);
       const trusted: Record<string, string> = {};
       for (const pair of options.publisher ?? []) {
@@ -100,4 +101,14 @@ export function registerModuleIntegrityCommands(
         throw new Error(`Module integrity verification FAILED (${report.status}).`);
       }
     });
+}
+
+async function importModuleHost(): Promise<typeof ModuleHost> {
+  try {
+    return await import('@pinout/module-host');
+  } catch (error) {
+    throw new Error(
+      `The alpha CLI does not bundle the experimental module host. Install @pinout/module-host from this repository to use integrity commands. (${error instanceof Error ? error.message : String(error)})`,
+    );
+  }
 }

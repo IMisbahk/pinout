@@ -21,7 +21,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "prepack": "npm run build"
   },
   "license": "Apache-2.0",
   "private": false,
@@ -34,10 +35,8 @@
   },
   "dependencies": {
     "@pinout/core": "0.0.1-alpha.1",
-    "@pinout/generator": "0.0.1-alpha.1",
     "commander": "^12.1.0",
     "@pinout/daemon": "0.0.1-alpha.1",
-    "@pinout/module-host": "0.0.1-alpha.1",
     "@pinout/discovery": "0.0.1-alpha.1"
   },
   "publishConfig": {
