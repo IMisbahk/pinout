@@ -1,0 +1,42 @@
+packages/mcp/src/index.ts
+  s_5b48326d004dcf::t_5665ba0c260784 4-5
+packages/mcp/src/createRuntimeServer.ts
+  s_5b48326d004dcf::t_bbceba47a8dce5 331,334,338-339
+  s_5b48326d004dcf::t_a91f175697d35a 10-14,65-71,76-93,106-107,121,124-143,146-148,150-160,216-300,381,383
+  s_5b48326d004dcf::t_5665ba0c260784 370
+  s_5b48326d004dcf::t_478291ed783c32 301-311,340-350,367-369,371-374,384-389,399-401
+packages/mcp/src/runStdio.ts
+  s_5b48326d004dcf::t_f244d1efb37c62 20-23
+  s_5b48326d004dcf::t_5665ba0c260784 10,18-19,24-35
+  s_5b48326d004dcf::t_67f0bd7b51963d 2-7,36
+packages/mcp/tests/daemonE2E.test.ts
+  s_5b48326d004dcf::t_64f3a468cb3d13 50
+  s_5b48326d004dcf::t_fc5d64a39840ec 1-48,51-86
+  s_5b48326d004dcf::t_d0ed83bfea035e 49
+packages/mcp/package.json
+  s_5b48326d004dcf::t_254d08c5bd2c67 6
+  s_5b48326d004dcf::t_93a4e8b4996d63 7-11,19-20
+packages/mcp/src/createDaemonServer.ts
+  s_5b48326d004dcf::t_caaa64f87f4199 9,23,76-81,159-161,181
+  s_5b48326d004dcf::t_5665ba0c260784 1-8,10-22,24-75,82-136,139-158,162-180,182-223
+  s_5b48326d004dcf::t_f244d1efb37c62 137-138
+packages/mcp/tests/mcp.test.ts
+  s_5b48326d004dcf::t_6acbad4d8374fc 19-35,37-103
+  s_5b48326d004dcf::t_caaa64f87f4199 36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "8e423a79ddfda4495874347700a98fb080b97f8e",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
