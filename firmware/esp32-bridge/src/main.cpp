@@ -884,7 +884,7 @@ void handleLine(char* line) {
     return;
   }
 
-  if (document["v"] != protocolVersion) {
+  if (document["v"].as<int>() != protocolVersion) {
     sendError("invalid", "INVALID_MESSAGE", "Unsupported protocol version.");
     return;
   }
