@@ -20,6 +20,7 @@ export async function startDaemon(
   config: DaemonConfig = {},
 ): Promise<RunningDaemon> {
   const context = new DaemonContext(runtime, config);
+  await context.ready;
   const server = new DaemonHttpServer(context);
   const address = await server.listen(config);
 

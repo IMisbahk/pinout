@@ -1,5 +1,5 @@
 import type { Device } from '../device.js';
-import type { DeviceBackend } from './types.js';
+import type { BackendInvocationContext, DeviceBackend } from './types.js';
 
 export class ProtocolDeviceBackend implements DeviceBackend {
   readonly kind = 'protocol' as const;
@@ -10,8 +10,12 @@ export class ProtocolDeviceBackend implements DeviceBackend {
     return () => undefined;
   }
 
-  async invoke(action: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-    return this.device.invoke(action, payload);
+  async invoke(
+    action: string,
+    payload: Record<string, unknown>,
+    context?: BackendInvocationContext,
+  ): Promise<Record<string, unknown>> {
+    return this.device.invoke(action, payload, context?.signal ? { signal: context.signal } : {});
   }
 
   async close(): Promise<void> {

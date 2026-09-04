@@ -44,6 +44,10 @@ export interface InvokeOptions {
   owner?: string;
   /** Resolve and policy-check without executing any physical side effect. */
   dryRun?: boolean;
+  /** Abort an in-flight backend request or long-running semantic action. */
+  signal?: AbortSignal;
+  /** Forward semantic progress to the operation manager. */
+  reportProgress?: (fraction: number | null, message?: string) => void;
 }
 
 export class DeviceInstance {
@@ -214,7 +218,10 @@ export class DeviceInstance {
     try {
       let result: Record<string, unknown>;
       try {
-        result = await this.backend.invoke(capability, payload);
+        result = await this.backend.invoke(capability, payload, {
+          ...(options.signal ? { signal: options.signal } : {}),
+          ...(options.reportProgress ? { reportProgress: options.reportProgress } : {}),
+        });
       } catch (error) {
         safetyReservation?.rollback();
         throw error;

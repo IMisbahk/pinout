@@ -17,6 +17,7 @@ beforeAll(async () => {
   daemon = await startDaemon(runtime, {
     port: 0,
     journalPath: join(journalDir, 'journal.jsonl'),
+    requireLeases: false,
   });
   base = `http://127.0.0.1:${daemon.port}`;
 });
@@ -61,6 +62,7 @@ describe('pinoutd HTTP API', () => {
     await runtime.registerFromModule(relayModule.id, { id: 'r', simulated: true });
     const isolated = await startDaemon(runtime, {
       port: 0,
+      requireLeases: false,
       safetyRules: [
         { kind: 'rate', capability: 'relay.set', maxPerWindow: 1, windowMs: 60000 },
         { kind: 'approval', capability: 'relay.set' },
@@ -109,6 +111,40 @@ describe('pinoutd HTTP API', () => {
     expect(body.ok).toBe(true);
     expect(body.devices).toBe(1);
     expect(body.safety).toBe('NORMAL');
+  });
+
+  it('requires an exclusive owner lease for physical outputs by default', async () => {
+    const runtime = new PinoutRuntime();
+    await runtime.registerFromModule(relayModule.id, { id: 'lease-default', simulated: true });
+    const guarded = await startDaemon(runtime, { port: 0 });
+    const url = `http://127.0.0.1:${guarded.port}`;
+    const invoke = () =>
+      fetch(`${url}/v1/devices/lease-default/invoke`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          capability: 'relay.set',
+          args: { on: true },
+          owner: 'agent-a',
+          waitFor: 'result',
+        }),
+      });
+    try {
+      expect((await invoke()).status).toBe(409);
+      const lease = await fetch(`${url}/v1/leases`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          owner: 'agent-a',
+          mode: 'exclusive',
+          scope: { kind: 'device', deviceId: 'lease-default' },
+        }),
+      });
+      expect(lease.status).toBe(201);
+      expect((await invoke()).status).toBe(200);
+    } finally {
+      await guarded.close();
+    }
   });
 
   it('lists devices and their state', async () => {
@@ -384,7 +420,11 @@ describe('remote binding protection', () => {
     const url = `http://127.0.0.1:${secured.port}`;
     const foreignOrigin = await fetch(`${url}/v1/halt`, {
       method: 'POST',
-      headers: { authorization: 'Bearer timing-token', 'content-type': 'application/json', origin: 'https://evil.example' },
+      headers: {
+        authorization: 'Bearer timing-token',
+        'content-type': 'application/json',
+        origin: 'https://evil.example',
+      },
       body: JSON.stringify({ reason: 'test' }),
     });
     expect(foreignOrigin.status).toBe(403);
@@ -404,18 +444,29 @@ describe('remote binding protection', () => {
     const secured = await startDaemon(runtime, {
       port: 0,
       token: 'policy-token',
+      requireLeases: false,
       safetyRules: [{ kind: 'approval', capability: 'relay.set' }],
     });
     const url = `http://127.0.0.1:${secured.port}`;
     const headers = { authorization: 'Bearer policy-token', 'content-type': 'application/json' };
     const approval = await fetch(`${url}/v1/approvals`, {
-      method: 'POST', headers,
-      body: JSON.stringify({ id: 'approval-1', deviceId: 'relay-policy', capability: 'relay.set', grantedBy: 'operator' }),
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        id: 'approval-1',
+        deviceId: 'relay-policy',
+        capability: 'relay.set',
+        grantedBy: 'operator',
+      }),
     });
     expect(approval.status).toBe(201);
-    expect(((await approval.json()) as { approval: { id: string } }).approval.id).toBe('approval-1');
+    expect(((await approval.json()) as { approval: { id: string } }).approval.id).toBe(
+      'approval-1',
+    );
     const heartbeat = await fetch(`${url}/v1/devices/relay-policy/heartbeat`, {
-      method: 'POST', headers, body: JSON.stringify({ actor: 'operator' }),
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ actor: 'operator' }),
     });
     expect(heartbeat.status).toBe(200);
     expect(((await heartbeat.json()) as { alive: boolean }).alive).toBe(true);

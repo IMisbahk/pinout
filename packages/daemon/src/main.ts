@@ -71,12 +71,20 @@ interface PersistedDaemonConfig {
   safetyRules?: DaemonConfig['safetyRules'];
 }
 
-async function loadPersistedConfig(): Promise<{ config: PersistedDaemonConfig; generated: boolean; path: string }> {
+async function loadPersistedConfig(): Promise<{
+  config: PersistedDaemonConfig;
+  generated: boolean;
+  path: string;
+}> {
   const dir = join(homedir(), '.pinout');
   const path = join(dir, 'pinoutd.json');
   try {
     const parsed = JSON.parse(await readFile(path, 'utf8')) as PersistedDaemonConfig;
-    if (typeof parsed !== 'object' || parsed === null || (parsed.token !== undefined && typeof parsed.token !== 'string')) {
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      (parsed.token !== undefined && typeof parsed.token !== 'string')
+    ) {
       throw new Error('pinoutd.json must contain a string token.');
     }
     return { config: parsed, generated: false, path };
@@ -93,6 +101,8 @@ async function loadPersistedConfig(): Promise<{ config: PersistedDaemonConfig; g
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const persisted = await loadPersistedConfig();
+  const defaultJournalDir = join(homedir(), '.pinout', 'journal');
+  await mkdir(defaultJournalDir, { recursive: true, mode: 0o700 });
   const { runtime } = await createRuntimeFromConfig({
     includeDemoDefaults: args.demo,
     continueOnError: true,
@@ -103,14 +113,18 @@ async function main(): Promise<void> {
     ...(args.token ? { token: args.token } : {}),
     ...(!args.token ? { token: persisted.config.token } : {}),
     ...(args.allowRemote ? { allowRemote: true } : {}),
-    ...(args.journalPath ? { journalPath: args.journalPath } : {}),
+    journalPath: args.journalPath ?? join(defaultJournalDir, 'pinoutd.jsonl'),
     ...(persisted.config.safetyRules ? { safetyRules: persisted.config.safetyRules } : {}),
   });
 
   const where = daemon.socketPath ?? `http://${daemon.host}:${daemon.port}`;
-  process.stdout.write(`pinoutd v${PINOUT_VERSION} listening on ${where}${args.allowRemote ? '' : ' (loopback only)'}\n`);
+  process.stdout.write(
+    `pinoutd v${PINOUT_VERSION} listening on ${where}${args.allowRemote ? '' : ' (loopback only)'}\n`,
+  );
   if (persisted.generated) {
-    process.stdout.write(`Generated daemon token in ${persisted.path}; retrieve it from that 0600 file.\n`);
+    process.stdout.write(
+      `Generated daemon token in ${persisted.path}; retrieve it from that 0600 file.\n`,
+    );
   }
 
   const shutdown = async (): Promise<void> => {

@@ -235,27 +235,40 @@ export class PinoutRuntime {
     input: Record<string, unknown> = {},
     options: InvokeOptions = {},
   ): Promise<Record<string, unknown>> {
-    this.journal.append('invocation.requested', { deviceId }, {
-      capability,
-      input,
-      ...(options.owner !== undefined ? { owner: options.owner } : {}),
-      ...(options.dryRun ? { dryRun: true } : {}),
-    });
+    this.journal.append(
+      'invocation.requested',
+      { deviceId },
+      {
+        capability,
+        input,
+        ...(options.owner !== undefined ? { owner: options.owner } : {}),
+        ...(options.dryRun ? { dryRun: true } : {}),
+      },
+    );
     try {
       const result = await this.getDevice(deviceId).invoke(capability, input, options);
-      this.journal.append('invocation.completed', { deviceId }, {
-        capability,
-        result,
-        ...(options.dryRun ? { dryRun: true } : {}),
-      });
+      this.journal.append(
+        'invocation.completed',
+        { deviceId },
+        {
+          capability,
+          result,
+          ...(options.dryRun ? { dryRun: true } : {}),
+        },
+      );
       return result;
     } catch (error) {
-      this.journal.append('invocation.failed', { deviceId }, {
-        capability,
-        code: error && typeof error === 'object' && 'code' in error ? error.code : 'INTERNAL_ERROR',
-        message: error instanceof Error ? error.message : String(error),
-        ...(options.dryRun ? { dryRun: true } : {}),
-      });
+      this.journal.append(
+        'invocation.failed',
+        { deviceId },
+        {
+          capability,
+          code:
+            error && typeof error === 'object' && 'code' in error ? error.code : 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : String(error),
+          ...(options.dryRun ? { dryRun: true } : {}),
+        },
+      );
       throw error;
     }
   }

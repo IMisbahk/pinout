@@ -193,12 +193,6 @@ export class OperationManager {
    */
   begin(options: BeginOperationOptions): OperationBeginResult {
     if (options.idempotencyKey) {
-      const scopedKey = BoundedIdempotencyStore.keyFor(
-        options.deviceId,
-        options.capability,
-        options.owner,
-        options.idempotencyKey,
-      );
       const lookup = this.idempotencyStore.lookup(
         options.deviceId,
         options.capability,
@@ -232,7 +226,6 @@ export class OperationManager {
         this.operations.set(restored.id, restored);
         return { deduped: true, handle: this.getHandle(restored.id) };
       }
-      void scopedKey;
     }
 
     const id = `op_${++this.sequence}_${randomId()}`;

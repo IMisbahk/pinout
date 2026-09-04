@@ -268,6 +268,11 @@ export {
   createSimulatedCoffeeMachineBackend,
   SimulatedCoffeeMachineBackend,
 } from './modules/coffeeMachine/simulator.js';
+export {
+  createEsp32CoffeeMachineBackend,
+  Esp32CoffeeMachineBackend,
+  type Esp32CoffeeMachineOptions,
+} from './modules/coffeeMachine/esp32Backend.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
 export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';
