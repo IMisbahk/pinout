@@ -29,6 +29,7 @@ describe('BoundedIdempotencyStore', () => {
         deviceId: 'arm-01',
         capability: 'motion.move_to',
         owner: 'agent-a',
+        idempotencyKey: 'retry-1',
         status: 'running',
         createdAt: now,
       },
@@ -53,6 +54,7 @@ describe('BoundedIdempotencyStore', () => {
         deviceId: 'd',
         capability: 'c',
         owner: 'o',
+        idempotencyKey: `key-${i}`,
         status: 'completed',
         createdAt: now,
       });
@@ -72,6 +74,7 @@ describe('BoundedIdempotencyStore', () => {
       deviceId: 'd',
       capability: 'c',
       owner: 'o',
+      idempotencyKey: 'k',
       status: 'completed',
       createdAt: now,
     });
@@ -95,6 +98,7 @@ describe('BoundedIdempotencyStore', () => {
           deviceId: 'd',
           capability: 'c',
           owner: 'attacker',
+          idempotencyKey: `flood-${i}-${'x'.repeat(50)}`,
           status: 'completed',
           createdAt: now,
         },
@@ -112,6 +116,7 @@ describe('BoundedIdempotencyStore', () => {
       deviceId: 'd',
       capability: 'c',
       owner: 'o',
+      idempotencyKey: 'key',
       status: 'completed',
       createdAt: now,
     });
