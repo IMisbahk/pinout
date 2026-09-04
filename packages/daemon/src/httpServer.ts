@@ -140,6 +140,11 @@ export class DaemonContext {
       },
     });
 
+    // The daemon is the policy authority for an already-registered runtime.
+    // Reattach every device before accepting requests so direct runtime calls
+    // cannot retain an ungoverned or stale safety engine.
+    this.runtime.configureGovernance({ halt: this.halt, safetyEngine: this.safety });
+
     this.runtime.on((envelope: RuntimeEventEnvelope) => {
       this.journal.append(
         'event.emitted',
@@ -414,22 +419,6 @@ export class DaemonHttpServer {
         dryRun: true,
         ...(owner !== undefined ? { owner } : {}),
       });
-      const safetyContext = {
-        deviceId,
-        capability,
-        payload: validated,
-        operationalState: device.getOperationalStateSnapshot(),
-        ...(owner !== undefined ? { owner } : {}),
-      };
-      const decision = c.safety.preview(safetyContext);
-      if (!decision.allowed) {
-        c.journal.append('policy.rejected', { deviceId }, { capability, decision });
-        throw new PinoutError(
-          decision.code ?? 'POLICY_ACTION_DENIED',
-          decision.message ?? 'Rejected by policy.',
-        );
-      }
-
       if (dryRun) {
         sendJson(res, 200, {
           dryRun: true,
@@ -452,10 +441,6 @@ export class DaemonHttpServer {
         run: async (runCtx) => {
           runCtx.throwIfCancelled();
           c.halt.enforceGate();
-          c.safety.enforce({
-            ...safetyContext,
-            operationalState: device.getOperationalStateSnapshot(),
-          });
           const result = await c.runtime.invoke(deviceId, capability, validated, {
             ...(owner !== undefined ? { owner } : {}),
           });

@@ -35,17 +35,18 @@ export class DeviceNotFoundError extends PinoutError {
 }
 
 export class PinoutRuntime {
-  readonly halt: HaltCoordinator;
-  readonly safetyEngine: SafetyEngine;
+  halt: HaltCoordinator;
+  safetyEngine: SafetyEngine;
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
   private readonly deviceEventUnsubscribers = new Map<string, () => void>();
   private safeStateChain: Promise<void> = Promise.resolve();
+  private unsubscribeHalt: (() => void) | undefined;
 
   constructor(options: PinoutRuntimeOptions = {}) {
     this.halt = options.halt ?? new HaltCoordinator();
     this.safetyEngine = options.safetyEngine ?? new SafetyEngine({ rules: [] });
-    this.halt.subscribe((change) => this.onSafetyStateChange(change));
+    this.subscribeHalt();
   }
 
   static async fromConfig(options: FromConfigOptions = {}): Promise<PinoutRuntime> {
@@ -178,6 +179,24 @@ export class PinoutRuntime {
     this.deviceMap.set(device.id, device);
   }
 
+  /**
+   * Replace the shared governance components and reattach every device.
+   * `pinoutd` uses this after it has constructed its persisted policy context.
+   */
+  configureGovernance(options: PinoutRuntimeOptions): void {
+    if (options.halt && options.halt !== this.halt) {
+      this.unsubscribeHalt?.();
+      this.halt = options.halt;
+      this.subscribeHalt();
+    }
+    if (options.safetyEngine) {
+      this.safetyEngine = options.safetyEngine;
+    }
+    for (const device of this.deviceMap.values()) {
+      device.attachGovernance(this.halt, this.safetyEngine);
+    }
+  }
+
   async unregister(id: string): Promise<void> {
     const device = this.getDevice(id);
     try {
@@ -203,6 +222,8 @@ export class PinoutRuntime {
     for (const id of ids) {
       await this.unregister(id);
     }
+    this.unsubscribeHalt?.();
+    this.unsubscribeHalt = undefined;
   }
 
   /** Wait until safe-state work requested by halt/estop has completed. */
@@ -234,6 +255,10 @@ export class PinoutRuntime {
         }),
       );
     });
+  }
+
+  private subscribeHalt(): void {
+    this.unsubscribeHalt = this.halt.subscribe((change) => this.onSafetyStateChange(change));
   }
 
   private emit(event: RuntimeEventEnvelope): void {
