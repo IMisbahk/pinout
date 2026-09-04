@@ -377,4 +377,49 @@ describe('remote binding protection', () => {
     await secured.close();
     await runtime.close();
   });
+
+  it('rejects browser cross-origin and non-JSON mutating requests', async () => {
+    const runtime = new PinoutRuntime();
+    const secured = await startDaemon(runtime, { port: 0, token: 'timing-token' });
+    const url = `http://127.0.0.1:${secured.port}`;
+    const foreignOrigin = await fetch(`${url}/v1/halt`, {
+      method: 'POST',
+      headers: { authorization: 'Bearer timing-token', 'content-type': 'application/json', origin: 'https://evil.example' },
+      body: JSON.stringify({ reason: 'test' }),
+    });
+    expect(foreignOrigin.status).toBe(403);
+    const nonJson = await fetch(`${url}/v1/halt`, {
+      method: 'POST',
+      headers: { authorization: 'Bearer timing-token', 'content-type': 'text/plain' },
+      body: JSON.stringify({ reason: 'test' }),
+    });
+    expect(nonJson.status).toBe(400);
+    await secured.close();
+    await runtime.close();
+  });
+
+  it('exposes approval and deadman heartbeat feeds', async () => {
+    const runtime = new PinoutRuntime();
+    await runtime.registerFromModule(relayModule.id, { id: 'relay-policy', simulated: true });
+    const secured = await startDaemon(runtime, {
+      port: 0,
+      token: 'policy-token',
+      safetyRules: [{ kind: 'approval', capability: 'relay.set' }],
+    });
+    const url = `http://127.0.0.1:${secured.port}`;
+    const headers = { authorization: 'Bearer policy-token', 'content-type': 'application/json' };
+    const approval = await fetch(`${url}/v1/approvals`, {
+      method: 'POST', headers,
+      body: JSON.stringify({ id: 'approval-1', deviceId: 'relay-policy', capability: 'relay.set', grantedBy: 'operator' }),
+    });
+    expect(approval.status).toBe(201);
+    expect(((await approval.json()) as { approval: { id: string } }).approval.id).toBe('approval-1');
+    const heartbeat = await fetch(`${url}/v1/devices/relay-policy/heartbeat`, {
+      method: 'POST', headers, body: JSON.stringify({ actor: 'operator' }),
+    });
+    expect(heartbeat.status).toBe(200);
+    expect(((await heartbeat.json()) as { alive: boolean }).alive).toBe(true);
+    await secured.close();
+    await runtime.close();
+  });
 });

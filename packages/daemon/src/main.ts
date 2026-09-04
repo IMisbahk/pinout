@@ -7,9 +7,13 @@
  * Binds loopback only unless --host and --token are both provided explicitly.
  */
 import process from 'node:process';
+import { randomBytes } from 'node:crypto';
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { createRuntimeFromConfig, PINOUT_VERSION } from '@pinout/core';
 import { startDaemon } from './start.js';
-import { DEFAULT_DAEMON_PORT } from './httpServer.js';
+import { DEFAULT_DAEMON_PORT, type DaemonConfig } from './httpServer.js';
 
 interface ParsedArgs {
   port: number;
@@ -17,6 +21,7 @@ interface ParsedArgs {
   token: string | undefined;
   journalPath: string | undefined;
   demo: boolean;
+  allowRemote: boolean;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -26,6 +31,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     token: undefined,
     journalPath: undefined,
     demo: false,
+    allowRemote: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -50,6 +56,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       case '--demo':
         args.demo = true;
         break;
+      case '--allow-remote':
+        args.allowRemote = true;
+        break;
       default:
         break;
     }
@@ -57,8 +66,33 @@ function parseArgs(argv: string[]): ParsedArgs {
   return args;
 }
 
+interface PersistedDaemonConfig {
+  token?: string;
+  safetyRules?: DaemonConfig['safetyRules'];
+}
+
+async function loadPersistedConfig(): Promise<{ config: PersistedDaemonConfig; generated: boolean; path: string }> {
+  const dir = join(homedir(), '.pinout');
+  const path = join(dir, 'pinoutd.json');
+  try {
+    const parsed = JSON.parse(await readFile(path, 'utf8')) as PersistedDaemonConfig;
+    if (typeof parsed !== 'object' || parsed === null || (parsed.token !== undefined && typeof parsed.token !== 'string')) {
+      throw new Error('pinoutd.json must contain a string token.');
+    }
+    return { config: parsed, generated: false, path };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    const token = randomBytes(32).toString('hex');
+    await mkdir(dir, { recursive: true, mode: 0o700 });
+    await writeFile(path, `${JSON.stringify({ token }, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+    await chmod(path, 0o600);
+    return { config: { token }, generated: true, path };
+  }
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+  const persisted = await loadPersistedConfig();
   const { runtime } = await createRuntimeFromConfig({
     includeDemoDefaults: args.demo,
     continueOnError: true,
@@ -67,11 +101,17 @@ async function main(): Promise<void> {
     ...(args.host ? { host: args.host } : {}),
     port: args.port,
     ...(args.token ? { token: args.token } : {}),
+    ...(!args.token ? { token: persisted.config.token } : {}),
+    ...(args.allowRemote ? { allowRemote: true } : {}),
     ...(args.journalPath ? { journalPath: args.journalPath } : {}),
+    ...(persisted.config.safetyRules ? { safetyRules: persisted.config.safetyRules } : {}),
   });
 
   const where = daemon.socketPath ?? `http://${daemon.host}:${daemon.port}`;
-  process.stdout.write(`pinoutd v${PINOUT_VERSION} listening on ${where} (loopback only)\n`);
+  process.stdout.write(`pinoutd v${PINOUT_VERSION} listening on ${where}${args.allowRemote ? '' : ' (loopback only)'}\n`);
+  if (persisted.generated) {
+    process.stdout.write(`Generated daemon token in ${persisted.path}; retrieve it from that 0600 file.\n`);
+  }
 
   const shutdown = async (): Promise<void> => {
     await daemon.close();

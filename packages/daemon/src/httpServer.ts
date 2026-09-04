@@ -13,7 +13,7 @@
  * never sensible to expose physical control to a network without auth.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { attachStreamSockets } from './streamSocket.js';
 import {
   Journal,
@@ -258,6 +258,22 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
     'content-length': Buffer.byteLength(body),
   });
   res.end(body);
+}
+
+function bearerMatches(provided: string | undefined, expected: string): boolean {
+  if (!provided) return false;
+  const actual = Buffer.from(provided, 'utf8');
+  const wanted = Buffer.from(expected, 'utf8');
+  return actual.length === wanted.length && timingSafeEqual(actual, wanted);
+}
+
+function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const parsed = new URL(origin);
+    return parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '::1';
+  } catch {
+    return false;
+  }
 }
 
 export class DaemonHttpServer {
@@ -571,6 +587,42 @@ export class DaemonHttpServer {
       sendJson(res, 200, { state: c.halt.state });
     });
 
+    // -- Policy feeds -------------------------------------------------------
+    this.route('POST', '/v1/approvals', async (c, _req, res, _match, body) => {
+      const id = requiredString(body, 'id');
+      const deviceId = requiredString(body, 'deviceId');
+      const capability = requiredString(body, 'capability');
+      const grantedBy = requiredString(body, 'grantedBy');
+      const approval = c.safety.recordApproval({
+        id,
+        deviceId,
+        capability,
+        grantedBy,
+        ...(typeof body?.expiresAt === 'number' ? { expiresAt: body.expiresAt } : {}),
+        ...(typeof body?.grantedAt === 'number' ? { grantedAt: body.grantedAt } : {}),
+      });
+      c.journal.append('policy.rejected', { deviceId }, {
+        event: 'approval.granted',
+        approvalId: approval.id,
+        capability,
+        grantedBy,
+        expiresAt: approval.expiresAt,
+      });
+      sendJson(res, 201, { approval });
+    });
+
+    this.route('POST', '/v1/devices/:id/heartbeat', async (c, _req, res, match, body) => {
+      const deviceId = match.params.id!;
+      c.runtime.getDevice(deviceId);
+      c.safety.heartbeatDeadman(deviceId);
+      c.journal.append('state.changed', { deviceId }, {
+        event: 'safety.deadman_heartbeat',
+        actor: typeof body?.actor === 'string' ? body.actor : undefined,
+        at: Date.now(),
+      });
+      sendJson(res, 200, { deviceId, alive: true, at: Date.now() });
+    });
+
     // -- Events (SSE) ----------------------------------------------------------
     this.route('GET', '/v1/events', async (c, req, res) => {
       res.writeHead(200, {
@@ -635,9 +687,21 @@ export class DaemonHttpServer {
     const server = createServer((req, res) => {
       // Auth: every /v1 route except health requires the bearer token when set.
       const url = new URL(req.url ?? '/', 'http://localhost');
+      const origin = req.headers.origin;
+      if (origin && !isLoopbackOrigin(origin)) {
+        sendJson(res, 403, { error: { code: 'ORIGIN_REJECTED', category: 'AUTH', message: 'Cross-origin requests are not accepted.', retryable: false } });
+        return;
+      }
+      if (['POST', 'PUT', 'PATCH'].includes(req.method ?? '') && url.pathname.startsWith('/v1/') && url.pathname !== '/v1/health') {
+        const contentType = req.headers['content-type']?.split(';', 1)[0]?.trim().toLowerCase();
+        if (contentType !== 'application/json') {
+          sendJson(res, 400, { error: { code: 'JSON_REQUIRED', category: 'VALIDATION', message: 'Mutating requests must use application/json.', retryable: false } });
+          return;
+        }
+      }
       if (token && url.pathname.startsWith('/v1/') && url.pathname !== '/v1/health') {
         const provided = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
-        if (provided !== token) {
+        if (!bearerMatches(provided, token)) {
           sendJson(res, 401, {
             error: {
               code: 'AUTH_REQUIRED',
