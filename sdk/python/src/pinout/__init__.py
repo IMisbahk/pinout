@@ -20,6 +20,7 @@ stream progress from, or cancel safely.
 
 from .client import Device, Operation, Pinout, PinoutError
 from .errors import (
+    ConfigurationError,
     LeaseConflict,
     OperationFailed,
     PolicyRejected,
@@ -27,6 +28,9 @@ from .errors import (
     Timeout,
     Unauthorized,
     UnsupportedCapability,
+    TransportError,
+    ValidationError,
+    ModuleError,
 )
 
 __all__ = [
@@ -41,5 +45,9 @@ __all__ = [
     "Timeout",
     "Unauthorized",
     "UnsupportedCapability",
+    "ConfigurationError",
+    "TransportError",
+    "ValidationError",
+    "ModuleError",
 ]
 __version__ = "0.0.1a1"
