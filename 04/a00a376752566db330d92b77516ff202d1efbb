@@ -1,0 +1,23 @@
+packages/daemon/src/httpServer.ts
+  s_d5247e323998d9::t_89b4ba98204288 146-150
+packages/core/tests/runtime.test.ts
+  s_d5247e323998d9::t_89b4ba98204288 159-179
+packages/core/src/runtime/runtime.ts
+  s_d5247e323998d9::t_89b4ba98204288 3,24-25,43,53,200-202,225-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "04a00a376752566db330d92b77516ff202d1efbb",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
