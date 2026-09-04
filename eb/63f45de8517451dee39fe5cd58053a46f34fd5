@@ -1,0 +1,33 @@
+packages/core/src/home/moduleStore.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 81-83,92-94,122-125,128-130,134-138,141-142,145-146
+packages/core/tests/webSocketTransport.test.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 16-18,22-24,28-30,34-36
+packages/protocols-scpi/tests/instruments.test.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 150-152
+packages/daemon/src/streamSocket.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 45-48
+packages/core/tests/deviceSafetyIntegration.test.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 30-34
+packages/core/tests/moduleEcosystem.test.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 135-137,142-144
+packages/core/src/module/conformance.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 56-63,65-71,141-147,151-153
+packages/core/src/module/manifest.ts
+  s_5b48326d004dcf::t_0e1a9ec9c0a0fa 39-56,64-75,87-95,132-135,174-178,180-181,187-188,194-195,200-201,203-204,206-222
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "eb63f45de8517451dee39fe5cd58053a46f34fd5",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
