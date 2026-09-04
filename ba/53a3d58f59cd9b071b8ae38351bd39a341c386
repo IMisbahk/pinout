@@ -1,0 +1,33 @@
+packages/core/src/operation/operationManager.ts
+  s_d5247e323998d9::t_fd0b242356fb3f 442
+  s_d5247e323998d9::t_7be937b6604999 674
+  s_d5247e323998d9::t_a4eee5ebf8ad18 213-214
+  s_d5247e323998d9::t_6d2df2ca6622be 255
+  s_d5247e323998d9::t_3aebf5d2bcd301 19-20,114-115,122,126-157,169-171,216,218,257
+  s_d5247e323998d9::t_ce7eaf32bf90d7 113,158-168
+  s_d5247e323998d9::t_6a29e8b79b9d48 172-185,215,217,219-234,256,258-259,274,440-441,464,479,499,526-536,681-703
+packages/core/src/operation/idempotencyStore.ts
+  s_d5247e323998d9::t_24d91fed154de6 30,130
+  s_d5247e323998d9::t_7d35b50fa1093b 111-116
+  s_d5247e323998d9::t_03529a165d3d64 34
+  s_d5247e323998d9::t_a00d12700e8e80 33,52,101,118-119,124-129,131-138
+  s_d5247e323998d9::t_c62bf58d103b86 117,139-142
+packages/core/tests/operations.test.ts
+  s_d5247e323998d9::t_82f51d6ba45afb 3,26-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ba53a3d58f59cd9b071b8ae38351bd39a341c386",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
