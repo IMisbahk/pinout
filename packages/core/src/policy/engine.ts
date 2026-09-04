@@ -103,9 +103,7 @@ export function assertFreshState(
       {
         device: context.deviceId,
         capability: context.capability,
-        observedAt,
-        maxStateAgeMs: maxAgeMs,
-        ageMs: age,
+        details: { observedAt, maxStateAgeMs: maxAgeMs, ageMs: age },
       },
     );
   }

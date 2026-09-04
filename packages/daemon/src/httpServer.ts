@@ -138,7 +138,8 @@ export class DaemonContext {
         );
         this.events.publish({ kind: 'operation', at: event.at, data: { ...event } });
       },
-    });
+    }, undefined, { journal: this.journal });
+    void this.operations.hydrate();
 
     // The daemon is the policy authority for an already-registered runtime.
     // Reattach every device before accepting requests so direct runtime calls
