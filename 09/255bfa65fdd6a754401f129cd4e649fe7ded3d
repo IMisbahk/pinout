@@ -1,0 +1,43 @@
+packages/core/src/home/moduleStore.ts
+  s_d5247e323998d9::t_a9c04c1d96f911 117
+  s_d5247e323998d9::t_aa479c911315f2 9,11,30-32,72,80-82,89-91,106-108,116,118-134
+  s_d5247e323998d9::t_50fe398f6c7e25 135
+packages/core/tests/moduleEcosystem.test.ts
+  s_d5247e323998d9::t_c827b3c962019d 1,131-145
+  s_d5247e323998d9::t_0571207219ea09 16
+  s_d5247e323998d9::t_bc7889c39121d1 146
+packages/core/src/module/conformance.ts
+  s_d5247e323998d9::t_379faf7c03d7c6 55-57
+  s_d5247e323998d9::t_447be2ea74973b 53-54,58-62,124-134
+packages/module-host/src/manifestTypes.ts
+  s_d5247e323998d9::t_213afc08ac51c3 1-4
+packages/cli/src/pinoutHomeCommands.ts
+  s_d5247e323998d9::t_a9c04c1d96f911 62
+  s_d5247e323998d9::t_74dd1720c64fcf 58-60,66-67
+packages/core/src/spec/types.ts
+  s_d5247e323998d9::t_cb722f05ce05a9 419,427-428,430-432
+packages/core/src/module/manifest.ts
+  s_d5247e323998d9::t_2504f2f66defb6 14-19,26,39-41,46-50,63-64,72-75,94-96,98-100,138-167
+  s_d5247e323998d9::t_e9f7beba625a8c 61-62,65
+packages/generator/src/emit/moduleEmitter.ts
+  s_d5247e323998d9::t_cb722f05ce05a9 84,86-88
+  s_d5247e323998d9::t_a9c04c1d96f911 85
+packages/core/src/index.ts
+  s_d5247e323998d9::t_213afc08ac51c3 152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "09255bfa65fdd6a754401f129cd4e649fe7ded3d",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
