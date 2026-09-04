@@ -1,0 +1,26 @@
+packages/core/src/spec/types.ts
+  s_d5247e323998d9::t_1f3c6a41b5fa75 250-258,283-284
+packages/core/src/operation/operationManager.ts
+  s_d5247e323998d9::t_1f3c6a41b5fa75 239,242-243,339
+packages/core/tests/operations.test.ts
+  s_d5247e323998d9::t_1f3c6a41b5fa75 20,126-129,146,149,172-178,180-186
+  s_d5247e323998d9::t_fc9da3966e5c8a 179
+  s_d5247e323998d9::t_3dcbd6cd2a7048 292
+  s_d5247e323998d9::t_8c8b57d7c26222 187-188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "daa5b589155e6be7dad3d02f80c23377107a1c01",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
