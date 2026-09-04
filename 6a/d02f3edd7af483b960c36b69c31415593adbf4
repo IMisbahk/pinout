@@ -1,0 +1,23 @@
+packages/generator/tests/provenance.test.ts
+  s_d5247e323998d9::t_b28343e09d5770 96-97
+packages/generator/src/types/ir.ts
+  s_d5247e323998d9::t_b28343e09d5770 58-59
+packages/generator/src/safety/provenance.ts
+  s_d5247e323998d9::t_b28343e09d5770 209-215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "6ad02f3edd7af483b960c36b69c31415593adbf4",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
