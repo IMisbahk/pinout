@@ -49,7 +49,10 @@ export interface DiscoveredCandidate {
 export interface DiscoveryOptions {
   timeoutMs?: number;
   /** Opt-in network probing. Off by default; bounded and never a subnet scan. */
-  network?: { enabled: boolean; endpoints?: Array<{ host: string; port: number }> };
+  network?: {
+    enabled: boolean;
+    endpoints?: Array<{ host: string; port: number; probe?: 'pinout-daemon' }>;
+  };
   /** Injectable serial-port lister for tests. */
   listSerialPorts?: () => Promise<
     Array<{ path: string; manufacturer?: string; vendorId?: string; productId?: string }>

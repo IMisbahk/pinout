@@ -534,11 +534,15 @@ export function networkProbePlugin(): DiscoveryPlugin {
       const timeoutMs = options.timeoutMs ?? 300;
 
       const results = await Promise.all(
-        endpoints.map(async (endpoint: { host: string; port: number }) => {
-          // A Pinout daemon answers its health check on any port it is
-          // configured with; probe that FIRST for explicitly supplied
-          // endpoints, then fall back to well-known-port signatures.
-          const daemonOk = await probePinoutDaemon(endpoint.host, endpoint.port, timeoutMs);
+        endpoints.map(async (endpoint: { host: string; port: number; probe?: 'pinout-daemon' }) => {
+          // HTTP is only sent to the conventional daemon port or when the
+          // caller explicitly flags an endpoint as a Pinout daemon. Other
+          // endpoints receive a connect-only probe, keeping discovery
+          // passive for Modbus/MQTT/SCPI services.
+          const daemonOk =
+            endpoint.port === 8787 || endpoint.probe === 'pinout-daemon'
+              ? await probePinoutDaemon(endpoint.host, endpoint.port, timeoutMs)
+              : false;
           if (daemonOk) {
             return [
               {
