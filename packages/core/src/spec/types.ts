@@ -416,7 +416,7 @@ export type SupportStatus =
   | 'EXPERIMENTAL';
 
 export interface ModuleManifestV1 {
-  schemaVersion: '1';
+  schemaVersion: 1;
   id: string;
   version: string;
   publisher?: string;
@@ -424,10 +424,12 @@ export interface ModuleManifestV1 {
   runtime: 'node' | 'python';
   capabilities: string[];
   /** Minimum Pinout version this module works with. */
-  requiresPinout?: string;
+  entrypoint: string;
+  pinout?: { minimumVersion?: string; maximumMajor?: number };
   permissions?: ModulePermission[];
-  simulation?: SimulationDescriptor;
-  support?: SupportStatus;
+  simulation: { provided: boolean; simulator?: string; notes?: string };
+  status: 'CANDIDATE' | 'REVIEWED' | 'TESTED';
+  provenance?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
 }
 

@@ -55,12 +55,16 @@ export function registerModuleCommands(
     .description('Install a module into the local Pinout registry (~/.pinout).')
     .argument('<path>', 'path to built module directory')
     .option('--force', 'replace an existing installation')
-    .action(async (modulePath: string, options: { force?: boolean }) => {
+    .option('--allow-candidate', 'install a generated candidate after reviewing it')
+    .option('--downgrade', 'allow replacing an installed module with a lower version')
+    .action(async (modulePath: string, options: { force?: boolean; allowCandidate?: boolean; downgrade?: boolean }) => {
       const output = outputFor(program, io);
-      const installOptions: { force?: boolean; home?: string } = {};
+      const installOptions: { force?: boolean; home?: string; allowCandidate?: boolean; downgrade?: boolean } = {};
       if (options.force) {
         installOptions.force = true;
       }
+      if (options.allowCandidate) installOptions.allowCandidate = true;
+      if (options.downgrade) installOptions.downgrade = true;
       const record = await installModuleFromPath(modulePath, installOptions);
       output.log(`Installed ${record.id}@${record.version} → ${record.installPath}`);
     });

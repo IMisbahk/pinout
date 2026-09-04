@@ -149,6 +149,7 @@ export {
   MODULE_MANIFEST_FILENAME,
   parseModuleManifest,
   readModuleManifestFromFile,
+  type PinoutModuleManifest,
 } from './module/manifest.js';
 export { loadModuleFromDirectory, type LoadedModule } from './module/loadModule.js';
 export {
