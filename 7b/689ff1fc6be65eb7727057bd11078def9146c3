@@ -1,0 +1,47 @@
+docs/adr/0003-serial-reset-and-handshake.md
+  s_5b48326d004dcf::t_cd0eff362a3668 1-12
+docs/coffee-machine.md
+  s_5b48326d004dcf::t_cd0eff362a3668 1-19
+docs/adr/0005-python-package-name.md
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-5
+docs/hardware-support.md
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-7
+docs/adr/0004-versioning-reset.md
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-5
+docs/mcp.md
+  s_5b48326d004dcf::t_fc5d64a39840ec 1-25
+docs/adr/0001-governed-runtime.md
+  s_5b48326d004dcf::t_cd0eff362a3668 1-12
+docs/index.md
+  s_5b48326d004dcf::t_cd0eff362a3668 10
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-9,11-13
+docs/safety-model.md
+  s_5b48326d004dcf::t_6a2f7bc1d76070 3-23
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-2
+docs/adr/0002-control-plane-topology.md
+  s_5b48326d004dcf::t_cd0eff362a3668 1-12
+docs/troubleshooting.md
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-6
+docs/releasing.md
+  s_5b48326d004dcf::t_ef96ee485a86e6 17-23
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-16,24-25
+docs/security-model.md
+  s_5b48326d004dcf::t_9b43dcad2cd8ac 1-2
+  s_5b48326d004dcf::t_6a2f7bc1d76070 3-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7b689ff1fc6be65eb7727057bd11078def9146c3",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
