@@ -236,8 +236,11 @@ export class OperationManager {
         },
       });
       this.emit('operation.cancelled', op.id, op.deviceId, op.capability, Date.now(), { reason });
+      this.settle(op.id);
       return Promise.resolve(this.publicSnapshot(op));
     }
+    op.status = 'cancelling';
+    op.cancelRequestedAt = Date.now();
     op.abort?.abort(new AbortedError(reason ?? 'Operation cancelled.'));
     return new Promise((resolve) => {
       this.waiters.set(op.id, [
@@ -333,6 +336,7 @@ export class OperationManager {
       const remaining = Math.max(0, op.deadline - Date.now());
       deadlineTimer = setTimeout(() => {
         if (!isTerminalOperationStatus(op.status) && op.status === 'running') {
+          op.abort?.abort(new AbortedError('Operation timed out.'));
           this.transition(op, 'timed_out', {
             error: {
               code: 'OPERATION_TIMEOUT',

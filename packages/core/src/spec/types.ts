@@ -247,7 +247,15 @@ export type Capability =
 // ---------------------------------------------------------------------------
 
 export type OperationStatus =
-  'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'timed_out' | 'rejected';
+  | 'queued'
+  | 'running'
+  /** Cancellation was requested; the backend has not yet acknowledged it. */
+  | 'cancelling'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'timed_out'
+  | 'rejected';
 
 export interface OperationProgress {
   /** 0..1, or `null` when the device cannot report determinate progress. */
@@ -272,6 +280,8 @@ export interface OperationSnapshot {
   idempotencyKey?: string;
   createdAt: number;
   startedAt?: number;
+  /** Timestamp of a cooperative cancellation request, if any. */
+  cancelRequestedAt?: number;
   finishedAt?: number;
   deadline?: number;
   progress: OperationProgress | null;
