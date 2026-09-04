@@ -1,0 +1,29 @@
+firmware/boards/arduino-uno.json
+  s_5b48326d004dcf::t_cd95c1c3563e34 6
+  s_5b48326d004dcf::t_466e8f0d7cdb04 9
+firmware/esp32-bridge/platformio.ini
+  s_5b48326d004dcf::t_1d5badd7ebe79c 17-30
+firmware/boards/esp32-devkit-v1.json
+  s_5b48326d004dcf::t_466e8f0d7cdb04 7,11-12
+firmware/esp32-bridge/src/main.cpp
+  s_5b48326d004dcf::t_2a45ec4d944e5c 73,75,82
+  s_5b48326d004dcf::t_1d5badd7ebe79c 34-37,40,44-49,54,69-72,74,76,83
+  s_5b48326d004dcf::t_edb7f7a7adc059 58-59,85-91,94,317-320,432-434,436,751-753,755,800-802,804
+  s_5b48326d004dcf::t_2d7957c1ea5079 84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9c8c32b668286b4708f9c6a1c11b326c6c23584f",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
