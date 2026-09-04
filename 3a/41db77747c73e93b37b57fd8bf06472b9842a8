@@ -1,0 +1,29 @@
+firmware/esp32-bridge/src/main.cpp
+  s_dea85c565656c1::t_d063f3c07e2ce6 899-906
+packages/core/src/session.ts
+  s_dea85c565656c1::t_ca38b0dc12a8ef 59-68,155,174,177
+  s_dea85c565656c1::t_efeec821fbfe74 69,201-223
+  s_dea85c565656c1::t_bd524119d2fb7e 224-226
+  s_dea85c565656c1::t_f7127c0e4a659f 227-228
+packages/core/tests/integration.test.ts
+  s_dea85c565656c1::t_ca38b0dc12a8ef 67-77,160-195
+  s_dea85c565656c1::t_1abbf5c3d8cedb 196-197
+docs/protocol.md
+  s_dea85c565656c1::t_ca38b0dc12a8ef 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3a41db77747c73e93b37b57fd8bf06472b9842a8",
+  "prompts": {},
+  "sessions": {
+    "s_dea85c565656c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a068a1-01d6-79c3-8491-2a6243ffe091",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
