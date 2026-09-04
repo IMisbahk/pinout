@@ -75,7 +75,6 @@ jobs:
 
   firmware:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -85,4 +84,12 @@ jobs:
         run: pip install platformio
       - name: Compile ESP32 firmware (compile-only)
         working-directory: firmware/esp32-bridge
-        run: pio run
+        run: pio run -e esp32dev
+      - name: Upload classic ESP32 firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-bridge-esp32dev
+          path: |
+            firmware/esp32-bridge/.pio/build/esp32dev/firmware.bin
+            firmware/esp32-bridge/.pio/build/esp32dev/firmware.elf
+          if-no-files-found: error
