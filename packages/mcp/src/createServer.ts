@@ -1,8 +1,42 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import type { Device, AgentTool } from '@pinout/core';
+import {
+  DeviceInstance,
+  PinoutRuntime,
+  ProtocolDeviceBackend,
+  type AgentTool,
+  type Device,
+} from '@pinout/core';
 
 export function createPinoutMcpServer(device: Device): Server {
+  // Keep the original single-device MCP API for compatibility, but place the
+  // device behind the same runtime boundary used by heterogeneous runtimes.
+  // No MCP tools may invoke a protocol Device directly.
+  const runtime = new PinoutRuntime();
+  const deviceId = 'mcp-device-01';
+  const instance = new DeviceInstance({
+    identity: {
+      id: deviceId,
+      moduleId: 'pinout/esp32',
+      deviceClass: 'microcontroller',
+      vendor: 'Espressif',
+      model: device.info.firmware,
+    },
+    backend: new ProtocolDeviceBackend(device),
+    capabilities: device.capabilities,
+    policies: [],
+    simulated: false,
+    activeTransportKind: 'protocol',
+    transportKinds: ['protocol'],
+    getOperationalState: () => ({
+      firmware: device.info.firmware,
+      version: device.info.version,
+      protocol: device.info.protocol,
+    }),
+  });
+  // register() currently completes synchronously before its resolved promise;
+  // retain the public synchronous factory while retaining runtime ownership.
+  void runtime.register(instance);
   const tools = device.toAgentTools();
   const toolByName = new Map(tools.map((tool) => [tool.name, tool]));
 
@@ -26,7 +60,7 @@ export function createPinoutMcpServer(device: Device): Server {
 
     const args = (request.params.arguments ?? {}) as Record<string, unknown>;
     try {
-      const result = await device.invoke(tool.name, args);
+      const result = await runtime.invoke(deviceId, tool.name, args, { owner: 'mcp-stdio' });
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         structuredContent: result,

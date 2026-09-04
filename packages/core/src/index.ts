@@ -191,6 +191,7 @@ export {
   resetRuntimeModulesForTests,
 } from './modules/registry.js';
 export { DeviceInstance } from './runtime/deviceInstance.js';
+export { ProtocolDeviceBackend } from './runtime/protocolBackend.js';
 export {
   CompositeDeviceBackend,
   createCompositeBackend,

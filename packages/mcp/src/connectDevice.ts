@@ -1,5 +1,6 @@
 import { connect, simulatedEsp32 } from '@pinout/core';
 import type { Device } from '@pinout/core';
+import type { Transport } from '@pinout/core';
 
 export interface PinoutMcpConnectOptions {
   mock?: boolean;
@@ -12,6 +13,16 @@ const defaultTimeoutMs = 5000;
 const defaultBaudRate = 115200;
 
 export async function connectPinoutDevice(options: PinoutMcpConnectOptions = {}): Promise<Device> {
+  return connect({
+    transport: await createMcpTransport(options),
+    timeoutMs: options.timeoutMs ?? readPositiveInt(process.env.PINOUT_TIMEOUT, defaultTimeoutMs),
+  });
+}
+
+/** Resolve the MCP bridge transport without connecting outside the runtime. */
+export async function createMcpTransport(
+  options: PinoutMcpConnectOptions = {},
+): Promise<Transport> {
   const mock = options.mock ?? process.env.PINOUT_MOCK === '1';
   const port = options.port ?? process.env.PINOUT_PORT;
   const baudRate = options.baudRate ?? readPositiveInt(process.env.PINOUT_BAUD, defaultBaudRate);
@@ -28,14 +39,11 @@ export async function connectPinoutDevice(options: PinoutMcpConnectOptions = {})
   }
 
   if (mock) {
-    return connect({ transport: simulatedEsp32(), timeoutMs });
+    return simulatedEsp32();
   }
 
   const { serialPort } = await import('@pinout/core/serial');
-  return connect({
-    transport: serialPort({ path: port as string, baudRate }),
-    timeoutMs,
-  });
+  return serialPort({ path: port as string, baudRate });
 }
 
 function readPositiveInt(raw: string | undefined, fallback: number): number {

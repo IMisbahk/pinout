@@ -6,7 +6,15 @@ import { runtimeToAgentTools, type RuntimeAgentTool } from '@pinout/core';
 const listDevicesToolName = 'pinout__list_devices';
 const describeDeviceToolName = 'pinout__describe_device';
 
-export function createRuntimeMcpServer(runtime: PinoutRuntime): Server {
+export interface RuntimeMcpServerOptions {
+  /** Principal associated with this MCP transport for lease-aware policies. */
+  owner?: string;
+}
+
+export function createRuntimeMcpServer(
+  runtime: PinoutRuntime,
+  options: RuntimeMcpServerOptions = {},
+): Server {
   const server = new Server(
     { name: 'pinout-runtime', version: '0.2.0' },
     { capabilities: { tools: {} } },
@@ -55,7 +63,9 @@ export function createRuntimeMcpServer(runtime: PinoutRuntime): Server {
 
     const args = (request.params.arguments ?? {}) as Record<string, unknown>;
     try {
-      const result = await runtime.invoke(tool.deviceId, tool.capability, args);
+      const result = await runtime.invoke(tool.deviceId, tool.capability, args, {
+        owner: options.owner ?? 'mcp-stdio',
+      });
       return success(result);
     } catch (error) {
       return formatToolError(error);
