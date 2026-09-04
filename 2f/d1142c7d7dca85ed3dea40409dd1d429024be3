@@ -1,0 +1,21 @@
+packages/core/tests/idempotencyAdversarial.test.ts
+  s_5b48326d004dcf::t_6e370d8fe6ac79 32,57,77,101,119
+packages/core/tests/fuzz.test.ts
+  s_5b48326d004dcf::t_6e370d8fe6ac79 243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "2fd1142c7d7dca85ed3dea40409dd1d429024be3",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
