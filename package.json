@@ -22,6 +22,8 @@
     "typecheck:tests": "tsc -p tsconfig.test.json --pretty",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "release:check": "node scripts/release-check.mjs --strict",
+    "release:dry-run": "node scripts/release-check.mjs",
     "pinout": "npm run build --silent && node packages/cli/dist/index.js",
     "example:blink": "npm run build --silent && tsx examples/blink.ts",
     "example:pwm": "npm run build --silent && tsx examples/pwm.ts",

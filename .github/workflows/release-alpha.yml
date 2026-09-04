@@ -1,0 +1,50 @@
+name: Release v0.0.1-alpha artifacts
+
+on:
+  push:
+    tags:
+      - 'v0.0.1-alpha*'
+
+permissions:
+  contents: read
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run build
+      - run: npm run release:check -- --version "${GITHUB_REF_NAME#v}"
+      - run: python -m pip install --disable-pip-version-check build
+      - name: Build Python distributions
+        run: |
+          python -m build --sdist --wheel --outdir "$RUNNER_TEMP/pinout-python" sdk/python
+          python -m build --sdist --wheel --outdir "$RUNNER_TEMP/pinout-python" sdk/python-module
+      - name: Collect npm dry-run metadata
+        run: |
+          mkdir -p "$RUNNER_TEMP/pinout-npm"
+          for workspace in packages/*; do
+            if [ -f "$workspace/package.json" ] && [ "$(node -p "require('./$workspace/package.json').private === true")" != "true" ]; then
+              npm pack --dry-run --json --workspace "$workspace" > "$RUNNER_TEMP/pinout-npm/$(basename "$workspace").json"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinout-v0.0.1-alpha-python
+          path: ${{ runner.temp }}/pinout-python/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinout-v0.0.1-alpha-npm-dry-run
+          path: ${{ runner.temp }}/pinout-npm/*.json
+          if-no-files-found: error
