@@ -1,0 +1,25 @@
+scripts/hil/esp32-c3-experimental.md
+  s_5b48326d004dcf::t_c9fb4bf66d55e3 1-8
+scripts/hil/esp32-classic.md
+  s_5b48326d004dcf::t_c9fb4bf66d55e3 1-22
+hardware/records/README.md
+  s_5b48326d004dcf::t_c9fb4bf66d55e3 1-6
+hardware/records/2026-09-04-esp32-classic-pending.md
+  s_5b48326d004dcf::t_c9fb4bf66d55e3 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "723adf42038856acf65d13f4648a0b60392f3dfe",
+  "prompts": {},
+  "sessions": {
+    "s_5b48326d004dcf": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06d61-5870-77d1-ae44-2616d8765036",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
