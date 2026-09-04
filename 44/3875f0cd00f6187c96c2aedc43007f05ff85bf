@@ -1,0 +1,24 @@
+scripts/release-check.mjs
+  s_d5247e323998d9::t_aecbefea2cfac4 1-98
+.github/workflows/release-alpha.yml
+  s_d5247e323998d9::t_ca912344bec0f8 6
+  s_d5247e323998d9::t_aecbefea2cfac4 1-5,7-50
+package.json
+  s_d5247e323998d9::t_aecbefea2cfac4 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "443875f0cd00f6187c96c2aedc43007f05ff85bf",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-terra"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
