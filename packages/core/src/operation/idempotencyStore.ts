@@ -27,8 +27,11 @@ export interface IdempotencyTombstone {
   deviceId: string;
   capability: string;
   owner: string | undefined;
+  idempotencyKey: string;
   status: string;
   createdAt: number;
+  result?: Record<string, unknown>;
+  error?: { code: string; message: string; retryable: boolean; details?: Record<string, unknown> };
   /** Last touched (used for LRU + retention). */
   lastUsedAt: number;
 }
@@ -46,6 +49,7 @@ export interface IdempotencyLookup {
   operationId?: string;
   /** True when the tombstone expired or was evicted before this lookup. */
   expiredOrEvicted?: boolean;
+  tombstone?: IdempotencyTombstone;
 }
 
 export class BoundedIdempotencyStore {
@@ -94,7 +98,7 @@ export class BoundedIdempotencyStore {
     // Reinsert to move to the end of Map iteration order (LRU behavior).
     this.tombstones.delete(id);
     this.tombstones.set(id, tombstone);
-    return { hit: true, operationId: tombstone.operationId };
+    return { hit: true, operationId: tombstone.operationId, tombstone: { ...tombstone } };
   }
 
   /** Record with an explicit pre-scoped key. */
@@ -104,7 +108,35 @@ export class BoundedIdempotencyStore {
     this.evictOverflow();
   }
 
+  updateUnder(
+    scopedKey: string,
+    patch: Partial<Pick<IdempotencyTombstone, 'status' | 'result' | 'error'>>,
+  ): void {
+    const existing = this.tombstones.get(scopedKey);
+    if (!existing) return;
+    this.tombstones.set(scopedKey, { ...existing, ...patch, lastUsedAt: this.nowFn() });
+  }
+
   size(): number {
+    return this.tombstones.size;
+  }
+
+  /** Import a previously journaled tombstone during process startup. */
+  hydrate(entries: IdempotencyTombstone[]): number {
+    for (const tombstone of entries) {
+      if (this.nowFn() - tombstone.createdAt <= this.retentionMs) {
+        this.tombstones.set(
+          BoundedIdempotencyStore.keyFor(
+            tombstone.deviceId,
+            tombstone.capability,
+            tombstone.owner,
+            tombstone.idempotencyKey,
+          ),
+          { ...tombstone },
+        );
+      }
+    }
+    this.evictOverflow();
     return this.tombstones.size;
   }
 

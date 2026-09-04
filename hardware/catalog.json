@@ -16,9 +16,9 @@
       "category": "embedded",
       "target": "ESP32 (classic DevKit, WROOM)",
       "integration": "firmware/esp32-bridge + @pinout/core esp32 driver",
-      "status": "IMPLEMENTED",
-      "testedHow": "unit tests against simulator; TCP/serial transport tests; compile-only CI",
-      "notes": "The hardware path (serial handshake, GPIO/PWM/ADC/I2C/SPI) is exercised by the SDK + firmware, but per-board behavior depends on deployment. Not certified."
+      "status": "COMPILE_TESTED",
+      "testedHow": "classic esp32dev firmware compile; unit tests against simulator; TCP/serial transport tests",
+      "notes": "The classic ESP32 is the alpha reference firmware. GPIO/PWM/ADC/I2C/SPI are simulator- and compile-tested, but no dated hardware-in-the-loop record exists. Not certified."
     },
     {
       "category": "embedded",
@@ -87,10 +87,10 @@
     {
       "category": "protocol",
       "target": "MQTT",
-      "integration": "@pinout/protocols-mqtt (Wave 2, in progress)",
-      "status": "PLANNED",
-      "testedHow": "none",
-      "notes": "Declarative topic\u2192state/event mapping design exists in spec docs."
+      "integration": "@pinout/protocols-mqtt MQTT 3.1.1 client + declarative topic\u2192capability mapping",
+      "status": "IMPLEMENTED",
+      "testedHow": "unit and regression tests with scripted broker traffic",
+      "notes": "Adapter package only: it is not yet a configured runtime device backend or a physical-equipment verification."
     },
     {
       "category": "protocol",
@@ -171,6 +171,14 @@
       "status": "SIMULATED",
       "testedHow": "simulator unit tests; policy-engine integration tests",
       "notes": ""
+    },
+    {
+      "category": "lab",
+      "target": "Coffee machine semantics",
+      "integration": "@pinout/core coffee-machine module + deterministic simulator",
+      "status": "SIMULATED",
+      "testedHow": "simulator tests including safe-state behavior and fault injection",
+      "notes": "Water, temperature, heater, pump, and brew capabilities. No physical coffee machine backend is claimed."
     },
     {
       "category": "platform",

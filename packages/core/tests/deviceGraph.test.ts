@@ -134,7 +134,7 @@ describe('DeviceGraph', () => {
       'gripper',
       'wrist-camera',
     ]);
-    expect(graph.query({ parent: undefined }).length).toBeGreaterThan(0);
+    expect(graph.query({}).length).toBeGreaterThan(0);
     expect(graph.query({ moduleId: 'pinout/force' })).toHaveLength(1);
   });
 

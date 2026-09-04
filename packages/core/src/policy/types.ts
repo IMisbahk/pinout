@@ -22,6 +22,8 @@ export interface StateEqualsPolicy {
   capability: string;
   field: string;
   equals: string | number | boolean;
+  /** Maximum acceptable age of the observed state, in milliseconds. */
+  maxStateAgeMs?: number;
   message?: string;
 }
 

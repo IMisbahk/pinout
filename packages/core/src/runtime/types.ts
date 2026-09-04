@@ -37,12 +37,23 @@ export interface RuntimeEventEnvelope {
 
 export type RuntimeEventHandler = (event: RuntimeEventEnvelope) => void;
 
+export interface BackendInvocationContext {
+  signal?: AbortSignal;
+  reportProgress?: (fraction: number | null, message?: string) => void;
+}
+
 export interface DeviceBackend {
   readonly kind: 'protocol' | 'simulated' | 'composite';
-  invoke(action: string, payload: Record<string, unknown>): Promise<Record<string, unknown>>;
+  invoke(
+    action: string,
+    payload: Record<string, unknown>,
+    context?: BackendInvocationContext,
+  ): Promise<Record<string, unknown>>;
   close(): Promise<void>;
   subscribe(handler: (event: string, payload: Record<string, unknown>) => void): () => void;
   getOperationalState?(): Record<string, unknown>;
+  /** Best-effort command that places this backend in its module-defined safe state. */
+  safeState?(): Promise<Record<string, unknown> | void>;
 }
 
 export interface PinoutModuleDefinition {

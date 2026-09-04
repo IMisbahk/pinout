@@ -1,6 +1,6 @@
 {
   "name": "@pinout/cli",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha.1",
   "description": "Command-line interface for Pinout.",
   "type": "module",
   "bin": {
@@ -21,23 +21,28 @@
     }
   },
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "prepack": "npm run build"
   },
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=20"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pinoutlabs/pinout.git"
+    "url": "git+https://github.com/IMisbahk/pinout.git"
   },
   "dependencies": {
-    "@pinout/core": "*",
-    "@pinout/generator": "*",
+    "@pinout/core": "0.0.1-alpha.1",
     "commander": "^12.1.0",
-    "@pinout/daemon": "*",
-    "@pinout/module-host": "*",
-    "@pinout/discovery": "*"
-  }
+    "@pinout/daemon": "0.0.1-alpha.1",
+    "@pinout/discovery": "0.0.1-alpha.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ]
 }

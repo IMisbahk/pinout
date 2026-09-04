@@ -48,17 +48,17 @@ describe('Journal', () => {
     expect(b.sequence).toBe(2);
   });
 
-  it('filters by device, kind, and sequence', () => {
+  it('filters by device, kind, and sequence', async () => {
     const journal = new Journal();
     journal.append('invocation.requested', { deviceId: 'arm-01' }, {});
     journal.append('invocation.requested', { deviceId: 'chamber-01' }, {});
     journal.append('policy.rejected', { deviceId: 'arm-01' }, {});
 
-    expect(journal.query({ deviceId: 'arm-01' })).resolves.toHaveLength(2);
-    expect(
-      journal.query({ kinds: ['policy.rejected'] }).then((entries) => entries[0].deviceId),
+    await expect(journal.query({ deviceId: 'arm-01' })).resolves.toHaveLength(2);
+    await expect(
+      journal.query({ kinds: ['policy.rejected'] }).then((entries) => entries[0]!.deviceId),
     ).resolves.toBe('arm-01');
-    expect(journal.query({ afterSequence: 2 })).resolves.toHaveLength(1);
+    await expect(journal.query({ afterSequence: 2 })).resolves.toHaveLength(1);
   });
 
   it('redacts secrets before they reach storage', async () => {
@@ -69,7 +69,7 @@ describe('Journal', () => {
       { deviceId: 'd' },
       { token: 'super-secret', timeoutMs: 5 },
     );
-    const stored = storage.readAll()[0];
+    const stored = storage.readAll()[0]!;
     expect(JSON.stringify(stored)).not.toContain('super-secret');
     expect(stored.payload?.token).toBe('[REDACTED]');
     expect(stored.payload?.timeoutMs).toBe(5);
@@ -95,7 +95,7 @@ describe('Journal', () => {
 
     const entries = await new Journal({ storage: new FileJournalStorage(filePath) }).query();
     expect(entries.map((e) => e.kind)).toEqual(['invocation.requested', 'invocation.completed']);
-    expect(entries[1].payload?.ok).toBe(true);
+    expect(entries[1]!.payload?.ok).toBe(true);
 
     await rm(dir, { recursive: true, force: true });
   });

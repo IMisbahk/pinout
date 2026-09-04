@@ -10,7 +10,7 @@ Minimal module::
 
     class MyDevice(PinoutModule):
         id = "vendor/mydevice"
-        version = "0.1.0"
+        version = "0.0.1-alpha.1"
         device_class = "sensor.custom"
         capabilities = [
             capability("temperature.read", "Read the temperature", output={"value": "number"}),
@@ -43,4 +43,4 @@ __all__ = [
     "run_module",
     "run_module_stdio",
 ]
-__version__ = "0.1.0"
+__version__ = "0.0.1a1"

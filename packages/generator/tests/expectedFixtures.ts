@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import type { ExpectedFixture } from '../../src/eval/evaluate.js';
+import type { ExpectedFixture } from '../src/eval/evaluate.js';
 
 export const repoRoot = resolve(import.meta.dirname, '../../..');
 

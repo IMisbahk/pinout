@@ -13,19 +13,27 @@ class CapturingLogger implements Logger {
   readonly entries: Array<{ level: LogLevel; message: string; context?: LogContext }> = [];
 
   debug(message: string, context?: LogContext): void {
-    this.entries.push({ level: 'debug', message, context });
+    this.entries.push(
+      context === undefined ? { level: 'debug', message } : { level: 'debug', message, context },
+    );
   }
 
   info(message: string, context?: LogContext): void {
-    this.entries.push({ level: 'info', message, context });
+    this.entries.push(
+      context === undefined ? { level: 'info', message } : { level: 'info', message, context },
+    );
   }
 
   warn(message: string, context?: LogContext): void {
-    this.entries.push({ level: 'warn', message, context });
+    this.entries.push(
+      context === undefined ? { level: 'warn', message } : { level: 'warn', message, context },
+    );
   }
 
   error(message: string, context?: LogContext): void {
-    this.entries.push({ level: 'error', message, context });
+    this.entries.push(
+      context === undefined ? { level: 'error', message } : { level: 'error', message, context },
+    );
   }
 
   child(): Logger {

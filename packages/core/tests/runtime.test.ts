@@ -2,10 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   DuplicateDeviceError,
   DeviceNotFoundError,
+  PinoutRuntime,
+  relayModule,
+  pumpModule,
   PolicyConstraintViolation,
   PolicyPreconditionFailed,
   createHeterogeneousRuntime,
   defaultHeterogeneousDeviceIds,
+  HaltCoordinator,
+  SafetyEngine,
 } from '@pinout/core';
 
 const ids = defaultHeterogeneousDeviceIds;
@@ -93,6 +98,106 @@ describe('PinoutRuntime heterogeneous', () => {
       await expect(runtime.invoke('missing', 'status.read', {})).rejects.toBeInstanceOf(
         DeviceNotFoundError,
       );
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('blocks module devices through the runtime halt gate', async () => {
+    const runtime = await createHeterogeneousRuntime({ motionDelayMs: 0 });
+    try {
+      // The runtime owns the coordinator used by all module-created devices.
+      expect(runtime.halt).toBeDefined();
+      runtime.halt.halt('operator requested halt');
+      await expect(
+        runtime.invoke(ids.esp32, 'gpio.write', { pin: 2, value: true }),
+      ).rejects.toThrow(/operator requested halt/i);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('drives ESP32 backends to their safe state on halt', async () => {
+    const runtime = await createHeterogeneousRuntime({
+      motionDelayMs: 0,
+      includeArm: false,
+      includeChamber: false,
+    });
+    const safeStateEvents: Array<Record<string, unknown>> = [];
+    runtime.on((event) => {
+      if (event.deviceId === ids.esp32 && event.event === 'device.safe_state_applied') {
+        safeStateEvents.push(event.payload);
+      }
+    });
+    try {
+      await runtime.invoke(ids.esp32, 'gpio.mode', { pin: 2, mode: 'output' });
+      await runtime.invoke(ids.esp32, 'gpio.write', { pin: 2, value: true });
+      runtime.halt.halt('safe state test');
+      await runtime.waitForSafeState();
+      expect(safeStateEvents).toEqual([{ applied: true, stoppedPins: [2] }]);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('uses injected governance for registered devices', async () => {
+    const halt = new HaltCoordinator();
+    const safetyEngine = new SafetyEngine({ rules: [] });
+    const runtime = new PinoutRuntime({ halt, safetyEngine });
+    try {
+      const device = await runtime.registerModuleDevice(relayModule, {
+        id: 'esp-injected',
+        simulated: true,
+      });
+      expect(runtime.halt).toBe(halt);
+      expect(runtime.safetyEngine).toBe(safetyEngine);
+      halt.halt('injected halt');
+      await expect(device.invoke('relay.set', { on: true })).rejects.toThrow(/injected halt/i);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('fails closed when deployment policy widens a module constraint', async () => {
+    const runtime = new PinoutRuntime();
+    try {
+      await expect(
+        runtime.registerModuleDevice(pumpModule, {
+          id: 'pump-conflict',
+          simulated: true,
+          deploymentPolicies: [
+            {
+              kind: 'numericRange',
+              capability: 'pump.set',
+              field: 'speed',
+              min: 0,
+              max: 120,
+            },
+          ],
+        }),
+      ).rejects.toMatchObject({ code: 'POLICY_CONSTRAINT_CONFLICT' });
+      expect(runtime.hasDevice('pump-conflict')).toBe(false);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('journals requested, completed, and failed runtime invocations', async () => {
+    const runtime = await createHeterogeneousRuntime({
+      motionDelayMs: 0,
+      includeArm: false,
+      includeChamber: false,
+    });
+    try {
+      await runtime.invoke(ids.esp32, 'gpio.read', { pin: 2 });
+      await expect(runtime.invoke(ids.esp32, 'not.a.capability', {})).rejects.toBeDefined();
+      const entries = await runtime.journal.query({ deviceId: ids.esp32 });
+      expect(entries.map((entry) => entry.kind)).toEqual([
+        'invocation.requested',
+        'invocation.completed',
+        'invocation.requested',
+        'invocation.failed',
+      ]);
     } finally {
       await runtime.close();
     }

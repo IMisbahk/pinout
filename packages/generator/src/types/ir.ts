@@ -55,6 +55,8 @@ export interface CandidateSafetyConstraint {
   field?: string;
   minimum?: number;
   maximum?: number;
+  /** Unit declared alongside the numeric bound, when the source provides one. */
+  unit?: string;
   equals?: string | number | boolean;
   message?: string;
   confidence: number;

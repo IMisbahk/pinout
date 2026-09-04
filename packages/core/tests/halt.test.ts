@@ -62,7 +62,7 @@ describe('HaltCoordinator', () => {
     const halt = new HaltCoordinator({ onStateChange });
     halt.halt('x');
     expect(onStateChange).toHaveBeenCalledTimes(1);
-    const change = onStateChange.mock.calls[0][0];
+    const change = onStateChange.mock.calls[0]![0];
     expect(change.from).toBe('NORMAL');
     expect(change.to).toBe('HALTED');
     expect(safetyStateEventName(change.to)).toBe('safety.halted');

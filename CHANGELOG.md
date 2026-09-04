@@ -24,7 +24,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - **Protocol-neutral tool export** (`runtimeToToolDefinitions`): every capability as a tool definition with derived danger classification for any AI vendor's function-call format.
 - **Runtime integration**: `DeviceInstance.invoke` now runs the halt gate, v2 safety rules, and lease checks, and supports `dryRun` and `owner` options.
 - **CI**: OS (Linux/macOS/Windows) × Node (20/22) matrix, Python SDK job (3.10/3.12), and MicroPython bridge protocol validation.
-- Baseline record in `docs/mega-sprint-baseline.md`; spec docs in `docs/spec/`; daemon guide in `docs/daemon.md`.
+- Spec docs live in `docs/spec/`; the daemon guide is `docs/daemon.md`.
 
 ### Changed (platform v1 sprint)
 
@@ -127,5 +127,5 @@ All notable changes to this project are documented here. The format follows [Kee
 - ESP32 bridge firmware speaking protocol v1 over UART.
 - `examples/blink.ts` sample.
 
-[Unreleased]: https://github.com/pinoutlabs/pinout/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/pinoutlabs/pinout/releases/tag/v0.1.0
+[Unreleased]: https://github.com/IMisbahk/pinout/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/IMisbahk/pinout/releases/tag/v0.1.0

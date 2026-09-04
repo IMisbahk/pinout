@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
-import type { Device } from '@pinout/core';
+export interface ScriptInvoker {
+  invoke(action: string, payload: Record<string, unknown>): Promise<Record<string, unknown>>;
+}
 
 export interface ScriptStep {
   action: string;
@@ -36,7 +38,10 @@ export async function readScriptFile(path: string): Promise<ScriptStep[]> {
   return readScriptSteps(await readFile(path, 'utf8'));
 }
 
-export async function runScript(device: Device, steps: ScriptStep[]): Promise<ScriptResult[]> {
+export async function runScript(
+  device: ScriptInvoker,
+  steps: ScriptStep[],
+): Promise<ScriptResult[]> {
   const results: ScriptResult[] = [];
   for (const step of steps) {
     const result = await device.invoke(step.action, step.payload ?? {});

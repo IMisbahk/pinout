@@ -44,6 +44,32 @@ describe('policy engine', () => {
     ).toThrow(PolicyPreconditionFailed);
   });
 
+  it('fails closed when a stateEquals observation is stale or missing', () => {
+    const rule = {
+      kind: 'stateEquals' as const,
+      capability: 'experiment.start',
+      field: 'door',
+      equals: 'closed' as const,
+      maxStateAgeMs: 100,
+    };
+    expect(() =>
+      evaluatePolicies([rule], {
+        deviceId: 'chamber-sim-01',
+        capability: 'experiment.start',
+        payload: {},
+        operationalState: { door: 'closed' },
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'SAFETY_STATE_STALE' }));
+    expect(() =>
+      evaluatePolicies([rule], {
+        deviceId: 'chamber-sim-01',
+        capability: 'experiment.start',
+        payload: {},
+        operationalState: { door: 'closed', observedAt: Date.now() },
+      }),
+    ).not.toThrow();
+  });
+
   it('rejects workspace violations for motion.move_to', () => {
     expect(() =>
       evaluatePolicies([robotArmWorkspacePolicy], {

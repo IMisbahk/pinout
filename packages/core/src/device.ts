@@ -62,6 +62,7 @@ export class Device {
   async invoke(
     action: string,
     payload: Record<string, unknown> = {},
+    options: { signal?: AbortSignal } = {},
   ): Promise<Record<string, unknown>> {
     if (!this.supports(action)) {
       throw new UnsupportedCapabilityError(action);
@@ -69,7 +70,7 @@ export class Device {
     const descriptor = describeCapability(action);
     const checked = validateInputSchema(descriptor.inputSchema, payload);
     const normalized = validateAction(this.info.firmware, action, checked);
-    const result = await this.session.request(action, normalized);
+    const result = await this.session.request(action, normalized, options);
     return validateOutputSchema(descriptor.outputSchema, result);
   }
 

@@ -1,22 +1,37 @@
 {
   "name": "@pinout/discovery",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha.1",
   "description": "Device discovery for Pinout — serial, USB, mDNS, and opt-in bounded network probing. Discovery never actuates hardware.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pinoutlabs/pinout.git"
+    "url": "git+https://github.com/IMisbahk/pinout.git"
   },
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
-    "test": "vitest run"
+    "build": "tsc -b",
+    "test": "vitest run",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
-    "@pinout/core": "*"
+    "@pinout/core": "0.0.1-alpha.1"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
   }
 }

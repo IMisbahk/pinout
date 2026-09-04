@@ -1,8 +1,13 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createHeterogeneousRuntime, loadPinoutConfig } from '@pinout/core';
-import { connectPinoutDevice } from './connectDevice.js';
-import { createPinoutMcpServer } from './createServer.js';
+import {
+  createHeterogeneousRuntime,
+  esp32Module,
+  loadPinoutConfig,
+  PinoutRuntime,
+} from '@pinout/core';
+import { createMcpTransport } from './connectDevice.js';
 import { createRuntimeMcpServer } from './createRuntimeServer.js';
+import { createDaemonMcpServer } from './createDaemonServer.js';
 
 export async function runStdioServer(): Promise<void> {
   if (process.env.PINOUT_DEMO === 'heterogeneous') {
@@ -10,8 +15,31 @@ export async function runStdioServer(): Promise<void> {
     return;
   }
 
-  const device = await connectPinoutDevice();
-  const server = createPinoutMcpServer(device);
+  if (process.env.PINOUT_MCP_EMBEDDED !== '1') {
+    const server = createDaemonMcpServer({
+      ...(process.env.PINOUT_DAEMON_URL ? { baseUrl: process.env.PINOUT_DAEMON_URL } : {}),
+      ...(process.env.PINOUT_TOKEN ? { token: process.env.PINOUT_TOKEN } : {}),
+      owner: process.env.PINOUT_OWNER ?? 'mcp-stdio',
+    });
+    const transport = new StdioServerTransport();
+    let closing = false;
+    const shutdown = async (): Promise<void> => {
+      if (closing) return;
+      closing = true;
+      await server.close().catch(() => undefined);
+    };
+    attachShutdown(shutdown);
+    await server.connect(transport);
+    await shutdown();
+    return;
+  }
+
+  const runtime = new PinoutRuntime();
+  await runtime.registerModuleDevice(esp32Module, {
+    id: 'esp32-01',
+    transport: await createMcpTransport(),
+  });
+  const server = createRuntimeMcpServer(runtime, { owner: 'mcp-stdio' });
   const transport = new StdioServerTransport();
 
   let closing = false;
@@ -21,7 +49,7 @@ export async function runStdioServer(): Promise<void> {
     }
     closing = true;
     await server.close().catch(() => undefined);
-    await device.close().catch(() => undefined);
+    await runtime.close().catch(() => undefined);
   };
 
   attachShutdown(shutdown);
@@ -34,7 +62,7 @@ async function runHeterogeneousRuntimeServer(): Promise<void> {
   const runtime = await createHeterogeneousRuntime({
     useHardwareEsp32: Boolean(config.port),
   });
-  const server = createRuntimeMcpServer(runtime);
+  const server = createRuntimeMcpServer(runtime, { owner: 'mcp-stdio' });
   const transport = new StdioServerTransport();
 
   let closing = false;

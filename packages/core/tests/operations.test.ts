@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AbortedError } from '../src/errors.js';
+import { Journal } from '../src/journal/journal.js';
 import {
   OperationManager,
   isTerminalOperationStatus,
@@ -17,10 +18,43 @@ describe('isTerminalOperationStatus', () => {
     expect(isTerminalOperationStatus('timed_out')).toBe(true);
     expect(isTerminalOperationStatus('queued')).toBe(false);
     expect(isTerminalOperationStatus('running')).toBe(false);
+    expect(isTerminalOperationStatus('cancelling')).toBe(false);
   });
 });
 
 describe('OperationManager', () => {
+  it('rehydrates terminal idempotency outcomes from a journal after restart', async () => {
+    const journal = new Journal();
+    const first = new OperationManager({}, undefined, { journal });
+    const original = first.begin({
+      deviceId: 'arm-01',
+      capability: 'motion.move_to',
+      owner: 'operator',
+      idempotencyKey: 'durable-1',
+      run: async () => {
+        throw new Error('driver fault');
+      },
+    });
+    await expect(original.handle.waitForResult()).rejects.toThrow('driver fault');
+
+    const restored = new OperationManager({}, undefined, { journal });
+    await restored.hydrate();
+    let executed = false;
+    const retry = restored.begin({
+      deviceId: 'arm-01',
+      capability: 'motion.move_to',
+      owner: 'operator',
+      idempotencyKey: 'durable-1',
+      run: async () => {
+        executed = true;
+        return { unsafe: true };
+      },
+    });
+    expect(retry.deduped).toBe(true);
+    expect(retry.handle.snapshot().status).toBe('failed');
+    expect(executed).toBe(false);
+  });
+
   it('runs to completion with result and timestamps', async () => {
     const manager = new OperationManager();
     const { handle, deduped } = manager.begin({
@@ -122,7 +156,10 @@ describe('OperationManager', () => {
       },
     });
     await tick(5);
-    const snapshot = await handle.cancel('operator request');
+    const cancelling = handle.cancel('operator request');
+    expect(handle.snapshot().status).toBe('cancelling');
+    expect(handle.snapshot().cancelRequestedAt).toBeDefined();
+    const snapshot = await cancelling;
     expect(snapshot.status).toBe('cancelled');
     expect(snapshot.error?.code).toBe('OPERATION_CANCELLED');
     await expect(handle.waitForResult()).rejects.toBeInstanceOf(AbortedError);
@@ -139,8 +176,10 @@ describe('OperationManager', () => {
         return {};
       },
     });
+    const waiting = handle.waitForResult();
     const snapshot = await handle.cancel();
     expect(snapshot.status).toBe('cancelled');
+    await expect(waiting).rejects.toBeInstanceOf(AbortedError);
     await tick(10);
     expect(ran).toBe(false);
   });
@@ -161,6 +200,23 @@ describe('OperationManager', () => {
     const snapshot = await manager.waitFor(handle.id);
     expect(snapshot.status).toBe('timed_out');
     expect(snapshot.error?.code).toBe('OPERATION_TIMEOUT');
+  });
+
+  it('aborts the run signal when a deadline expires', async () => {
+    const manager = new OperationManager();
+    const { handle } = manager.begin({
+      deviceId: 'chamber-01',
+      capability: 'experiment.start',
+      timeoutMs: 10,
+      run: async (ctx) => {
+        await new Promise<void>((resolve) => ctx.signal.addEventListener('abort', () => resolve()));
+        expect(ctx.signal.aborted).toBe(true);
+        ctx.throwIfCancelled();
+        return {};
+      },
+    });
+    await expect(handle.waitForResult()).rejects.toMatchObject({ code: 'OPERATION_TIMEOUT' });
+    expect(handle.snapshot().status).toBe('timed_out');
   });
 
   it.each(['resolve', 'reject'])('keeps timeout terminal after a late %s', async (outcome) => {
@@ -266,7 +322,7 @@ describe('OperationManager', () => {
     });
     handle.subscribe(listener);
     await handle.waitForResult();
-    const op = manager.list({ deviceId: 'arm-01' })[0];
+    const op = manager.list({ deviceId: 'arm-01' })[0]!;
     expect(op.status).toBe('completed');
     expect(listener).not.toHaveBeenCalled();
   });

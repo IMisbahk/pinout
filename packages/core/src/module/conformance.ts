@@ -50,6 +50,29 @@ export async function runModuleConformance(modulePath: string): Promise<Conforma
   }
   checks.push(check('entrypoint', true));
 
+  const declared = new Set(manifest.capabilities);
+  const exported = new Set(module.capabilities.map((capability) => capability.name));
+  const legacyManifest = manifest.capabilities.length === 0;
+  checks.push(
+    check(
+      'manifest capability parity',
+      legacyManifest ||
+        (declared.size === exported.size && [...declared].every((name) => exported.has(name))),
+      'manifest and module capability declarations must match',
+    ),
+  );
+  if (!legacyManifest && !manifest.simulation.provided && module.createSimulatedBackend) {
+    checks.push(
+      check(
+        'simulation declaration',
+        false,
+        'module exposes a simulator but manifest declares simulation.provided=false',
+      ),
+    );
+  } else {
+    checks.push(check('simulation declaration', true));
+  }
+
   const capabilityNames = new Set<string>();
   let schemasOk = true;
   for (const capability of module.capabilities) {
@@ -110,6 +133,25 @@ async function checkBackendLifecycle(module: PinoutModuleDefinition): Promise<Co
   if (!backend) {
     checks.push(check('backend lifecycle', false, 'backend factory returned undefined'));
     return checks;
+  }
+  if (module.createSimulatedBackend && module.createProtocolBackend) {
+    try {
+      const simulated = module.createSimulatedBackend({});
+      const physical = await module.createProtocolBackend({ simulated: false });
+      checks.push(
+        check(
+          'backend flag parity',
+          simulated.kind === 'simulated' && physical.kind !== 'simulated',
+          'backend factories must honor simulated=false',
+        ),
+      );
+      await simulated.close();
+      await physical.close();
+    } catch (error) {
+      checks.push(
+        check('backend flag parity', false, error instanceof Error ? error.message : String(error)),
+      );
+    }
   }
   checks.push(check('backend lifecycle', true));
 

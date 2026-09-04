@@ -33,7 +33,7 @@ my-sensor/
   "vendor": "Acme",
   "model": "T100",
   "pinout": {
-    "minimumVersion": "0.2.0"
+    "minimumVersion": "0.0.1-alpha.1"
   }
 }
 ```

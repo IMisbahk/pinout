@@ -13,7 +13,7 @@
  * never sensible to expose physical control to a network without auth.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { attachStreamSockets } from './streamSocket.js';
 import {
   Journal,
@@ -50,6 +50,8 @@ export interface DaemonConfig {
   journalPath?: string;
   /** Safety rules enforced by the daemon for every invocation. */
   safetyRules?: SafetyRule[];
+  /** Require an exclusive caller lease for physical outputs. Defaults to true. */
+  requireLeases?: boolean;
 }
 
 export const DEFAULT_DAEMON_PORT = 8787;
@@ -101,6 +103,7 @@ export class DaemonContext {
   readonly streams: StreamBus;
   readonly events: EventHub;
   readonly startedAt: number;
+  readonly ready: Promise<void>;
 
   constructor(runtime: PinoutRuntime, config: DaemonConfig = {}) {
     this.runtime = runtime;
@@ -121,23 +124,50 @@ export class DaemonContext {
 
     this.leases = new LeaseManager();
 
+    const leaseRules: SafetyRule[] =
+      config.requireLeases === false
+        ? []
+        : runtime.devices().flatMap((summary) =>
+            runtime
+              .getDevice(summary.id)
+              .capabilities.filter((capability) => capability.safety.physicalOutput)
+              .map((capability) => ({
+                kind: 'lease' as const,
+                capability: capability.name,
+                id: `daemon.default-lease.${summary.id}.${capability.name}`,
+              })),
+          );
     this.safety = new SafetyEngine({
-      rules: config.safetyRules ?? [],
+      rules: [...leaseRules, ...(config.safetyRules ?? [])],
       leaseManager: this.leases,
     });
 
-    this.operations = new OperationManager({
-      onOperationEvent: (event) => {
-        this.journal.append(
-          event.kind as JournalEntryKind,
-          {
-            deviceId: event.deviceId,
-            operationId: event.operationId,
-          },
-          event.data ?? {},
-        );
-        this.events.publish({ kind: 'operation', at: event.at, data: { ...event } });
+    this.operations = new OperationManager(
+      {
+        onOperationEvent: (event) => {
+          this.journal.append(
+            event.kind as JournalEntryKind,
+            {
+              deviceId: event.deviceId,
+              operationId: event.operationId,
+            },
+            event.data ?? {},
+          );
+          this.events.publish({ kind: 'operation', at: event.at, data: { ...event } });
+        },
       },
+      undefined,
+      { journal: this.journal },
+    );
+    this.ready = this.operations.hydrate();
+
+    // The daemon is the policy authority for an already-registered runtime.
+    // Reattach every device before accepting requests so direct runtime calls
+    // cannot retain an ungoverned or stale safety engine.
+    this.runtime.configureGovernance({
+      halt: this.halt,
+      safetyEngine: this.safety,
+      journal: this.journal,
     });
 
     this.runtime.on((envelope: RuntimeEventEnvelope) => {
@@ -251,6 +281,26 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
   res.end(body);
 }
 
+function bearerMatches(provided: string | undefined, expected: string): boolean {
+  if (!provided) return false;
+  const actual = Buffer.from(provided, 'utf8');
+  const wanted = Buffer.from(expected, 'utf8');
+  return actual.length === wanted.length && timingSafeEqual(actual, wanted);
+}
+
+function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const parsed = new URL(origin);
+    return (
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '::1'
+    );
+  } catch {
+    return false;
+  }
+}
+
 export class DaemonHttpServer {
   private readonly routes: Route[] = [];
   private server: Server | undefined;
@@ -298,6 +348,7 @@ export class DaemonHttpServer {
     const pathname = url.pathname;
 
     try {
+      await this.context.ready;
       if (pathname === '/v1/health' && req.method === 'GET') {
         sendJson(res, 200, {
           ok: true,
@@ -356,6 +407,7 @@ export class DaemonHttpServer {
       sendJson(res, 200, {
         ...deviceSummary(device),
         capabilities: device.capabilityNames(),
+        capabilityDescriptors: device.capabilities,
         operationalState: device.getOperationalStateSnapshot(),
       });
     });
@@ -410,26 +462,10 @@ export class DaemonHttpServer {
         args,
       );
       // Include the device's own baseline/deployment policies in planning.
-      await device.invoke(capability, validated, {
+      await c.runtime.invoke(deviceId, capability, validated, {
         dryRun: true,
         ...(owner !== undefined ? { owner } : {}),
       });
-      const safetyContext = {
-        deviceId,
-        capability,
-        payload: validated,
-        operationalState: device.getOperationalStateSnapshot(),
-        ...(owner !== undefined ? { owner } : {}),
-      };
-      const decision = c.safety.preview(safetyContext);
-      if (!decision.allowed) {
-        c.journal.append('policy.rejected', { deviceId }, { capability, decision });
-        throw new PinoutError(
-          decision.code ?? 'POLICY_ACTION_DENIED',
-          decision.message ?? 'Rejected by policy.',
-        );
-      }
-
       if (dryRun) {
         sendJson(res, 200, {
           dryRun: true,
@@ -452,12 +488,10 @@ export class DaemonHttpServer {
         run: async (runCtx) => {
           runCtx.throwIfCancelled();
           c.halt.enforceGate();
-          c.safety.enforce({
-            ...safetyContext,
-            operationalState: device.getOperationalStateSnapshot(),
-          });
           const result = await c.runtime.invoke(deviceId, capability, validated, {
             ...(owner !== undefined ? { owner } : {}),
+            signal: runCtx.signal,
+            reportProgress: runCtx.reportProgress,
           });
           runCtx.reportProgress(1, 'completed');
           return result;
@@ -582,6 +616,50 @@ export class DaemonHttpServer {
       sendJson(res, 200, { state: c.halt.state });
     });
 
+    // -- Policy feeds -------------------------------------------------------
+    this.route('POST', '/v1/approvals', async (c, _req, res, _match, body) => {
+      const id = requiredString(body, 'id');
+      const deviceId = requiredString(body, 'deviceId');
+      const capability = requiredString(body, 'capability');
+      const grantedBy = requiredString(body, 'grantedBy');
+      const approval = c.safety.recordApproval({
+        id,
+        deviceId,
+        capability,
+        grantedBy,
+        ...(typeof body?.expiresAt === 'number' ? { expiresAt: body.expiresAt } : {}),
+        ...(typeof body?.grantedAt === 'number' ? { grantedAt: body.grantedAt } : {}),
+      });
+      c.journal.append(
+        'policy.rejected',
+        { deviceId },
+        {
+          event: 'approval.granted',
+          approvalId: approval.id,
+          capability,
+          grantedBy,
+          expiresAt: approval.expiresAt,
+        },
+      );
+      sendJson(res, 201, { approval });
+    });
+
+    this.route('POST', '/v1/devices/:id/heartbeat', async (c, _req, res, match, body) => {
+      const deviceId = match.params.id!;
+      c.runtime.getDevice(deviceId);
+      c.safety.heartbeatDeadman(deviceId);
+      c.journal.append(
+        'state.changed',
+        { deviceId },
+        {
+          event: 'safety.deadman_heartbeat',
+          actor: typeof body?.actor === 'string' ? body.actor : undefined,
+          at: Date.now(),
+        },
+      );
+      sendJson(res, 200, { deviceId, alive: true, at: Date.now() });
+    });
+
     // -- Events (SSE) ----------------------------------------------------------
     this.route('GET', '/v1/events', async (c, req, res) => {
       res.writeHead(200, {
@@ -646,9 +724,39 @@ export class DaemonHttpServer {
     const server = createServer((req, res) => {
       // Auth: every /v1 route except health requires the bearer token when set.
       const url = new URL(req.url ?? '/', 'http://localhost');
+      const origin = req.headers.origin;
+      if (origin && !isLoopbackOrigin(origin)) {
+        sendJson(res, 403, {
+          error: {
+            code: 'ORIGIN_REJECTED',
+            category: 'AUTH',
+            message: 'Cross-origin requests are not accepted.',
+            retryable: false,
+          },
+        });
+        return;
+      }
+      if (
+        ['POST', 'PUT', 'PATCH'].includes(req.method ?? '') &&
+        url.pathname.startsWith('/v1/') &&
+        url.pathname !== '/v1/health'
+      ) {
+        const contentType = req.headers['content-type']?.split(';', 1)[0]?.trim().toLowerCase();
+        if (contentType !== 'application/json') {
+          sendJson(res, 400, {
+            error: {
+              code: 'JSON_REQUIRED',
+              category: 'VALIDATION',
+              message: 'Mutating requests must use application/json.',
+              retryable: false,
+            },
+          });
+          return;
+        }
+      }
       if (token && url.pathname.startsWith('/v1/') && url.pathname !== '/v1/health') {
         const provided = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
-        if (provided !== token) {
+        if (!bearerMatches(provided, token)) {
           sendJson(res, 401, {
             error: {
               code: 'AUTH_REQUIRED',

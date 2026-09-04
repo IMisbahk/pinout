@@ -155,6 +155,8 @@ export class LeaseManager {
   /**
    * Whether `owner` holds an active lease permitting `mode` access on
    * `deviceId` (and `capability` when the lease is capability-scoped).
+   * A missing lease never grants access; callers that only need conflict
+   * inspection should use `list()`.
    */
   permits(
     owner: string,
@@ -163,13 +165,18 @@ export class LeaseManager {
     mode: LeaseMode = 'exclusive',
   ): { permitted: boolean; conflict?: LeaseConflictDetails } {
     this.reapExpired();
+    let ownerHasRequiredLease = false;
     for (const lease of this.leases.values()) {
       if (!leaseCoversDevice(lease, deviceId)) continue;
       if (lease.scope.kind === 'capability' && !lease.scope.capabilities.includes(capability)) {
         continue;
       }
-      // A lease in scope of this capability exists. Does it block us?
-      if (lease.owner === owner) continue;
+      if (lease.owner === owner) {
+        if (mode === 'shared-read' || lease.mode === 'exclusive') {
+          ownerHasRequiredLease = true;
+        }
+        continue;
+      }
       if (mode === 'shared-read' && lease.mode === 'shared-read') continue;
       return {
         permitted: false,
@@ -181,7 +188,7 @@ export class LeaseManager {
         },
       };
     }
-    return { permitted: true };
+    return { permitted: ownerHasRequiredLease };
   }
 
   /** Remove all expired leases; returns how many were reaped. */

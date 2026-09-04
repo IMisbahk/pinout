@@ -6,6 +6,8 @@ import type { Transport } from '../types.js';
 export interface SerialPortOptions {
   path: string;
   baudRate?: number;
+  /** Leave adapter reset lines asserted on open (classic ESP32 default). */
+  resetOnConnect?: boolean;
 }
 
 export interface SerialPortInfo {
@@ -77,10 +79,13 @@ class NodeSerialTransport implements Transport {
       });
     });
 
-    try {
-      await setSignals(port, { dtr: false, rts: false });
-    } catch {
-      // Some USB-UART adapters reject signal changes. Opening still succeeded.
+    // node-serialport may assert DTR/RTS while opening. Classic ESP32
+    // adapters use that transition for auto-reset; native USB Serial/JTAG
+    // users can opt out to avoid reset/download-mode transitions.
+    if (this.options.resetOnConnect === false) {
+      await new Promise<void>((resolve) => {
+        port.set({ dtr: false, rts: false }, () => resolve());
+      });
     }
 
     this.port = port;
@@ -131,16 +136,4 @@ class NodeSerialTransport implements Transport {
       });
     });
   }
-}
-
-function setSignals(port: SerialPort, signals: { dtr: boolean; rts: boolean }): Promise<void> {
-  return new Promise((resolve, reject) => {
-    port.set(signals, (error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
 }

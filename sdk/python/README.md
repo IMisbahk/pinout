@@ -1,6 +1,6 @@
 # Pinout Python SDK
 
-The official Python client for [Pinout](https://github.com/pinoutlabs/pinout) —
+The official Python client for [Pinout](https://github.com/IMisbahk/pinout) —
 the interface between intelligence and physical machines.
 
 Talks to a running [`pinoutd`](../../docs/daemon.md) daemon over its local HTTP

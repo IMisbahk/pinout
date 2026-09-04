@@ -1,8 +1,14 @@
 {
   "name": "@pinout/mcp",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha.1",
   "description": "MCP stdio server for Pinout — exposes device capabilities as agent tools.",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "bin": {
     "pinout-mcp": "./dist/index.js"
   },
@@ -10,19 +16,23 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "prepack": "npm run build"
   },
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "engines": {
     "node": ">=20"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pinoutlabs/pinout.git"
+    "url": "git+https://github.com/IMisbahk/pinout.git"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@pinout/core": "*"
+    "@pinout/core": "0.0.1-alpha.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

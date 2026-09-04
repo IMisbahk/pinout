@@ -1,6 +1,5 @@
 import type { Command } from 'commander';
-import { generateCandidateModule } from '@pinout/generator';
-import { loadGeneratorConfig } from '@pinout/generator';
+import type * as Generator from '@pinout/generator';
 import type { CliIo } from './runCli.js';
 import type { CliOutput } from './output.js';
 
@@ -32,6 +31,7 @@ export function registerGenerateCommands(
         },
       ) => {
         const output = outputFor(program, io);
+        const { generateCandidateModule, loadGeneratorConfig } = await importGenerator();
         const config = loadGeneratorConfig();
         if (options.provider) {
           config.provider = options.provider;
@@ -88,4 +88,14 @@ export function registerGenerateCommands(
         }
       },
     );
+}
+
+async function importGenerator(): Promise<typeof Generator> {
+  try {
+    return await import('@pinout/generator');
+  } catch (error) {
+    throw new Error(
+      `The alpha CLI does not bundle the experimental generator. Install @pinout/generator from this repository to use 'pinout generate'. (${error instanceof Error ? error.message : String(error)})`,
+    );
+  }
 }

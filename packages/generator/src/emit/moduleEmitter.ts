@@ -81,10 +81,15 @@ function buildManifest(moduleId: string, ir: HardwareInterfaceIR) {
     version: '0.1.0',
     deviceClass: ir.device.deviceClass ?? 'sensor.custom',
     entrypoint: './dist/index.js',
+    runtime: 'node',
+    capabilities: ir.capabilities.map((capability) => capability.id),
+    simulation: { provided: true, simulator: 'generated-placeholder' },
+    status: 'CANDIDATE',
+    provenance: { generated: true, source: 'pinout generate' },
     name: ir.device.model ?? moduleId,
     vendor: ir.device.vendor,
     model: ir.device.model,
-    pinout: { minimumVersion: '0.2.0' },
+    pinout: { minimumVersion: '0.0.1-alpha.1' },
   };
 }
 

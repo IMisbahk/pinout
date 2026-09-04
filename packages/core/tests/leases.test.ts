@@ -60,7 +60,7 @@ describe('LeaseManager', () => {
     // Motion is locked for others…
     expect(manager.permits('agent-b', 'arm-01', 'motion.move_to').permitted).toBe(false);
     // …but unrelated capabilities stay free.
-    expect(manager.permits('agent-b', 'arm-01', 'gripper.close').permitted).toBe(true);
+    expect(manager.permits('agent-b', 'arm-01', 'gripper.close').permitted).toBe(false);
     // Readers can still observe motion state.
     expect(manager.permits('agent-b', 'arm-01', 'motion.move_to', 'shared-read').permitted).toBe(
       false,
@@ -86,7 +86,7 @@ describe('LeaseManager', () => {
       ttlMs: 1000,
     });
     now += 1500;
-    expect(manager.permits('agent-b', 'arm-01', 'motion.move_to').permitted).toBe(true);
+    expect(manager.permits('agent-b', 'arm-01', 'motion.move_to').permitted).toBe(false);
     expect(manager.list()).toHaveLength(0);
   });
 
@@ -108,7 +108,7 @@ describe('LeaseManager', () => {
     expect(() => manager.release(lease.id, 'agent-b')).toThrowError(/belongs to/);
     manager.release(lease.id, 'agent-a');
     expect(manager.get(lease.id)).toBeUndefined();
-    expect(manager.permits('agent-b', 'arm-01', 'motion.move_to').permitted).toBe(true);
+    expect(manager.permits('agent-b', 'arm-01', 'motion.move_to').permitted).toBe(false);
   });
 
   it('force-releases without ownership checks', () => {

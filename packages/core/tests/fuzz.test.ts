@@ -240,6 +240,7 @@ describe('fuzz: idempotency key store', () => {
         deviceId: 'd',
         capability: 'c',
         owner: 'o',
+        idempotencyKey: key,
         status: 'completed',
         createdAt: now,
       });

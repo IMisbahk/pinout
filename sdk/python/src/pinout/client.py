@@ -27,7 +27,7 @@ class _Http:
         self.timeout = timeout
 
     def request(self, method: str, path: str, body: dict | None = None,
-                stream: bool = False) -> Any:
+                stream: bool = False, timeout: float | None = None) -> Any:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(
             f"{self.base_url}{path}",
@@ -39,7 +39,7 @@ class _Http:
             },
         )
         try:
-            res = urllib.request.urlopen(req, timeout=self.timeout)
+            res = urllib.request.urlopen(req, timeout=self.timeout if timeout is None else timeout)
         except urllib.error.HTTPError as err:
             payload = self._read_error(err)
             raise PinoutError.from_payload(payload) from None
@@ -190,8 +190,17 @@ class Device:
         })
         return payload["lease"]
 
-    def release_lease(self, lease_id: str) -> None:
-        self._http.request("DELETE", f"/v1/leases/{lease_id}?owner=", {})
+    def release_lease(self, lease_id: str, owner: str) -> None:
+        """Release a lease using the same owner principal that acquired it."""
+        from urllib.parse import quote
+        self._http.request("DELETE", f"/v1/leases/{lease_id}?owner={quote(owner, safe='')}")
+
+    def renew_lease(self, lease_id: str, owner: str, ttl: float = 60.0) -> dict:
+        payload = self._http.request("POST", f"/v1/leases/{lease_id}/renew", {
+            "owner": owner,
+            "ttlMs": int(ttl * 1000),
+        })
+        return payload["lease"]
 
 
 class Pinout:
@@ -202,9 +211,11 @@ class Pinout:
     over literals in code.
     """
 
-    def __init__(self, base_url: str | None = None, token: str | None = None) -> None:
+    def __init__(self, base_url: str | None = None, token: str | None = None,
+                 timeout: float = 30.0, stream_timeout: float | None = None) -> None:
         url = base_url or os.environ.get("PINOUT_URL") or DEFAULT_BASE_URL
-        self._http = _Http(url, token or os.environ.get("PINOUT_TOKEN"))
+        self._http = _Http(url, token or os.environ.get("PINOUT_TOKEN"), timeout)
+        self._stream_timeout = stream_timeout
 
     def health(self) -> dict:
         return self._http.request("GET", "/v1/health")
@@ -244,7 +255,7 @@ class Pinout:
 
     def events(self) -> Iterator[dict]:
         """Stream daemon events (Server-Sent Events) as parsed dicts."""
-        res: Any = self._http.request("GET", "/v1/events", stream=True)
+        res: Any = self._http.request("GET", "/v1/events", stream=True, timeout=self._stream_timeout)
         try:
             for raw_line in res:
                 line = raw_line.decode().strip()
@@ -265,6 +276,10 @@ class Pinout:
     def streams(self, device_id: str | None = None) -> list[dict]:
         path = "/v1/streams" + (f"?deviceId={device_id}" if device_id else "")
         return self._http.request("GET", path)["streams"]
+
+    def stream_snapshot(self, stream_id: str) -> dict:
+        """Return the latest frame for a stream."""
+        return self._http.request("GET", f"/v1/streams/{stream_id}/snapshot")["frame"]
 
 
 def watch(device_id: str, handler: Callable[[dict], None], base_url: str | None = None,

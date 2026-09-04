@@ -1,5 +1,5 @@
 import type { Device } from '../device.js';
-import type { DeviceBackend } from './types.js';
+import type { BackendInvocationContext, DeviceBackend } from './types.js';
 
 export class ProtocolDeviceBackend implements DeviceBackend {
   readonly kind = 'protocol' as const;
@@ -10,8 +10,12 @@ export class ProtocolDeviceBackend implements DeviceBackend {
     return () => undefined;
   }
 
-  async invoke(action: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-    return this.device.invoke(action, payload);
+  async invoke(
+    action: string,
+    payload: Record<string, unknown>,
+    context?: BackendInvocationContext,
+  ): Promise<Record<string, unknown>> {
+    return this.device.invoke(action, payload, context?.signal ? { signal: context.signal } : {});
   }
 
   async close(): Promise<void> {
@@ -28,5 +32,13 @@ export class ProtocolDeviceBackend implements DeviceBackend {
       version: this.device.info.version,
       protocol: this.device.info.protocol,
     };
+  }
+
+  async safeState(): Promise<Record<string, unknown>> {
+    if (!this.device.supports('gpio.stopAll')) {
+      return { applied: false, reason: 'safe-state-not-supported' };
+    }
+    const stoppedPins = await this.device.gpio.stopAll();
+    return { applied: true, stoppedPins };
   }
 }

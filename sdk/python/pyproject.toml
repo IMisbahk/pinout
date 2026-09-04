@@ -3,8 +3,8 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pinout"
-version = "0.1.0"
+name = "pinout-client"
+dynamic = ["version"]
 description = "Python SDK for Pinout — the interface between intelligence and physical machines."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,7 @@ license = { text = "Apache-2.0" }
 authors = [{ name = "Pinout and contributors" }]
 keywords = ["hardware", "robotics", "iot", "automation", "ai"]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
@@ -28,10 +28,13 @@ async = ["httpx>=0.27"]
 dev = ["pytest>=8", "httpx>=0.27"]
 
 [project.urls]
-Repository = "https://github.com/pinoutlabs/pinout"
+Repository = "https://github.com/IMisbahk/pinout"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pinout.__version__"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

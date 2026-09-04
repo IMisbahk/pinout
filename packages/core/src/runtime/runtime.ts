@@ -1,5 +1,8 @@
-import { PinoutError } from '../errors.js';
-import { mergeModulePolicies } from '../module/policies.js';
+import { PinoutError, PinoutStructuredError } from '../errors.js';
+import { HaltCoordinator, type SafetyStateChange } from '../halt/haltCoordinator.js';
+import { Journal } from '../journal/journal.js';
+import { mergeModuleAndDeploymentRules, SafetyEngine } from '../policy/safety.js';
+import type { PolicyRule } from '../policy/types.js';
 import { getModule } from '../modules/registry.js';
 import { DeviceInstance, type InvokeOptions } from './deviceInstance.js';
 import { ProtocolDeviceBackend } from './protocolBackend.js';
@@ -12,6 +15,15 @@ import type {
   RuntimeEventEnvelope,
   RuntimeEventHandler,
 } from './types.js';
+
+export interface PinoutRuntimeOptions {
+  /** Shared software halt gate for every registered device. */
+  halt?: HaltCoordinator;
+  /** Shared v2 safety engine for every registered device. */
+  safetyEngine?: SafetyEngine;
+  /** Shared append-only audit journal for every invocation. */
+  journal?: Journal;
+}
 
 export class DuplicateDeviceError extends PinoutError {
   constructor(id: string) {
@@ -26,9 +38,21 @@ export class DeviceNotFoundError extends PinoutError {
 }
 
 export class PinoutRuntime {
+  halt: HaltCoordinator;
+  safetyEngine: SafetyEngine;
+  journal: Journal;
   private readonly deviceMap = new Map<string, DeviceInstance>();
   private readonly handlers = new Set<RuntimeEventHandler>();
   private readonly deviceEventUnsubscribers = new Map<string, () => void>();
+  private safeStateChain: Promise<void> = Promise.resolve();
+  private unsubscribeHalt: (() => void) | undefined;
+
+  constructor(options: PinoutRuntimeOptions = {}) {
+    this.halt = options.halt ?? new HaltCoordinator();
+    this.safetyEngine = options.safetyEngine ?? new SafetyEngine({ rules: [] });
+    this.journal = options.journal ?? new Journal();
+    this.subscribeHalt();
+  }
 
   static async fromConfig(options: FromConfigOptions = {}): Promise<PinoutRuntime> {
     const { runtime } = await createRuntimeFromConfig(options);
@@ -124,15 +148,30 @@ export class PinoutRuntime {
       identity.label = options.label;
     }
 
+    const mergedPolicies = mergeModuleAndDeploymentRules(
+      module.policies,
+      options.deploymentPolicies ?? [],
+    );
+    if (mergedPolicies.conflicts.length > 0) {
+      throw new PinoutStructuredError(
+        'POLICY_CONSTRAINT_CONFLICT',
+        'POLICY',
+        `Deployment policies conflict with module '${module.id}' safety constraints.`,
+        { details: { conflicts: mergedPolicies.conflicts } },
+      );
+    }
+
     const instance = new DeviceInstance({
       identity,
       backend,
       capabilities: module.capabilities,
-      policies: mergeModulePolicies(module.policies, options.deploymentPolicies ?? []),
+      policies: mergedPolicies.rules as PolicyRule[],
       simulated,
       activeTransportKind: options.transport?.kind ?? backend.kind,
       transportKinds: module.supportedTransportKinds,
       getOperationalState: () => backend.getOperationalState?.() ?? {},
+      halt: this.halt,
+      safetyEngine: this.safetyEngine,
     });
 
     if (backend instanceof ProtocolDeviceBackend) {
@@ -152,9 +191,31 @@ export class PinoutRuntime {
     if (this.deviceMap.has(device.id)) {
       throw new DuplicateDeviceError(device.id);
     }
+    device.attachGovernance(this.halt, this.safetyEngine);
     const unsubscribe = device.subscribeRuntimeEvents((event) => this.emit(event));
     this.deviceEventUnsubscribers.set(device.id, unsubscribe);
     this.deviceMap.set(device.id, device);
+  }
+
+  /**
+   * Replace the shared governance components and reattach every device.
+   * `pinoutd` uses this after it has constructed its persisted policy context.
+   */
+  configureGovernance(options: PinoutRuntimeOptions): void {
+    if (options.halt && options.halt !== this.halt) {
+      this.unsubscribeHalt?.();
+      this.halt = options.halt;
+      this.subscribeHalt();
+    }
+    if (options.safetyEngine) {
+      this.safetyEngine = options.safetyEngine;
+    }
+    if (options.journal) {
+      this.journal = options.journal;
+    }
+    for (const device of this.deviceMap.values()) {
+      device.attachGovernance(this.halt, this.safetyEngine);
+    }
   }
 
   async unregister(id: string): Promise<void> {
@@ -174,7 +235,42 @@ export class PinoutRuntime {
     input: Record<string, unknown> = {},
     options: InvokeOptions = {},
   ): Promise<Record<string, unknown>> {
-    return this.getDevice(deviceId).invoke(capability, input, options);
+    this.journal.append(
+      'invocation.requested',
+      { deviceId },
+      {
+        capability,
+        input,
+        ...(options.owner !== undefined ? { owner: options.owner } : {}),
+        ...(options.dryRun ? { dryRun: true } : {}),
+      },
+    );
+    try {
+      const result = await this.getDevice(deviceId).invoke(capability, input, options);
+      this.journal.append(
+        'invocation.completed',
+        { deviceId },
+        {
+          capability,
+          result,
+          ...(options.dryRun ? { dryRun: true } : {}),
+        },
+      );
+      return result;
+    } catch (error) {
+      this.journal.append(
+        'invocation.failed',
+        { deviceId },
+        {
+          capability,
+          code:
+            error && typeof error === 'object' && 'code' in error ? error.code : 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : String(error),
+          ...(options.dryRun ? { dryRun: true } : {}),
+        },
+      );
+      throw error;
+    }
   }
 
   async close(): Promise<void> {
@@ -182,6 +278,43 @@ export class PinoutRuntime {
     for (const id of ids) {
       await this.unregister(id);
     }
+    this.unsubscribeHalt?.();
+    this.unsubscribeHalt = undefined;
+  }
+
+  /** Wait until safe-state work requested by halt/estop has completed. */
+  async waitForSafeState(): Promise<void> {
+    await this.safeStateChain;
+  }
+
+  private onSafetyStateChange(change: SafetyStateChange): void {
+    if (change.to !== 'HALTED' && change.to !== 'ESTOP_REQUESTED') return;
+    this.safeStateChain = this.safeStateChain.then(async () => {
+      await Promise.all(
+        [...this.deviceMap.values()].map(async (device) => {
+          try {
+            const result = await device.applySafeState();
+            this.emit({
+              deviceId: device.id,
+              event: 'device.safe_state_applied',
+              payload: result ?? { applied: false, reason: 'safe-state-not-supported' },
+              timestamp: Date.now(),
+            });
+          } catch (error) {
+            this.emit({
+              deviceId: device.id,
+              event: 'device.safe_state_failed',
+              payload: { message: error instanceof Error ? error.message : String(error) },
+              timestamp: Date.now(),
+            });
+          }
+        }),
+      );
+    });
+  }
+
+  private subscribeHalt(): void {
+    this.unsubscribeHalt = this.halt.subscribe((change) => this.onSafetyStateChange(change));
   }
 
   private emit(event: RuntimeEventEnvelope): void {

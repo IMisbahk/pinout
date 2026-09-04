@@ -94,7 +94,7 @@ describe('detectContradictions', () => {
   it('flags incompatible units on the same argument as unit-conflict', () => {
     const constraints: ProvenancedConstraint[] = [
       { ...constraint({ maximum: 80, unit: 'C' }), provenance: 'DOCUMENTED', hardEligible: true },
-      { ...constraint({ maximum: 176, unit: 'V' }), provenance: 'DOCUMENTED', hardEligible: true },
+      { ...constraint({ maximum: 24, unit: 'V' }), provenance: 'DOCUMENTED', hardEligible: true },
     ];
     const contradictions = detectContradictions(constraints);
     expect(contradictions[0]!.kind).toBe('unit-conflict');
@@ -102,7 +102,7 @@ describe('detectContradictions', () => {
 
   it('detects manual-vs-example conflicts via documented claims', () => {
     const constraints: ProvenancedConstraint[] = [
-      { ...constraint({ maximum: 80, unit: 'C' }), provenance: 'DOCUMENTED', hardEligible: true },
+      { ...constraint({ maximum: 80 }), provenance: 'DOCUMENTED', hardEligible: true },
     ];
     const claims: DocumentedClaim[] = [
       {

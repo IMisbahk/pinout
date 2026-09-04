@@ -166,7 +166,7 @@ describe('network probe (opt-in)', () => {
     ).toEqual([]);
 
     const candidates = await plugin.discover({
-      network: { enabled: true, endpoints: [{ host: '127.0.0.1', port }] },
+      network: { enabled: true, endpoints: [{ host: '127.0.0.1', port, probe: 'pinout-daemon' }] },
       timeoutMs: 300,
     });
     expect(candidates).toHaveLength(1);

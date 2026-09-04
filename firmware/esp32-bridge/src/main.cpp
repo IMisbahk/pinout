@@ -1,4 +1,9 @@
 #include <Arduino.h>
+#if defined(PINOUT_ESP32_C3)
+// Arduino-ESP32 2.x exposes the native USB CDC stream from HWCDC.h when
+// ARDUINO_USB_MODE=1; Arduino.h alone does not declare the global Serial.
+#include <HWCDC.h>
+#endif
 #include <ArduinoJson.h>
 #include <SPI.h>
 #include <Wire.h>
@@ -7,7 +12,7 @@ constexpr uint32_t baudRate = 115200;
 constexpr size_t lineMax = 512;
 constexpr int protocolVersion = 1;
 constexpr const char* firmwareName = "esp32-bridge";
-constexpr const char* firmwareVersion = "0.3.0";
+constexpr const char* firmwareVersion = "0.0.1-alpha.1";
 constexpr size_t maxBusPayloadBytes = 32;
 
 char lineBuffer[lineMax];
@@ -31,18 +36,32 @@ WatchState watches[8];
 size_t watchCount = 0;
 PulseState pulses[8];
 
+#if defined(PINOUT_ESP32_C3)
+int i2cSda = 8;
+int i2cScl = 9;
+#else
 int i2cSda = 21;
 int i2cScl = 22;
+#endif
 uint32_t i2cFrequency = 100000;
 bool i2cStarted = false;
 
+#if defined(PINOUT_ESP32_C3)
+int spiSck = 4;
+int spiMiso = 5;
+int spiMosi = 6;
+int spiCs = 7;
+#else
 int spiSck = 18;
 int spiMiso = 19;
 int spiMosi = 23;
 int spiCs = 5;
+#endif
 uint32_t spiFrequency = 1000000;
 bool spiStarted = false;
 bool activeOutputs[40] = {};
+int activePwmPins[16] = {-1, -1, -1, -1, -1, -1, -1, -1,
+                         -1, -1, -1, -1, -1, -1, -1, -1};
 
 void cancelPulseForPin(int pin) {
   for (size_t i = 0; i < 8; i++) {
@@ -52,14 +71,32 @@ void cancelPulseForPin(int pin) {
   }
 }
 
+#if defined(PINOUT_ESP32_C3)
+bool isFlashPin(int pin) { return pin >= 11 && pin <= 17; }
+bool isInputOnlyPin(int) { return false; }
+bool isUart0Pin(int pin) { return pin == 20 || pin == 21; }
+bool isStrapPin(int pin) { return pin == 2; }
+bool isAdcPin(int pin) { return pin >= 0 && pin <= 4; }
+bool isUsbPin(int pin) { return pin == 18 || pin == 19; }
+#else
 bool isFlashPin(int pin) { return pin >= 6 && pin <= 11; }
 bool isInputOnlyPin(int pin) { return pin >= 34 && pin <= 39; }
 bool isUart0Pin(int pin) { return pin == 1 || pin == 3; }
 bool isStrapPin(int pin) { return pin == 12; }
 bool isAdcPin(int pin) { return pin >= 32 && pin <= 39; }
+bool isUsbPin(int) { return false; }
+#endif
+
+int maxGpioPin() {
+#if defined(PINOUT_ESP32_C3)
+  return 21;
+#else
+  return 39;
+#endif
+}
 
 bool isReadablePin(int pin) {
-  return pin >= 0 && pin <= 39 && !isFlashPin(pin) && !isUart0Pin(pin) && !isStrapPin(pin);
+  return pin >= 0 && pin <= maxGpioPin() && !isFlashPin(pin) && !isUart0Pin(pin) && !isStrapPin(pin) && !isUsbPin(pin);
 }
 
 bool isWritablePin(int pin) {
@@ -282,6 +319,10 @@ void handleGpioStopAll(const char* id) {
   // Detach PWM channels so motors/servos cannot remain driven after the stop.
   for (int channel = 0; channel < 16; channel++) {
     ledcWrite(channel, 0);
+    if (activePwmPins[channel] >= 0) {
+      ledcDetachPin(activePwmPins[channel]);
+      activePwmPins[channel] = -1;
+    }
   }
   for (size_t i = 0; i < 8; i++) {
     pulses[i].active = false;
@@ -393,7 +434,11 @@ void handleGpioPwm(const char* id, const JsonVariantConst& payload) {
   ledcSetup(channel, frequency, 8);
   cancelPulseForPin(pin);
   activeOutputs[pin] = true;
+  if (activePwmPins[channel] >= 0 && activePwmPins[channel] != pin) {
+    ledcDetachPin(activePwmPins[channel]);
+  }
   ledcAttachPin(pin, channel);
+  activePwmPins[channel] = pin;
   ledcWrite(channel, static_cast<uint32_t>(duty * 255));
   JsonDocument result;
   result["pin"] = pin;
@@ -429,12 +474,27 @@ void handleGpioWatch(const char* id, const JsonVariantConst& payload) {
     sendError(id, "INVALID_PIN", "Pin is not a valid ESP32 GPIO.");
     return;
   }
-  if (watchCount < 8) {
-    watches[watchCount].pin = pin;
-    watches[watchCount].lastValue = digitalRead(pin) == HIGH;
-    watches[watchCount].active = true;
-    watchCount++;
+  for (size_t i = 0; i < watchCount; i++) {
+    if (watches[i].active && watches[i].pin == pin) {
+      JsonDocument result;
+      result["pin"] = pin;
+      result["watching"] = true;
+      sendSuccess(id, result);
+      return;
+    }
   }
+  size_t slot = watchCount;
+  for (size_t i = 0; i < watchCount; i++) {
+    if (!watches[i].active) { slot = i; break; }
+  }
+  if (slot >= 8) {
+    sendError(id, "WATCH_TABLE_FULL", "No watch slots are available.");
+    return;
+  }
+  watches[slot].pin = pin;
+  watches[slot].lastValue = digitalRead(pin) == HIGH;
+  watches[slot].active = true;
+  if (slot == watchCount) watchCount++;
   JsonDocument result;
   result["pin"] = pin;
   result["watching"] = true;
@@ -693,7 +753,11 @@ void handleGpioServo(const char* id, const JsonVariantConst& payload) {
   cancelPulseForPin(pin);
   ledcSetup(channel, 50, 16);
   activeOutputs[pin] = true;
+  if (activePwmPins[channel] >= 0 && activePwmPins[channel] != pin) {
+    ledcDetachPin(activePwmPins[channel]);
+  }
   ledcAttachPin(pin, channel);
+  activePwmPins[channel] = pin;
   const uint32_t pulseUs = 1000 + static_cast<uint32_t>((angle / 180.0f) * 1000.0f);
   ledcWrite(channel, pulseUs * 65535UL / 20000UL);
   JsonDocument result;
@@ -738,7 +802,11 @@ void handleGpioMotor(const char* id, const JsonVariantConst& payload) {
   }
   ledcSetup(channel, 1000, 8);
   activeOutputs[pwmPin] = true;
+  if (activePwmPins[channel] >= 0 && activePwmPins[channel] != pwmPin) {
+    ledcDetachPin(activePwmPins[channel]);
+  }
   ledcAttachPin(pwmPin, channel);
+  activePwmPins[channel] = pwmPin;
   ledcWrite(channel, static_cast<uint32_t>(duty * 255));
   if (dirPin >= 0) {
     pinMode(dirPin, OUTPUT);
@@ -884,7 +952,7 @@ void handleLine(char* line) {
     return;
   }
 
-  if (document["v"] != protocolVersion) {
+  if (document["v"].as<int>() != protocolVersion) {
     sendError("invalid", "INVALID_MESSAGE", "Unsupported protocol version.");
     return;
   }
@@ -896,7 +964,14 @@ void setup() {
   Serial.setRxBufferSize(1024);
   Serial.begin(baudRate);
   bootMillis = millis();
-  delay(100);
+  // Native USB Serial/JTAG boards (such as the ESP32-C3 SuperMini) can boot
+  // before macOS has opened the USB endpoint. Wait briefly so `ready` is not
+  // lost before the host begins the Pinout handshake. Hardware UARTs report
+  // ready immediately and are unaffected.
+  const unsigned long usbHostWaitDeadline = millis() + 3000;
+  while (!Serial && millis() < usbHostWaitDeadline) {
+    delay(10);
+  }
   while (Serial.available() > 0) {
     Serial.read();
   }

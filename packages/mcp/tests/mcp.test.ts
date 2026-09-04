@@ -16,6 +16,91 @@ import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createPinoutMcpServer } from '../src/createServer.js';
 import { createRuntimeMcpServer } from '../src/createRuntimeServer.js';
+import { createDaemonMcpServer } from '../src/createDaemonServer.js';
+
+describe('@pinout/mcp daemon client', () => {
+  it('uses pinoutd for leases and governed capability operations', async () => {
+    const requests: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
+    const fetchStub: typeof fetch = async (input, init) => {
+      const url = String(input);
+      const method = init?.method ?? 'GET';
+      const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
+      requests.push({ url, method, ...(body ? { body } : {}) });
+      const pathname = new URL(url).pathname;
+      let payload: Record<string, unknown>;
+      if (pathname === '/v1/devices') {
+        payload = { devices: [{ id: 'relay-01', simulated: true }] };
+      } else if (pathname === '/v1/devices/relay-01' && method === 'GET') {
+        payload = {
+          identity: { id: 'relay-01' },
+          capabilityDescriptors: [
+            {
+              name: 'relay.set',
+              description: 'Set relay state.',
+              inputSchema: {
+                type: 'object',
+                required: ['on'],
+                properties: { on: { type: 'boolean' } },
+              },
+              outputSchema: { type: 'object', properties: { on: { type: 'boolean' } } },
+              safety: { physicalOutput: true, reversible: true },
+            },
+          ],
+        };
+      } else if (pathname === '/v1/leases') {
+        payload = { lease: { id: 'lease-1', owner: 'agent-fixed' } };
+      } else if (pathname === '/v1/devices/relay-01/invoke') {
+        payload = { operation: { id: 'op-1', status: 'completed' }, result: { on: true } };
+      } else {
+        payload = { ok: true };
+      }
+      return new Response(JSON.stringify(payload), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+    const server = createDaemonMcpServer({
+      baseUrl: 'http://pinoutd.test',
+      owner: 'agent-fixed',
+      fetch: fetchStub,
+    });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'daemon-mcp-test', version: '0.0.0' });
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+      const tools = await client.listTools();
+      expect(tools.tools.map((tool) => tool.name)).toContain('relay_01__relay_set');
+
+      const lease = await client.callTool({
+        name: 'pinout__acquire_lease',
+        arguments: { deviceId: 'relay-01' },
+      });
+      expect(lease.isError).not.toBe(true);
+      const invoked = await client.callTool({
+        name: 'relay_01__relay_set',
+        arguments: {
+          on: true,
+          _pinout: { idempotencyKey: 'brew-once', waitFor: 'result' },
+        },
+      });
+      expect(invoked.isError).not.toBe(true);
+      expect(requests.find((request) => request.url.endsWith('/v1/leases'))?.body).toMatchObject({
+        owner: 'agent-fixed',
+      });
+      expect(
+        requests.find((request) => request.url.endsWith('/v1/devices/relay-01/invoke'))?.body,
+      ).toMatchObject({
+        owner: 'agent-fixed',
+        idempotencyKey: 'brew-once',
+        args: { on: true },
+      });
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
+});
 
 describe('@pinout/mcp server', () => {
   it('lists device capabilities as MCP tools', async () => {
@@ -102,9 +187,10 @@ describe('@pinout/mcp server', () => {
         arguments: { pin: 34, value: true },
       });
       expect(result.isError).toBe(true);
-      expect(result.content[0]?.type).toBe('text');
-      if (result.content[0]?.type === 'text') {
-        expect(result.content[0].text).toMatch(/input-only|cannot be driven/i);
+      const content = (result as { content: Array<{ type: string; text?: string }> }).content;
+      expect(content[0]?.type).toBe('text');
+      if (content[0]?.type === 'text') {
+        expect(content[0].text).toMatch(/input-only|cannot be driven/i);
       }
     } finally {
       await client.close();

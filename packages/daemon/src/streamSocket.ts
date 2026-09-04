@@ -1,9 +1,17 @@
 import type { Server } from 'node:http';
 import type { Duplex } from 'node:stream';
+import { timingSafeEqual } from 'node:crypto';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { StreamBus, StreamFrame } from '@pinout/core';
 
 const MAX_FRAME_BYTES = 8 * 1024 * 1024;
+
+function bearerMatches(provided: string | undefined, expected: string): boolean {
+  if (!provided) return false;
+  const actual = Buffer.from(provided, 'utf8');
+  const wanted = Buffer.from(expected, 'utf8');
+  return actual.length === wanted.length && timingSafeEqual(actual, wanted);
+}
 
 /** Binary messages contain uint32-BE metadata length, UTF-8 JSON, then raw bytes. */
 export function encodeStreamFrame(frame: StreamFrame): Buffer | string {
@@ -34,7 +42,10 @@ export function attachStreamSockets(
       const url = new URL(request.url ?? '/', 'http://localhost');
       const match = /^\/v1\/streams\/([^/]+)\/frames$/.exec(url.pathname);
       if (!match) return reject(socket, '404 Not Found');
-      if (token && request.headers.authorization !== `Bearer ${token}`) {
+      if (
+        token &&
+        !bearerMatches((request.headers.authorization ?? '').replace(/^Bearer\s+/i, ''), token)
+      ) {
         return reject(socket, '401 Unauthorized');
       }
       const streamId = decodeURIComponent(match[1]!);

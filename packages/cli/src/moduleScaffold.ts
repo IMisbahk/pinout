@@ -24,7 +24,7 @@ export function scaffoldModule(options: ScaffoldOptions): string {
         deviceClass: 'sensor.custom',
         entrypoint: './dist/index.js',
         name: `${slug} device`,
-        pinout: { minimumVersion: '0.2.0' },
+        pinout: { minimumVersion: '0.0.1-alpha.1' },
       },
       null,
       2,

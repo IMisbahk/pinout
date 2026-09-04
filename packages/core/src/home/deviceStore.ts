@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { DeclarativePolicyMap } from '../module/policies.js';
 import { DeviceAlreadyExistsError, DeviceConfigInvalidError } from '../module/errors.js';
 import { resolveDevicesConfigPath, resolvePinoutHome } from './paths.js';
@@ -16,6 +16,17 @@ export interface DeviceBackendConfig {
   transport?: DeviceTransportConfig;
 }
 
+/** Identity captured during explicit hardware enrollment. */
+export interface DeviceIdentity {
+  firmware: string;
+  version: string;
+  protocol: number;
+  capabilities: string[];
+  usbSerial?: string;
+  vid?: string;
+  pid?: string;
+}
+
 export interface DeviceDefinition {
   id: string;
   module: string;
@@ -24,6 +35,8 @@ export interface DeviceDefinition {
   config?: Record<string, unknown>;
   policies?: DeclarativePolicyMap;
   enabled?: boolean;
+  identity?: DeviceIdentity;
+  enrolledAt?: string;
 }
 
 export interface DevicesFile {
@@ -53,6 +66,8 @@ export function writeDevicesFile(devicesFile: DevicesFile, path?: string, home?:
   const configPath = resolveDevicesConfigPath(resolvedHome, path);
   mkdirSync(resolvePinoutHome(resolvedHome), { recursive: true });
   writeFileSync(configPath, `${JSON.stringify(devicesFile, null, 2)}\n`, 'utf8');
+  // Device identities and transport paths are local sensitive state.
+  chmodSync(configPath, 0o600);
 }
 
 export function addDeviceDefinition(
@@ -63,6 +78,25 @@ export function addDeviceDefinition(
   const file = readDevicesFile(options.path, options.home);
   if (file.devices.some((entry) => entry.id === definition.id)) {
     throw new DeviceAlreadyExistsError(definition.id);
+  }
+  if (definition.identity?.usbSerial) {
+    const duplicate = file.devices.find(
+      (entry) => entry.identity?.usbSerial === definition.identity?.usbSerial,
+    );
+    if (duplicate) {
+      throw new DeviceAlreadyExistsError(
+        `USB serial '${definition.identity.usbSerial}' is already enrolled as '${duplicate.id}'.`,
+      );
+    }
+  }
+  const path = definition.backend?.transport?.path;
+  if (path) {
+    const samePath = file.devices.find((entry) => entry.backend?.transport?.path === path);
+    if (samePath && JSON.stringify(samePath.identity) !== JSON.stringify(definition.identity)) {
+      throw new DeviceConfigInvalidError(
+        `Transport path '${path}' is already enrolled with a different identity ('${samePath.id}'). Re-enroll explicitly before changing identity.`,
+      );
+    }
   }
   file.devices.push(definition);
   writeDevicesFile(file, options.path, options.home);
@@ -130,6 +164,28 @@ function parseDevicesFile(raw: unknown): DevicesFile {
     if (device.enabled === false) {
       parsed.enabled = false;
     }
+    if (device.identity && typeof device.identity === 'object') {
+      const identity = device.identity as Record<string, unknown>;
+      if (
+        typeof identity.firmware !== 'string' ||
+        typeof identity.version !== 'string' ||
+        typeof identity.protocol !== 'number' ||
+        !Array.isArray(identity.capabilities) ||
+        !identity.capabilities.every((capability) => typeof capability === 'string')
+      ) {
+        throw new DeviceConfigInvalidError('Device identity is invalid.');
+      }
+      parsed.identity = {
+        firmware: identity.firmware,
+        version: identity.version,
+        protocol: identity.protocol,
+        capabilities: identity.capabilities,
+        ...(typeof identity.usbSerial === 'string' ? { usbSerial: identity.usbSerial } : {}),
+        ...(typeof identity.vid === 'string' ? { vid: identity.vid } : {}),
+        ...(typeof identity.pid === 'string' ? { pid: identity.pid } : {}),
+      };
+    }
+    if (typeof device.enrolledAt === 'string') parsed.enrolledAt = device.enrolledAt;
     return parsed;
   });
   return { schemaVersion: 1, devices };

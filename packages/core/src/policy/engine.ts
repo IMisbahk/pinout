@@ -1,4 +1,5 @@
 import { PolicyConstraintViolation, PolicyPreconditionFailed } from './errors.js';
+import { PinoutStructuredError } from '../errors.js';
 import type { PolicyContext, PolicyRule } from './types.js';
 
 export function evaluatePolicies(rules: PolicyRule[], context: PolicyContext): void {
@@ -58,6 +59,9 @@ function evaluateStateEquals(
   // Hostile/malformed state objects must produce a precondition failure, not
   // a TypeError that escapes the policy layer.
   const state = context.operationalState;
+  if (rule.maxStateAgeMs !== undefined) {
+    assertFreshState(state, rule.maxStateAgeMs, context);
+  }
   const actual =
     state !== null && typeof state === 'object'
       ? (state as Record<string, unknown>)[rule.field]
@@ -72,6 +76,34 @@ function evaluateStateEquals(
         field: rule.field,
         expected: rule.equals,
         actual,
+      },
+    );
+  }
+}
+
+export function assertFreshState(
+  state: Record<string, unknown>,
+  maxAgeMs: number,
+  context: PolicyContext,
+  now = Date.now(),
+): void {
+  const observedAt = typeof state.observedAt === 'number' ? state.observedAt : undefined;
+  const age = observedAt === undefined ? undefined : now - observedAt;
+  if (
+    observedAt === undefined ||
+    !Number.isFinite(observedAt) ||
+    age === undefined ||
+    age < 0 ||
+    age > maxAgeMs
+  ) {
+    throw new PinoutStructuredError(
+      'SAFETY_STATE_STALE',
+      'SAFETY',
+      `State for '${context.deviceId}' is missing or older than ${maxAgeMs}ms.`,
+      {
+        device: context.deviceId,
+        capability: context.capability,
+        details: { observedAt, maxStateAgeMs: maxAgeMs, ageMs: age },
       },
     );
   }

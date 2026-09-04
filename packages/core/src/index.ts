@@ -126,6 +126,7 @@ export {
 } from './drivers/esp32/pins.js';
 export { esp32DevKitPinMap, resolveEsp32DevKitPin } from './drivers/esp32/boardMap.js';
 export { PinoutRuntime, DuplicateDeviceError, DeviceNotFoundError } from './runtime/runtime.js';
+export type { PinoutRuntimeOptions } from './runtime/runtime.js';
 export { createRuntimeFromConfig, type FromConfigOptions } from './runtime/fromConfig.js';
 export { PINOUT_VERSION } from './version.js';
 export {
@@ -148,6 +149,7 @@ export {
   MODULE_MANIFEST_FILENAME,
   parseModuleManifest,
   readModuleManifestFromFile,
+  type PinoutModuleManifest,
 } from './module/manifest.js';
 export { loadModuleFromDirectory, type LoadedModule } from './module/loadModule.js';
 export {
@@ -190,6 +192,7 @@ export {
   resetRuntimeModulesForTests,
 } from './modules/registry.js';
 export { DeviceInstance } from './runtime/deviceInstance.js';
+export { ProtocolDeviceBackend } from './runtime/protocolBackend.js';
 export {
   CompositeDeviceBackend,
   createCompositeBackend,
@@ -256,6 +259,20 @@ export { relayModuleId } from './modules/relayModule.js';
 export { valveModuleId } from './modules/valveModule.js';
 export { pumpModuleId } from './modules/pumpModule.js';
 export { powerSupplyModuleId } from './modules/powerSupplyModule.js';
+export {
+  coffeeMachineModule,
+  coffeeMachineModuleId,
+  coffeeMachineSafetyRules,
+} from './modules/coffeeMachineModule.js';
+export {
+  createSimulatedCoffeeMachineBackend,
+  SimulatedCoffeeMachineBackend,
+} from './modules/coffeeMachine/simulator.js';
+export {
+  createEsp32CoffeeMachineBackend,
+  Esp32CoffeeMachineBackend,
+  type Esp32CoffeeMachineOptions,
+} from './modules/coffeeMachine/esp32Backend.js';
 export { createSimulatedRobotArmBackend } from './modules/robotArm/simulator.js';
 export { createSimulatedChamberBackend } from './modules/chamber/simulator.js';
 export { createSimulatedDcMotorBackend } from './modules/dcMotor/simulator.js';

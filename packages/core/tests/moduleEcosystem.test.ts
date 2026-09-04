@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -13,6 +13,7 @@ import {
   action,
   policiesFromDeclarative,
   readDevicesFile,
+  readModulesIndex,
   resetRuntimeModulesForTests,
   runModuleConformance,
   sensorRead,
@@ -126,6 +127,26 @@ describe('module ecosystem', () => {
   it('runs conformance on reference external module', async () => {
     const result = await runModuleConformance(weirdSensorPath);
     expect(result.passed).toBe(true);
+  });
+
+  it('gates generated candidates and records integrity metadata', async () => {
+    const candidate = join(pinoutHome, 'candidate');
+    cpSync(weirdSensorPath, candidate, { recursive: true });
+    const manifest = JSON.parse(
+      readFileSync(join(candidate, 'pinout.module.json'), 'utf8'),
+    ) as Record<string, unknown>;
+    manifest.status = 'CANDIDATE';
+    manifest.capabilities = ['temperature.read'];
+    manifest.simulation = { provided: true };
+    writeFileSync(join(candidate, 'pinout.module.json'), `${JSON.stringify(manifest)}\n`);
+    await expect(installModuleFromPath(candidate, { home: pinoutHome })).rejects.toThrow(
+      /CANDIDATE/,
+    );
+    await installModuleFromPath(candidate, { home: pinoutHome, allowCandidate: true });
+    const record = readModulesIndex(pinoutHome).modules.find((entry) => entry.id === manifest.id);
+    expect(record?.status).toBe('CANDIDATE');
+    expect(record?.manifestHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(record?.contentHash).toMatch(/^[a-f0-9]{64}$/);
   });
 });
 

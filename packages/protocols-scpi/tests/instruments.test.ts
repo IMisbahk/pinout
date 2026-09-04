@@ -147,9 +147,9 @@ describe('Oscilloscope', () => {
     const badCoupling = 'weird' as unknown as Parameters<
       typeof scope.configureChannel
     >[1]['coupling'];
-    await expect(scope.configureChannel(1, { coupling: badCoupling })).rejects.toBeInstanceOf(
-      ScpiUsageError,
-    );
+    await expect(
+      scope.configureChannel(1, badCoupling === undefined ? {} : { coupling: badCoupling }),
+    ).rejects.toBeInstanceOf(ScpiUsageError);
     await expect(scope.captureWaveform({ channel: 0 })).rejects.toBeInstanceOf(ScpiUsageError);
     expect(scpi.requests).toEqual([]);
     await scpi.client.close();

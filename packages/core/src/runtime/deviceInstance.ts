@@ -1,6 +1,7 @@
 import { DisconnectedError, UnsupportedCapabilityError, PinoutError } from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
 import type { SafetyEngine } from '../policy/safety.js';
+import type { SafetyReservation } from '../policy/safety.js';
 import type { PolicyRule } from '../policy/types.js';
 import type { HaltCoordinator } from '../halt/haltCoordinator.js';
 import { validateInputSchema, validateOutputSchema } from '../schema.js';
@@ -14,6 +15,8 @@ import type {
   RuntimeEventEnvelope,
   RuntimeEventHandler,
 } from './types.js';
+
+export type { DeviceBackend } from './types.js';
 
 export interface DeviceInstanceOptions {
   identity: DeviceIdentity;
@@ -41,6 +44,10 @@ export interface InvokeOptions {
   owner?: string;
   /** Resolve and policy-check without executing any physical side effect. */
   dryRun?: boolean;
+  /** Abort an in-flight backend request or long-running semantic action. */
+  signal?: AbortSignal;
+  /** Forward semantic progress to the operation manager. */
+  reportProgress?: (fraction: number | null, message?: string) => void;
 }
 
 export class DeviceInstance {
@@ -52,8 +59,8 @@ export class DeviceInstance {
 
   private readonly backend: DeviceBackend;
   private readonly policies: PolicyRule[];
-  private readonly halt: HaltCoordinator | undefined;
-  private readonly safetyEngine: SafetyEngine | undefined;
+  private halt: HaltCoordinator | undefined;
+  private safetyEngine: SafetyEngine | undefined;
   private readonly getOperationalState: () => Record<string, unknown>;
   private readonly runtimeEventHandlers = new Set<RuntimeEventHandler>();
   private health: DeviceHealth;
@@ -87,6 +94,17 @@ export class DeviceInstance {
       }
       this.emitRuntimeEvent(event, payload);
     });
+  }
+
+  /**
+   * Attach the runtime-owned governance boundary to this device.
+   *
+   * Runtime registration deliberately overwrites any device-local wiring so
+   * a device cannot bypass the runtime halt or safety engine.
+   */
+  attachGovernance(halt: HaltCoordinator, safetyEngine: SafetyEngine): void {
+    this.halt = halt;
+    this.safetyEngine = safetyEngine;
   }
 
   get id(): string {
@@ -162,6 +180,7 @@ export class DeviceInstance {
       payload,
       operationalState: this.getOperationalState(),
     });
+    let safetyReservation: SafetyReservation | undefined;
     if (this.safetyEngine) {
       const context = {
         deviceId: this.id,
@@ -178,7 +197,7 @@ export class DeviceInstance {
             decision.message ?? 'Rejected by policy.',
           );
       } else {
-        this.safetyEngine.enforce(context);
+        safetyReservation = this.safetyEngine.reserve(context);
       }
     }
 
@@ -197,7 +216,17 @@ export class DeviceInstance {
     this.activeInvocations += 1;
     this.setLifecycle('busy');
     try {
-      const result = await this.backend.invoke(capability, payload);
+      let result: Record<string, unknown>;
+      try {
+        result = await this.backend.invoke(capability, payload, {
+          ...(options.signal ? { signal: options.signal } : {}),
+          ...(options.reportProgress ? { reportProgress: options.reportProgress } : {}),
+        });
+      } catch (error) {
+        safetyReservation?.rollback();
+        throw error;
+      }
+      safetyReservation?.commit();
       return validateOutputSchema(descriptor.outputSchema, result);
     } finally {
       this.activeInvocations -= 1;
@@ -205,6 +234,12 @@ export class DeviceInstance {
         this.setLifecycle(this.activeInvocations > 0 ? 'busy' : 'ready');
       }
     }
+  }
+
+  /** Apply this backend's explicit safe state outside normal actuation gates. */
+  async applySafeState(): Promise<Record<string, unknown> | undefined> {
+    const result = await this.backend.safeState?.();
+    return result === undefined ? undefined : result;
   }
 
   async close(): Promise<void> {

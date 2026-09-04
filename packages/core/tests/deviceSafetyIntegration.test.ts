@@ -27,7 +27,11 @@ function makeDevice(
   const identity: DeviceIdentity = { id: 'esp-01', moduleId: 'pinout/esp32', deviceClass: 'gpio' };
   const backend: DeviceBackend = overrides.backend ?? {
     kind: 'simulated',
-    invoke: async (action, payload) => ({ ok: true, action, payload }),
+    invoke: async (action: string, payload: Record<string, unknown>) => ({
+      ok: true,
+      action,
+      payload,
+    }),
     close: async () => undefined,
     subscribe: () => () => undefined,
   };
@@ -69,6 +73,29 @@ describe('DeviceInstance safety integration', () => {
     await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrowError(
       /Rate limit/,
     );
+  });
+
+  it('refunds consumable safety state when the backend rejects the action', async () => {
+    let attempts = 0;
+    const backend: DeviceBackend = {
+      kind: 'simulated',
+      invoke: vi.fn(async () => {
+        attempts += 1;
+        if (attempts === 1) throw new Error('backend unavailable');
+        return { ok: true };
+      }),
+      close: async () => undefined,
+      subscribe: () => () => undefined,
+    };
+    const engine = new SafetyEngine({
+      rules: [{ kind: 'rate', capability: 'gpio.write', maxPerWindow: 1, windowMs: 60_000 }],
+    });
+    const device = makeDevice({ backend, safetyEngine: engine });
+
+    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).rejects.toThrow(
+      /backend unavailable/,
+    );
+    await expect(device.invoke('gpio.write', { pin: 2, value: 1 })).resolves.toEqual({ ok: true });
   });
 
   it('enforces lease-gated capabilities when an owner is passed', async () => {

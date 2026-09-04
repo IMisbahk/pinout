@@ -4,7 +4,7 @@ import { ensureModuleLoaded } from '../modules/registry.js';
 import { readDevicesFile, type DeviceDefinition } from '../home/deviceStore.js';
 import { resolveDevicesConfigPath, resolvePinoutHome } from '../home/paths.js';
 import { resolveRegistrationOptions } from '../home/transportFactory.js';
-import { PinoutRuntime } from './runtime.js';
+import { PinoutRuntime, type PinoutRuntimeOptions } from './runtime.js';
 import type { RegisterModuleDeviceOptions } from './types.js';
 
 export interface FromConfigOptions {
@@ -12,6 +12,9 @@ export interface FromConfigOptions {
   devicesPath?: string;
   continueOnError?: boolean;
   includeDemoDefaults?: boolean;
+  /** Optional runtime-owned governance components for configured devices. */
+  halt?: PinoutRuntimeOptions['halt'];
+  safetyEngine?: PinoutRuntimeOptions['safetyEngine'];
 }
 
 export interface FromConfigResult {
@@ -25,7 +28,10 @@ export async function createRuntimeFromConfig(
   const home = resolvePinoutHome(options.home);
   const devicesPath = resolveDevicesConfigPath(home, options.devicesPath);
   const devicesFile = readDevicesFile(devicesPath, home);
-  const runtime = new PinoutRuntime();
+  const runtime = new PinoutRuntime({
+    ...(options.halt ? { halt: options.halt } : {}),
+    ...(options.safetyEngine ? { safetyEngine: options.safetyEngine } : {}),
+  });
   const errors: Array<{ deviceId: string; error: unknown }> = [];
 
   const definitions = mergeDeviceDefinitions(devicesFile.devices, options);

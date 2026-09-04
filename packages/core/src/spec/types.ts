@@ -247,7 +247,15 @@ export type Capability =
 // ---------------------------------------------------------------------------
 
 export type OperationStatus =
-  'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'timed_out' | 'rejected';
+  | 'queued'
+  | 'running'
+  /** Cancellation was requested; the backend has not yet acknowledged it. */
+  | 'cancelling'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'timed_out'
+  | 'rejected';
 
 export interface OperationProgress {
   /** 0..1, or `null` when the device cannot report determinate progress. */
@@ -272,6 +280,8 @@ export interface OperationSnapshot {
   idempotencyKey?: string;
   createdAt: number;
   startedAt?: number;
+  /** Timestamp of a cooperative cancellation request, if any. */
+  cancelRequestedAt?: number;
   finishedAt?: number;
   deadline?: number;
   progress: OperationProgress | null;
@@ -406,7 +416,7 @@ export type SupportStatus =
   | 'EXPERIMENTAL';
 
 export interface ModuleManifestV1 {
-  schemaVersion: '1';
+  schemaVersion: 1;
   id: string;
   version: string;
   publisher?: string;
@@ -414,10 +424,12 @@ export interface ModuleManifestV1 {
   runtime: 'node' | 'python';
   capabilities: string[];
   /** Minimum Pinout version this module works with. */
-  requiresPinout?: string;
+  entrypoint: string;
+  pinout?: { minimumVersion?: string; maximumMajor?: number };
   permissions?: ModulePermission[];
-  simulation?: SimulationDescriptor;
-  support?: SupportStatus;
+  simulation: { provided: boolean; simulator?: string; notes?: string };
+  status: 'CANDIDATE' | 'REVIEWED' | 'TESTED';
+  provenance?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
 }
 

@@ -51,7 +51,7 @@ an individual is officially representing the community in public spaces.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the project team by opening an issue marked `conduct` at
-https://github.com/pinoutlabs/pinout/issues or by contacting a maintainer
+https://github.com/IMisbahk/pinout/issues or by contacting a maintainer
 directly through GitHub. All complaints will be reviewed and investigated
 promptly and fairly.
 

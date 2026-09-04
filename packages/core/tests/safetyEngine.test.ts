@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LeaseManager } from '../src/lease/leaseManager.js';
 import {
   SafetyEngine,
@@ -14,6 +14,22 @@ beforeEach(() => {
 });
 
 describe('SafetyEngine: rate', () => {
+  it('rejects an interlock backed by stale operational state', () => {
+    const engine = new SafetyEngine({
+      rules: [{ kind: 'interlock', capability: 'move', interlock: 'door', maxStateAgeMs: 50 }],
+      now: clock,
+    });
+    engine.setInterlock('door', true);
+    const result = engine.check({
+      deviceId: 'arm',
+      capability: 'move',
+      payload: {},
+      operationalState: { observedAt: now - 51 },
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.code).toBe('SAFETY_STATE_STALE');
+  });
+
   it('previews without spending approvals or rate slots and rolls back rejected checks', () => {
     const engine = new SafetyEngine({
       rules: [
@@ -211,7 +227,7 @@ describe('SafetyEngine: leases', () => {
       capability: 'motion.move_to',
       payload: {},
       operationalState: {},
-      owner,
+      ...(owner === undefined ? {} : { owner }),
     });
 
     expect(engine.check(ctx()).allowed).toBe(false);
@@ -303,6 +319,25 @@ describe('SafetyEngine: legacy rule compatibility', () => {
       code: 'POLICY_PRECONDITION_FAILED',
     });
   });
+
+  it('reports each rejection exactly once', () => {
+    const onRejection = vi.fn();
+    const engine = new SafetyEngine({
+      rules: [
+        { kind: 'numericRange', capability: 'temperature.set', field: 'target', min: 0, max: 80 },
+      ],
+      onRejection,
+    });
+    const decision = engine.check({
+      deviceId: 'chamber-01',
+      capability: 'temperature.set',
+      payload: { target: 90 },
+      operationalState: {},
+    });
+
+    expect(decision.allowed).toBe(false);
+    expect(onRejection).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('mergeModuleAndDeploymentRules', () => {
@@ -327,7 +362,7 @@ describe('mergeModuleAndDeploymentRules', () => {
     ];
     const { rules, conflicts } = mergeModuleAndDeploymentRules(moduleRules, deployment);
     expect(conflicts).toHaveLength(1);
-    expect(conflicts[0].kind).toBe('range-widening');
+    expect(conflicts[0]!.kind).toBe('range-widening');
     // Only the module rule survived.
     expect(rules.filter((r) => r.kind === 'numericRange')).toHaveLength(1);
   });
@@ -340,7 +375,7 @@ describe('mergeModuleAndDeploymentRules', () => {
       { kind: 'stateEquals', capability: 'pump.start', field: 'valve', equals: 'closed' },
     ];
     const { conflicts } = mergeModuleAndDeploymentRules(moduleRules, deployment);
-    expect(conflicts[0].kind).toBe('state-mismatch');
+    expect(conflicts[0]!.kind).toBe('state-mismatch');
   });
 
   it('marks merged deployment rules as CONFIGURED provenance', () => {
@@ -348,7 +383,7 @@ describe('mergeModuleAndDeploymentRules', () => {
       [],
       [{ kind: 'rate', capability: 'gpio.write', maxPerWindow: 10 }],
     );
-    expect(rules[0].provenance).toBe('CONFIGURED');
+    expect(rules[0]!.provenance).toBe('CONFIGURED');
   });
 
   it('allows deployment rules on unconstrained capabilities', () => {

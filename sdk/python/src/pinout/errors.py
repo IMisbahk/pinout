@@ -60,12 +60,35 @@ class Unauthorized(PinoutError):
     """Missing or invalid bearer token."""
 
 
+class ValidationError(PinoutError):
+    """Request arguments or payload failed schema validation."""
+
+
+class TransportError(PinoutError):
+    """Transport or protocol communication failed."""
+
+
+class ModuleError(PinoutError):
+    """Module loading or execution failed."""
+
+
+class ConfigurationError(PinoutError):
+    """Daemon or client configuration is invalid."""
+
+
 _CATEGORY_MAP = {
     "POLICY": PolicyRejected,
     "SAFETY": SafetyHalted,
     "LEASE": LeaseConflict,
     "AUTH": Unauthorized,
     "TIMEOUT": Timeout,
+    "VALIDATION": ValidationError,
+    "TRANSPORT": TransportError,
+    "MODULE": ModuleError,
+    "CONFIG": ConfigurationError,
+    "PROTOCOL": TransportError,
+    "UNSUPPORTED": UnsupportedCapability,
+    "OPERATION": OperationFailed,
 }
 
 _CODE_MAP = {
@@ -79,4 +102,11 @@ _CODE_MAP = {
     "OPERATION_TIMEOUT": Timeout,
     "TIMEOUT": Timeout,
     "AUTH_REQUIRED": Unauthorized,
+    "ORIGIN_REJECTED": Unauthorized,
+    "JSON_REQUIRED": ValidationError,
+    "VALIDATION_ERROR": ValidationError,
+    "TRANSPORT_DISCONNECTED": TransportError,
+    "TRANSPORT_TIMEOUT": Timeout,
+    "PROTOCOL_ERROR": TransportError,
+    "OPERATION_CANCELLED": OperationFailed,
 }
