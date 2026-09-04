@@ -1,0 +1,35 @@
+packages/core/src/policy/safety.ts
+  s_d5247e323998d9::t_f27a14e03c6243 22,323,325
+  s_d5247e323998d9::t_82c4bf6f9083bb 65-66
+  s_d5247e323998d9::t_194e796cafee10 324
+packages/core/src/policy/types.ts
+  s_d5247e323998d9::t_0343dcb291fea9 25-26
+packages/core/src/policy/engine.ts
+  s_d5247e323998d9::t_df7158512e0220 88,91
+  s_d5247e323998d9::t_959295dc16603e 84
+  s_d5247e323998d9::t_4b1d342ae94bc7 92-98,103-109
+  s_d5247e323998d9::t_53d3ef31c71105 2,62-64,85-87,89-90,99-102,111
+  s_d5247e323998d9::t_dc67908b7d5ff6 110,112-113
+packages/core/tests/safetyEngine.test.ts
+  s_d5247e323998d9::t_3c98ffe753339c 17-23,28-32
+  s_d5247e323998d9::t_4b1d342ae94bc7 24-27
+packages/core/tests/policy.test.ts
+  s_d5247e323998d9::t_0e55a10e0abfb3 47-54,71-72
+  s_d5247e323998d9::t_4b1d342ae94bc7 55-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "282630d5b4bd0fc2ad3f72d275176d7c51732761",
+  "prompts": {},
+  "sessions": {
+    "s_d5247e323998d9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06ce5-1cb6-72c2-84f5-8d925b701532",
+        "model": "gpt-5.6-luna"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
