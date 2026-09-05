@@ -1,0 +1,23 @@
+packages/core/tests/protocolBackendEvidence.test.ts
+  s_67ccf019af85c7::t_854677a0ae91df 147
+  s_67ccf019af85c7::t_8765fb4dfa692d 1-146,148-152
+packages/core/src/runtime/protocolBackend.ts
+  s_67ccf019af85c7::t_cd13b06c526fee 138
+  s_67ccf019af85c7::t_b9ad348bfee01a 11-20,51,71-72,77-85,89,92,96-137,139-148,182-184,194,204,210-212,217,224,229,251-341,354-362,421,425
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "82ee4a4a727d4435bd87e4b5841178649027b550",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
