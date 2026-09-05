@@ -1,0 +1,25 @@
+packages/mcp/src/createDaemonServer.ts
+  s_3f967323127a65::t_b3d68e718043df 82,85-88,90-96
+packages/mcp/src/createRuntimeServer.ts
+  s_3f967323127a65::t_75749e4825b351 214
+  s_3f967323127a65::t_a48c02488ba2ed 54,66,69-70
+  s_3f967323127a65::t_7fc2a4d2c09675 188
+  s_3f967323127a65::t_18cdd782581f7e 138-142
+  s_3f967323127a65::t_1b391f1652ca6c 129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "5e8e409cef3f2426dd333238d538fa0bc5a534e3",
+  "prompts": {},
+  "sessions": {
+    "s_3f967323127a65": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "60121f85-2480-4253-963f-15afa697cbbe",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
