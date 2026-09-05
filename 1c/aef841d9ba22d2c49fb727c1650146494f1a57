@@ -1,0 +1,19 @@
+packages/daemon/tests/coffeeMachineContract.test.ts
+  s_7fc1ef99a1a0c9::t_bc33cfb8eecd85 51-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "1caef841d9ba22d2c49fb727c1650146494f1a57",
+  "prompts": {},
+  "sessions": {
+    "s_7fc1ef99a1a0c9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b8c2b0f-252d-458f-92bf-ce82755e04b1",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
