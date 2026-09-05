@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "devices": [
+    {
+      "id": "lamp-01",
+      "module": "pinout/lamp",
+      "label": "Workbench Illumination Lamp",
+      "backend": {
+        "type": "protocol",
+        "transport": {
+          "type": "simulated-esp32"
+        }
+      },
+      "config": {
+        "pin": 2,
+        "polarity": "active-high",
+        "safeLevel": "low",
+        "maxOnMs": 30000,
+        "readbackPin": 13,
+        "readbackPolarity": "active-high"
+      }
+    }
+  ]
+}
