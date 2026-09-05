@@ -12,6 +12,7 @@ const board = await openDevice(options);
 
 try {
   console.log(`connected ${board.info.firmware} ${board.info.version}`);
+  await board.arm();
   await board.gpio.write(2, true);
   console.log('gpio 2 high');
   await delay(options.mock ? 50 : 500);

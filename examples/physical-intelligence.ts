@@ -72,6 +72,7 @@ async function main(): Promise<void> {
   const espDevice = runtime.getDevice(
     (await import('@pinout/core')).defaultHeterogeneousDeviceIds.esp32,
   );
+  await espDevice.invoke('sys.arm', {});
   const pinState = await espDevice.invoke('gpio.write', { pin: 2, value: true });
   console.log(`  gpio.write(pin=2, value=1) → ${JSON.stringify(pinState)}`);
   const plan = await espDevice.invoke('gpio.write', { pin: 2, value: true }, { dryRun: true });

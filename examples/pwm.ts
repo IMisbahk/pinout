@@ -9,6 +9,7 @@ const args = parseArgs(process.argv.slice(2));
 const device = await openDevice(resolveConnectionOptions(args));
 
 try {
+  await device.arm();
   await device.gpio.pwm(0, 2, 0.25, 1000);
   console.log('pwm gpio 2 duty 0.25');
   await delay(args.mock ? 20 : 500);

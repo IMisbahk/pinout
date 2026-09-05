@@ -9,6 +9,7 @@ const args = parseArgs(process.argv.slice(2));
 const device = await openDevice(resolveConnectionOptions(args));
 
 try {
+  await device.arm();
   device.on('gpio.changed', (payload) => {
     console.log(`gpio.changed ${JSON.stringify(payload)}`);
   });

@@ -26,6 +26,7 @@ try {
 }
 
 const defaultScript = `
+{"action":"sys.arm","payload":{}}
 {"action":"gpio.write","payload":{"pin":2,"value":true}}
 {"action":"gpio.read","payload":{"pin":2}}
 `.trim();

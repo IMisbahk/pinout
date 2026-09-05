@@ -160,6 +160,8 @@ Devices operate according to a strict safety state machine:
    - Actuation commands are **REJECTED** with error code `WATCHDOG_TRIPPED`.
    - **No automatic resumption**: Re-entering `armed` requires an explicit `sys.arm` command after operator/host recovery.
 
+Arming is strictly explicit and governed. Backends, SDK layers, and runtime routers must never arm a device implicitly during an actuation call. Any `autoArm` configuration in test fixtures is strictly demo/test-only and logs an explicit warning.
+
 ## Actions
 
 ### `sys.hello`

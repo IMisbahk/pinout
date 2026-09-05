@@ -32,6 +32,7 @@ console.log('=== Registered devices ===');
 printDeviceTable();
 
 console.log('\n=== SOS blink on ESP32 (simulator) ===');
+await runtime.invoke(ids.esp32, 'sys.arm', {});
 const sos = [
   true,
   false,

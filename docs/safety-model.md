@@ -21,8 +21,8 @@ The normal pipeline is:
    When armed, the host must continuously send heartbeats within the negotiated timeout window (`watchdog.configure`). If the host crashes, hangs, or the link is severed, the device firmware locally triggers safe state upon timeout without requiring host intervention.
 2. **Circuit-Aware Safe State**:
    Safe state is not assumed to be electrical LOW. Output commissioning requires declaring the fail-safe level (`low`, `high`, `high-z`, or `hold`) and load polarity (`active-high` vs `active-low`). For example, active-low relays are driven HIGH when safe state is applied, preventing dangerous de-energization inversion.
-3. **Explicit Arming**:
-   Boot, watchdog timeout, link drops, reconnects, and hardware resets always leave the device in the `disarmed` or `tripped` state. Actuation commands sent while disarmed or tripped are rejected with `NOT_ARMED` or `WATCHDOG_TRIPPED`. No automatic resumption of actuation is allowed without explicit host re-arming (`sys.arm`).
+3. **Explicit and Governed Arming (No Implicit Auto-Arming)**:
+   Boot, watchdog timeout, link drops, reconnects, and hardware resets always leave the device in the `disarmed` or `tripped` state. Actuation commands sent while disarmed or tripped are rejected with `NOT_ARMED` or `WATCHDOG_TRIPPED`. No code path may arm implicitly on invoke. Arming is an explicit, safety-governed action reachable via `pinout arm <deviceId>`, MCP tool `sys_arm`, or `runtime.invoke(id, 'sys.arm', {})` requiring lease ownership and journal recording. `autoArm` options in backends are strictly demo/test-only and emit logger warnings.
 4. **Bounded Command Validity**:
    Commands may carry a `validityMs` TTL. Buffered or delayed commands exceeding their TTL are rejected with `COMMAND_EXPIRED`.
 5. **Legacy Firmware Guarantees**:
