@@ -8,6 +8,16 @@ import {
   type GpioPolarity,
   type GpioSafeLevel,
 } from '../drivers/esp32/pins.js';
+import {
+  computeFreshness,
+  formatIsoTimestamp,
+  recordAcknowledged,
+  recordCommanded,
+  recordObserved,
+  unknownEvidence,
+  type EvidenceProvenance,
+  type EvidenceState,
+} from '../spec/evidence.js';
 import type { BackendInvocationContext, DeviceBackend } from './types.js';
 
 export interface OutputSafeConfig {
@@ -38,6 +48,7 @@ export class ProtocolDeviceBackend implements DeviceBackend {
     number,
     { safeLevel: GpioSafeLevel; polarity: GpioPolarity }
   >();
+  private readonly evidenceMap = new Map<string, EvidenceState<unknown>>();
   private readonly cleanupListener: (() => void) | undefined;
 
   constructor(
@@ -57,16 +68,82 @@ export class ProtocolDeviceBackend implements DeviceBackend {
       }
     }
 
+    this.recordAcknowledgedState('armed', 'disarmed');
+
     const tripHandler = (payload: Record<string, unknown>): void => {
       this.state = 'tripped';
       this.tripReason = typeof payload.reason === 'string' ? payload.reason : 'WATCHDOG_EXPIRED';
       this.stopHeartbeat();
+      const nowIso = formatIsoTimestamp();
+      this.recordAcknowledgedState('armed', 'tripped', nowIso);
+    };
+
+    const gpioChangedHandler = (payload: Record<string, unknown>): void => {
+      if (typeof payload.pin === 'number' && payload.value !== undefined) {
+        const nowIso = formatIsoTimestamp();
+        this.recordObservedState(`gpio.${payload.pin}`, payload.value, 'gpio-readback', nowIso);
+      }
     };
 
     this.device.on('device.tripped', tripHandler);
+    this.device.on('gpio.changed', gpioChangedHandler);
     this.cleanupListener = () => {
       this.device.off('device.tripped', tripHandler);
+      this.device.off('gpio.changed', gpioChangedHandler);
     };
+  }
+
+  private get provenance(): EvidenceProvenance {
+    const transportKind = (
+      this.device as unknown as { session?: { transport?: { kind?: string } } }
+    ).session?.transport?.kind;
+    if (transportKind?.startsWith('simulated') || transportKind === 'loopback') {
+      return 'simulated';
+    }
+    if (transportKind) {
+      return 'hardware';
+    }
+    return 'unknown';
+  }
+
+  private recordCommandedState<T = unknown>(
+    key: string,
+    value: T | null,
+    at?: string | number | Date | null,
+  ): EvidenceState<T> {
+    const existing =
+      (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
+      unknownEvidence<T>(this.provenance);
+    const updated = recordCommanded(existing, value, at, this.provenance);
+    this.evidenceMap.set(key, updated as EvidenceState<unknown>);
+    return updated;
+  }
+
+  private recordAcknowledgedState<T = unknown>(
+    key: string,
+    value: T | null,
+    at?: string | number | Date | null,
+  ): EvidenceState<T> {
+    const existing =
+      (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
+      unknownEvidence<T>(this.provenance);
+    const updated = recordAcknowledged(existing, value, at, this.provenance);
+    this.evidenceMap.set(key, updated as EvidenceState<unknown>);
+    return updated;
+  }
+
+  private recordObservedState<T = unknown>(
+    key: string,
+    value: T | null,
+    source: 'gpio-readback' | 'sensor' | 'simulated' = 'gpio-readback',
+    at?: string | number | Date | null,
+  ): EvidenceState<T> {
+    const existing =
+      (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
+      unknownEvidence<T>(this.provenance);
+    const updated = recordObserved(existing, value, source, at, this.provenance);
+    this.evidenceMap.set(key, updated as EvidenceState<unknown>);
+    return updated;
   }
 
   subscribe(_handler: (event: string, payload: Record<string, unknown>) => void): () => void {
@@ -102,6 +179,9 @@ export class ProtocolDeviceBackend implements DeviceBackend {
 
     await this.initializeOutputs();
 
+    const nowIso = formatIsoTimestamp();
+    this.recordCommandedState('armed', 'armed', nowIso);
+
     if (this.device.supports('sys.arm')) {
       const armPayload: { timeoutMs?: number } = {};
       const timeoutMs = options?.timeoutMs ?? this.options.watchdogTimeoutMs;
@@ -111,6 +191,7 @@ export class ProtocolDeviceBackend implements DeviceBackend {
       const result = await this.device.arm(armPayload);
       this.state = 'armed';
       this.tripReason = undefined;
+      this.recordAcknowledgedState('armed', 'armed', formatIsoTimestamp());
       if (typeof result.timeoutMs === 'number') {
         this.watchdogConfig.timeoutMs = result.timeoutMs;
       }
@@ -120,25 +201,32 @@ export class ProtocolDeviceBackend implements DeviceBackend {
 
     this.state = 'armed';
     this.tripReason = undefined;
+    this.recordAcknowledgedState('armed', 'armed', formatIsoTimestamp());
     return { armed: true, state: 'armed', legacy: true };
   }
 
   async disarm(): Promise<Record<string, unknown>> {
     this.stopHeartbeat();
+    const nowIso = formatIsoTimestamp();
+    this.recordCommandedState('armed', 'disarmed', nowIso);
+
     if (this.device.supports('sys.disarm')) {
       const result = await this.device.disarm();
       this.state = 'disarmed';
       this.tripReason = undefined;
+      this.recordAcknowledgedState('armed', 'disarmed', formatIsoTimestamp());
       return result;
     }
     if (this.device.supports('gpio.stopAll')) {
       const stoppedPins = await this.device.gpio.stopAll();
       this.state = 'disarmed';
       this.tripReason = undefined;
+      this.recordAcknowledgedState('armed', 'disarmed', formatIsoTimestamp());
       return { armed: false, state: 'disarmed', stoppedPins };
     }
     this.state = 'disarmed';
     this.tripReason = undefined;
+    this.recordAcknowledgedState('armed', 'disarmed', formatIsoTimestamp());
     return { armed: false, state: 'disarmed' };
   }
 
@@ -160,7 +248,97 @@ export class ProtocolDeviceBackend implements DeviceBackend {
     payload: Record<string, unknown>,
     context?: BackendInvocationContext,
   ): Promise<Record<string, unknown>> {
-    return this.device.invoke(action, payload, context?.signal ? { signal: context.signal } : {});
+    const cmdIso = formatIsoTimestamp();
+
+    if (action === 'gpio.write' && typeof payload.pin === 'number') {
+      this.recordCommandedState(`gpio.${payload.pin}`, payload.value ?? null, cmdIso);
+    } else if (action === 'gpio.batchWrite' && Array.isArray(payload.writes)) {
+      for (const w of payload.writes) {
+        if (w && typeof w === 'object' && typeof (w as { pin?: unknown }).pin === 'number') {
+          const writeEntry = w as { pin: number; value?: unknown };
+          this.recordCommandedState(`gpio.${writeEntry.pin}`, writeEntry.value ?? null, cmdIso);
+        }
+      }
+    } else if (action === 'gpio.toggle' && typeof payload.pin === 'number') {
+      this.recordCommandedState(`gpio.${payload.pin}`, payload.value ?? null, cmdIso);
+    } else if (action === 'gpio.pwm' && typeof payload.pin === 'number') {
+      this.recordCommandedState(`gpio.${payload.pin}`, payload.duty ?? null, cmdIso);
+    } else if (action === 'gpio.servo' && typeof payload.pin === 'number') {
+      this.recordCommandedState(`gpio.${payload.pin}`, payload.angle ?? null, cmdIso);
+    } else if (action === 'gpio.motor' && typeof payload.pin === 'number') {
+      this.recordCommandedState(`gpio.${payload.pin}`, payload.speed ?? null, cmdIso);
+    } else if (action === 'sys.arm') {
+      this.recordCommandedState('armed', 'armed', cmdIso);
+    } else if (action === 'sys.disarm') {
+      this.recordCommandedState('armed', 'disarmed', cmdIso);
+    }
+
+    const result = await this.device.invoke(
+      action,
+      payload,
+      context?.signal ? { signal: context.signal } : {},
+    );
+
+    const ackIso = formatIsoTimestamp();
+
+    if (action === 'gpio.write' && typeof payload.pin === 'number') {
+      this.recordAcknowledgedState(
+        `gpio.${payload.pin}`,
+        result.value !== undefined ? result.value : (payload.value ?? null),
+        ackIso,
+      );
+    } else if (action === 'gpio.batchWrite' && Array.isArray(payload.writes)) {
+      for (const w of payload.writes) {
+        if (w && typeof w === 'object' && typeof (w as { pin?: unknown }).pin === 'number') {
+          const writeEntry = w as { pin: number; value?: unknown };
+          this.recordAcknowledgedState(
+            `gpio.${writeEntry.pin}`,
+            writeEntry.value ?? null,
+            ackIso,
+          );
+        }
+      }
+    } else if (action === 'gpio.toggle' && typeof payload.pin === 'number') {
+      this.recordAcknowledgedState(`gpio.${payload.pin}`, result.value ?? null, ackIso);
+    } else if (action === 'gpio.pwm' && typeof payload.pin === 'number') {
+      this.recordAcknowledgedState(
+        `gpio.${payload.pin}`,
+        result.duty !== undefined ? result.duty : (payload.duty ?? null),
+        ackIso,
+      );
+    } else if (action === 'gpio.servo' && typeof payload.pin === 'number') {
+      this.recordAcknowledgedState(
+        `gpio.${payload.pin}`,
+        result.angle !== undefined ? result.angle : (payload.angle ?? null),
+        ackIso,
+      );
+    } else if (action === 'gpio.motor' && typeof payload.pin === 'number') {
+      this.recordAcknowledgedState(
+        `gpio.${payload.pin}`,
+        result.speed !== undefined ? result.speed : (payload.speed ?? null),
+        ackIso,
+      );
+    } else if (action === 'sys.arm') {
+      this.state = 'armed';
+      this.tripReason = undefined;
+      this.recordAcknowledgedState('armed', 'armed', ackIso);
+    } else if (action === 'sys.disarm') {
+      this.state = 'disarmed';
+      this.tripReason = undefined;
+      this.recordAcknowledgedState('armed', 'disarmed', ackIso);
+    } else if (
+      (action === 'gpio.read' || action === 'gpio.analogRead') &&
+      typeof payload.pin === 'number' &&
+      result.value !== undefined
+    ) {
+      this.recordObservedState(`gpio.${payload.pin}`, result.value, 'gpio-readback', ackIso);
+    } else if (action === 'sys.info' || action === 'sys.hello') {
+      if (typeof result.state === 'string') {
+        this.recordObservedState('armed', result.state, 'sensor', ackIso);
+      }
+    }
+
+    return result;
   }
 
   async close(): Promise<void> {
@@ -171,6 +349,15 @@ export class ProtocolDeviceBackend implements DeviceBackend {
 
   getDevice(): Device {
     return this.device;
+  }
+
+  getOperationalStateEvidence(): Record<string, EvidenceState<unknown>> {
+    const snapshot: Record<string, EvidenceState<unknown>> = {};
+    const now = Date.now();
+    for (const [key, state] of this.evidenceMap.entries()) {
+      snapshot[key] = computeFreshness(state, now);
+    }
+    return snapshot;
   }
 
   getOperationalState(): Record<string, unknown> {
@@ -231,9 +418,11 @@ export class ProtocolDeviceBackend implements DeviceBackend {
             this.state = 'tripped';
             this.tripReason = 'WATCHDOG_EXPIRED';
             this.stopHeartbeat();
+            this.recordAcknowledgedState('armed', 'tripped', formatIsoTimestamp());
           } else if (error.code === 'NOT_ARMED') {
             this.state = 'disarmed';
             this.stopHeartbeat();
+            this.recordAcknowledgedState('armed', 'disarmed', formatIsoTimestamp());
           }
         }
       }
