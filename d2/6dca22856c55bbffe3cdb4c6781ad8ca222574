@@ -1,0 +1,19 @@
+docs/recovery-model.md
+  s_7fc1ef99a1a0c9::t_c08f177bb8c826 1-167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "d26dca22856c55bbffe3cdb4c6781ad8ca222574",
+  "prompts": {},
+  "sessions": {
+    "s_7fc1ef99a1a0c9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b8c2b0f-252d-458f-92bf-ce82755e04b1",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
