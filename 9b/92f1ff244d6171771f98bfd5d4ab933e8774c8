@@ -1,0 +1,26 @@
+hardware/records/2026-09-05-modbus-lamp-pending.md
+  s_ced3dc698ea5a4::t_a7fa5f74607add 1-45
+docs/hardware-support.md
+  s_ced3dc698ea5a4::t_7a277898c3a80e 22-29
+docs/lamp-modbus.md
+  s_ced3dc698ea5a4::t_98eb93d297a23b 1-87
+hardware/catalog.json
+  s_ced3dc698ea5a4::t_d51afae18a124a 81-86
+  s_ced3dc698ea5a4::t_d62f8533c25aa5 79-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "9b92f1ff244d6171771f98bfd5d4ab933e8774c8",
+  "prompts": {},
+  "sessions": {
+    "s_ced3dc698ea5a4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9e7fd9aa-63e8-48a0-abf5-ee01a0fefde0",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
