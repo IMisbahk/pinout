@@ -1,0 +1,92 @@
+packages/cli/tests/daemonCommands.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 152-154
+packages/core/tests/recoveryReconciliation.test.ts
+  s_c149cfa220e73b::t_a805f4a62d0311 9
+  s_c149cfa220e73b::t_c49580a4e4133b 2
+packages/cli/src/doctor/daemon.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 19
+packages/cli/src/doctor/runner.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 9,58
+packages/core/src/spec/evidence.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 9,83-84,197-199
+packages/daemon/tests/coffeeMachineContract.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 52-56
+packages/core/src/operation/idempotencyStore.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 124
+packages/cli/src/daemonCommands.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 16,105-119,125-135,152
+packages/cli/src/doctor/environment.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 98
+packages/core/tests/evidenceState.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 81-97,108-122,131-135,365-367
+  s_c149cfa220e73b::t_4346ecd4cfbfd0 260-264
+  s_c149cfa220e73b::t_8f949565a462a6 232-235,238-242
+packages/core/tests/watchdogArmingSafeState.test.ts
+  s_c149cfa220e73b::t_9fdf39ea1652d0 378-383
+  s_c149cfa220e73b::t_c49580a4e4133b 104-106,119-121,125-127,147-149,226-230,288-290,417-420
+packages/cli/tests/doctor.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 29,192,209,231,236,285,363-368,426-432,448-455
+packages/core/tests/buses.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 34-36
+packages/protocols-modbus/tests/lampBackend.test.ts
+  s_c149cfa220e73b::t_5df5a9608706ac 2
+  s_c149cfa220e73b::t_05c4e5d2c9c9d6 220-223
+packages/core/src/drivers/esp32/simulatedTransport.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 12-18
+packages/core/tests/bridge.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 122-127
+packages/daemon/tests/evidenceApi.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 176-186,222-232
+  s_c149cfa220e73b::t_19594af3168a9a 191-193,195-197,200-203
+  s_c149cfa220e73b::t_03b348d8c5945b 237-241
+packages/core/tests/recoveryCancelStop.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 2,78-80
+packages/core/src/modules/esp32Module.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 75-76
+packages/mcp/src/runStdio.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 138
+packages/mcp/tests/mcp.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 122-126,145-149,420-433,458-471
+packages/core/src/runtime/protocolBackend.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 294
+packages/cli/src/doctor/configuration.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 2,59-64,73-78
+packages/cli/src/doctor/discovery.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 3-8
+packages/cli/src/doctor/types.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 7,67-68
+packages/core/tests/protocolBackendEvidence.test.ts
+  s_c149cfa220e73b::t_7bfcac737472d7 83-86,121-124
+packages/core/src/runtime/deviceInstance.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 1-6,86-87,219-233,288-295,564-568,572-576
+packages/core/tests/lamp.test.ts
+  s_c149cfa220e73b::t_aa3b62dcb5d5bc 20
+  s_c149cfa220e73b::t_c49580a4e4133b 204-208,227-231,305-309,318-322,345-349,449-453,502-506,700-704
+  s_c149cfa220e73b::t_f2d817ce6c912e 535,544,553
+packages/cli/src/doctor/firmware.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 215
+packages/core/src/drivers/esp32/bridge.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 337
+packages/core/src/drivers/esp32/pins.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 55-57
+packages/mcp/tests/stdioSubprocess.test.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 86-88,164-166,198-200,227-229,252-253
+packages/core/src/operation/operationManager.ts
+  s_c149cfa220e73b::t_c49580a4e4133b 30,896-899,927-930
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "dfff6bcafedf8fdeddb22a67a064eb194310b115",
+  "prompts": {},
+  "sessions": {
+    "s_c149cfa220e73b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "981503d1-7d1c-46ec-b9e6-339cfe3c451a",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
