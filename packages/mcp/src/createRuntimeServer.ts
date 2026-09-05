@@ -351,7 +351,21 @@ export function toMcpTool(tool: RuntimeAgentTool) {
     },
     outputSchema: {
       type: 'object' as const,
-      ...tool.outputSchema,
+      anyOf: [
+        {
+          type: 'object' as const,
+          required: ['operation'],
+          properties: {
+            operation: { type: 'object' as const },
+            result: { type: 'object' as const, ...tool.outputSchema },
+            deduped: { type: 'boolean' as const },
+          },
+        },
+        {
+          type: 'object' as const,
+          ...tool.outputSchema,
+        },
+      ],
     },
     annotations: {
       readOnlyHint: !tool.annotations.physicalOutput,

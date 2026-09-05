@@ -32,9 +32,17 @@ export function createDaemonMcpServer(options: DaemonMcpServerOptions = {}): Ser
     { capabilities: { tools: {} } },
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [...controlPlaneTools(), ...(await client.runtimeTools()).map(toMcpTool)],
-  }));
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    let runtimeToolsList: RuntimeAgentTool[] = [];
+    try {
+      runtimeToolsList = await client.runtimeTools();
+    } catch {
+      runtimeToolsList = [];
+    }
+    return {
+      tools: [...controlPlaneTools(), ...runtimeToolsList.map(toMcpTool)],
+    };
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = (request.params.arguments ?? {}) as Record<string, unknown>;
@@ -42,10 +50,37 @@ export function createDaemonMcpServer(options: DaemonMcpServerOptions = {}): Ser
       switch (request.params.name) {
         case 'pinout__list_devices':
           return success(await client.call('GET', '/v1/devices'));
-        case 'pinout__describe_device':
-          return success(
-            await client.call('GET', `/v1/devices/${segment(required(args, 'deviceId'))}`),
+        case 'pinout__describe_device': {
+          const raw = await client.call(
+            'GET',
+            `/v1/devices/${segment(required(args, 'deviceId'))}`,
           );
+          const rawHealth =
+            raw.health && typeof raw.health === 'object'
+              ? (raw.health as Record<string, unknown>)
+              : { lifecycle: raw.lifecycle ?? 'ready', healthy: true };
+          const rawIdentity =
+            raw.identity && typeof raw.identity === 'object'
+              ? (raw.identity as Record<string, unknown>)
+              : { id: raw.id, moduleId: raw.moduleId, deviceClass: raw.deviceClass };
+          const rawSupportedTransports = Array.isArray(raw.supportedTransportKinds)
+            ? (raw.supportedTransportKinds as string[])
+            : typeof raw.activeTransportKind === 'string'
+              ? [raw.activeTransportKind]
+              : ['simulated'];
+          const capabilityDescriptors = Array.isArray(raw.capabilityDescriptors)
+            ? raw.capabilityDescriptors
+            : [];
+          return success({
+            identity: rawIdentity,
+            health: rawHealth,
+            simulated: Boolean(raw.simulated),
+            activeTransportKind: (raw.activeTransportKind as string) ?? 'simulated',
+            supportedTransportKinds: rawSupportedTransports,
+            capabilities: capabilityDescriptors,
+            operationalState: (raw.operationalState as Record<string, unknown>) ?? {},
+          });
+        }
         case 'pinout__read_state':
           return success(
             await client.call('GET', `/v1/devices/${segment(required(args, 'deviceId'))}/state`),
@@ -146,12 +181,25 @@ class DaemonClient {
     const headers: Record<string, string> = {};
     if (this.token) headers.authorization = `Bearer ${this.token}`;
     if (body !== undefined) headers['content-type'] = 'application/json';
-    const response = await this.fetchFn(`${this.baseUrl}${path}`, {
-      method,
-      headers,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
-    const payload = (await response.json()) as Record<string, unknown>;
+    let response: Response;
+    try {
+      response = await this.fetchFn(`${this.baseUrl}${path}`, {
+        method,
+        headers,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch (networkError) {
+      throw structured(
+        'DAEMON_UNAVAILABLE',
+        `Unable to reach pinoutd daemon at ${this.baseUrl}: ${networkError instanceof Error ? networkError.message : String(networkError)}. Ensure pinoutd is running and PINOUT_DAEMON_URL is configured correctly.`,
+      );
+    }
+    let payload: Record<string, unknown>;
+    try {
+      payload = (await response.json()) as Record<string, unknown>;
+    } catch {
+      payload = {};
+    }
     if (!response.ok) {
       const error = objectArg(payload.error);
       throw structured(
