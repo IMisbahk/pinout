@@ -1,0 +1,27 @@
+docs/index.md
+  s_c149cfa220e73b::t_ae11d2e368c255 5-7,9-10,12-16,18-24,30-41
+  s_c149cfa220e73b::t_ba3d278fa32ca0 42
+README.md
+  s_c149cfa220e73b::t_6de14f11f53341 506,508,512,514,520,539,550,552,556
+  s_c149cfa220e73b::t_6657d055bd2974 121,123-125,127
+ROADMAP.md
+  s_c149cfa220e73b::t_56067a947b03bb 3,5,7,9,11-15,17,19-31,33-36,38,40-43
+CHANGELOG.md
+  s_c149cfa220e73b::t_7ebb63512fde69 7-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "02e432fb8ede7ae30b7bcee7e8d967a85aea3681",
+  "prompts": {},
+  "sessions": {
+    "s_c149cfa220e73b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "981503d1-7d1c-46ec-b9e6-339cfe3c451a",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
