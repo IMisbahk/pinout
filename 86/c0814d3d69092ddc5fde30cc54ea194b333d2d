@@ -1,0 +1,28 @@
+packages/core/src/lineReader.ts
+  s_67ccf019af85c7::t_868522a8e4ab86 1-6,9-10,24-25,33,43-44
+packages/core/src/protocol.ts
+  s_67ccf019af85c7::t_9b33ba30d5e5ac 5-8
+firmware/esp32-bridge/src/main.cpp
+  s_67ccf019af85c7::t_6bedbc74108ab3 1238
+  s_67ccf019af85c7::t_e9779f80513c68 12-15
+firmware/micropython-bridge/main.py
+  s_67ccf019af85c7::t_2719b900302ac0 30-31
+docs/protocol.md
+  s_67ccf019af85c7::t_bb3ec7cd33800e 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "86c0814d3d69092ddc5fde30cc54ea194b333d2d",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
