@@ -1,0 +1,27 @@
+packages/protocols-modbus/src/index.ts
+  s_ced3dc698ea5a4::t_658e86d9537811 28-39
+packages/protocols-modbus/tests/lampBackend.test.ts
+  s_ced3dc698ea5a4::t_8f12c785e96268 1-31,33-348
+  s_ced3dc698ea5a4::t_3e5389fd5b916a 32
+packages/protocols-modbus/src/simulator.ts
+  s_ced3dc698ea5a4::t_64634bf3c51bd6 1-262
+packages/protocols-modbus/src/lampBackend.ts
+  s_ced3dc698ea5a4::t_d45e826da690c0 1-21,27-659
+  s_ced3dc698ea5a4::t_7aa3aa70d7c2fd 22-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "1f96f3228b15485d16ad75b585984d9b8fcf1e36",
+  "prompts": {},
+  "sessions": {
+    "s_ced3dc698ea5a4": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "9e7fd9aa-63e8-48a0-abf5-ee01a0fefde0",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
