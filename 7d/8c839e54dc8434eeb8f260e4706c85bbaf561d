@@ -1,0 +1,22 @@
+examples/lamp.ts
+  s_922762322ff9e0::t_2f226b3206b2af 1-13,15-79
+  s_922762322ff9e0::t_40160d1ced4a3d 14
+examples/lamp.config.json
+  s_922762322ff9e0::t_ddf416a189642e 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "7d8c839e54dc8434eeb8f260e4706c85bbaf561d",
+  "prompts": {},
+  "sessions": {
+    "s_922762322ff9e0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "dd7a9c21-b024-4fee-a3d9-9154200e80a8",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
