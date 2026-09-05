@@ -136,7 +136,7 @@ Capabilities use dotted names grouped by physical semantics:
 - `force.*` — load cells / force sensors
 - `drive.*` — mobile bases / differential drive
 - `relay.*` — electrical contacts
-- `lamp.*` — illumination and indicator actuation (`lamp.on`, `lamp.off`, `lamp.set`, `lamp.status`)
+- `lamp.*` — illumination and indicator actuation (`lamp.arm`, `lamp.disarm`, `lamp.on`, `lamp.off`, `lamp.set`, `lamp.status`)
 - `valve.*` — proportional flow control
 - `pump.*` — pump speed and stop
 - `power.*` — programmable supply configuration and output enable

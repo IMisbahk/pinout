@@ -1,4 +1,5 @@
 import { DeviceError } from '../../errors.js';
+import { createLogger } from '../../logger.js';
 import type { BackendInvocationContext, DeviceBackend } from '../../runtime/types.js';
 import {
   validateLampConfig,
@@ -26,7 +27,12 @@ export class SimulatedLampBackend implements DeviceBackend {
   constructor(options: Record<string, unknown> = {}) {
     this.config = validateLampConfig(options);
     if (this.config.autoArm) {
+      createLogger('warn', { module: 'pinout:lamp' }).warn(
+        'autoArm is enabled on simulated lamp backend; this is for demo/testing only and bypasses explicit arming safety.',
+      );
       this.armedState = 'armed';
+    } else {
+      this.armedState = 'disarmed';
     }
   }
 
@@ -45,15 +51,23 @@ export class SimulatedLampBackend implements DeviceBackend {
     return this.buildStatus();
   }
 
-  async arm(): Promise<Record<string, unknown>> {
+  async arm(options: { timeoutMs?: number } = {}): Promise<Record<string, unknown>> {
+    const timeoutMs =
+      typeof options.timeoutMs === 'number'
+        ? options.timeoutMs
+        : (this.config.watchdogTimeoutMs ?? 1000);
     this.armedState = 'armed';
-    return { armed: true, state: 'armed' };
+    return { armed: 'armed', timeoutMs };
   }
 
   async disarm(): Promise<Record<string, unknown>> {
     this.clearMaxOnTimer();
     this.armedState = 'disarmed';
-    return { armed: false, state: 'disarmed' };
+    if (this.config.readbackPin !== undefined) {
+      this.simulatedReadbackLevel = this.config.polarity === 'active-low' ? true : false;
+    }
+    this.emit('safe_state.applied', { pin: this.config.pin, safeLevel: this.config.safeLevel });
+    return { armed: 'disarmed' };
   }
 
   async safeState(): Promise<Record<string, unknown>> {
@@ -86,6 +100,18 @@ export class SimulatedLampBackend implements DeviceBackend {
       return this.buildStatus();
     }
 
+    if (action === 'lamp.arm') {
+      const timeoutMs =
+        typeof payload.timeoutMs === 'number'
+          ? payload.timeoutMs
+          : (this.config.watchdogTimeoutMs ?? 1000);
+      return this.arm({ timeoutMs });
+    }
+
+    if (action === 'lamp.disarm') {
+      return this.disarm();
+    }
+
     if (action === 'lamp.on' || action === 'lamp.off' || action === 'lamp.set') {
       let targetOn: boolean;
       if (action === 'lamp.on') {
@@ -97,12 +123,15 @@ export class SimulatedLampBackend implements DeviceBackend {
       }
 
       if (this.armedState === 'disarmed') {
-        throw new DeviceError('NOT_ARMED', 'Device is disarmed. Explicit arming is required.');
+        throw new DeviceError(
+          'NOT_ARMED',
+          'Device is disarmed. Explicit arming (lamp.arm) is required before actuation.',
+        );
       }
       if (this.armedState === 'tripped') {
         throw new DeviceError(
           'WATCHDOG_TRIPPED',
-          'Device watchdog tripped. Re-arming is required.',
+          'Device watchdog tripped. Re-arming (lamp.arm) is required before actuation.',
         );
       }
 

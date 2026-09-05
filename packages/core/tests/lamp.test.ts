@@ -21,12 +21,14 @@ import {
 import { ByteQueue } from '../src/transports/byteQueue.js';
 
 describe('Lamp Module - Configuration and Commissioning', () => {
-  it('registers lamp module as a built-in module', () => {
+  it('registers lamp module as a built-in module with explicit arm/disarm capabilities', () => {
     const module = getModule(lampModuleId);
     expect(module).toBe(lampModule);
     expect(module.id).toBe('pinout/lamp');
     expect(module.deviceClass).toBe('actuator.lamp');
     expect(module.capabilityNames).toEqual([
+      'lamp.arm',
+      'lamp.disarm',
       'lamp.on',
       'lamp.off',
       'lamp.set',
@@ -76,10 +78,12 @@ describe('Lamp Module - Configuration and Commissioning', () => {
     const activeHigh = validateLampConfig({ pin: 2, polarity: 'active-high' }, false);
     expect(activeHigh.safeLevel).toBe('low');
     expect(activeHigh.polarity).toBe('active-high');
+    expect(activeHigh.autoArm).toBe(false);
 
     const activeLow = validateLampConfig({ pin: 4, polarity: 'active-low' }, false);
     expect(activeLow.safeLevel).toBe('high');
     expect(activeLow.polarity).toBe('active-low');
+    expect(activeLow.autoArm).toBe(false);
   });
 
   it('commissions output safe states with gpio.configSafeState before any actuation write', async () => {
@@ -133,7 +137,7 @@ describe('Lamp Module - Configuration and Commissioning', () => {
 });
 
 describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
-  it('rejects lamp.on and lamp.set when device is disarmed', async () => {
+  it('is disarmed by default and rejects lamp.on and lamp.set until explicit lamp.arm', async () => {
     const transport = simulatedEsp32();
     const runtime = new PinoutRuntime();
     try {
@@ -144,7 +148,6 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           pin: 2,
           polarity: 'active-high',
           safeLevel: 'low',
-          autoArm: false,
         },
       });
 
@@ -154,6 +157,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       expect(initialStatus.acknowledged).toEqual({ on: null, at: null });
       expect(initialStatus.observed).toEqual({ on: null, at: null, source: 'none' });
 
+      // Actuations fail while disarmed
       await expect(runtime.invoke('lamp-01', 'lamp.on', {})).rejects.toThrowError(
         /NOT_ARMED|disarmed/i,
       );
@@ -165,7 +169,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
     }
   });
 
-  it('arms explicitly, executes lamp.on/lamp.off, and does not infer observed state from write', async () => {
+  it('executes full explicit arm -> on -> status -> off -> disarm flow without inferring observed state', async () => {
     const transport = simulatedEsp32();
     const runtime = new PinoutRuntime();
     try {
@@ -176,14 +180,22 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           pin: 2,
           polarity: 'active-high',
           safeLevel: 'low',
-          autoArm: true,
         },
       });
 
-      const beforeTurnOn = await runtime.invoke('lamp-01', 'lamp.status', {});
-      expect(beforeTurnOn.armed).toBe('armed');
-      expect(beforeTurnOn.provenance).toBe('simulated');
+      // 1. Initial state is disarmed
+      const beforeArm = await runtime.invoke('lamp-01', 'lamp.status', {});
+      expect(beforeArm.armed).toBe('disarmed');
 
+      // 2. Explicit arm via lamp.arm
+      const armRes = await runtime.invoke('lamp-01', 'lamp.arm', { timeoutMs: 3000 });
+      expect(armRes).toMatchObject({ armed: 'armed' });
+
+      const afterArm = await runtime.invoke('lamp-01', 'lamp.status', {});
+      expect(afterArm.armed).toBe('armed');
+      expect(afterArm.provenance).toBe('simulated');
+
+      // 3. Actuate lamp.on
       const onResult = await runtime.invoke('lamp-01', 'lamp.on', {});
       expect(onResult).toEqual({ on: true });
 
@@ -201,6 +213,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       // Hardware level was driven HIGH for active-high
       expect(transport.state.levels.get(2)).toBe(true);
 
+      // 4. Actuate lamp.off
       const offResult = await runtime.invoke('lamp-01', 'lamp.off', {});
       expect(offResult).toEqual({ on: false });
 
@@ -210,17 +223,29 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       expect(statusAfterOff.observed).toEqual({ on: null, at: null, source: 'none' });
       expect(transport.state.levels.get(2)).toBe(false);
 
-      // Test lamp.set capability
+      // 5. Test lamp.set capability
       await runtime.invoke('lamp-01', 'lamp.set', { on: true });
       expect(transport.state.levels.get(2)).toBe(true);
       await runtime.invoke('lamp-01', 'lamp.set', { on: false });
       expect(transport.state.levels.get(2)).toBe(false);
+
+      // 6. Explicit disarm via lamp.disarm
+      const disarmRes = await runtime.invoke('lamp-01', 'lamp.disarm', {});
+      expect(disarmRes).toEqual({ armed: 'disarmed' });
+
+      const statusAfterDisarm = await runtime.invoke('lamp-01', 'lamp.status', {});
+      expect(statusAfterDisarm.armed).toBe('disarmed');
+
+      // 7. Subsequent actuation is rejected after disarm
+      await expect(runtime.invoke('lamp-01', 'lamp.on', {})).rejects.toThrowError(
+        /NOT_ARMED|disarmed/i,
+      );
     } finally {
       await runtime.close();
     }
   });
 
-  it('drives inverted electrical level for active-low polarity', async () => {
+  it('drives inverted electrical level for active-low polarity after explicit arming', async () => {
     const transport = simulatedEsp32();
     const runtime = new PinoutRuntime();
     try {
@@ -231,10 +256,10 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           pin: 4,
           polarity: 'active-low',
           safeLevel: 'high',
-          autoArm: true,
         },
       });
 
+      await runtime.invoke('lamp-active-low', 'lamp.arm', {});
       await runtime.invoke('lamp-active-low', 'lamp.on', {});
       // Active-low lamp is energized by driving LOW (false)
       expect(transport.state.levels.get(4)).toBe(false);
@@ -260,7 +285,6 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           safeLevel: 'low',
           readbackPin: 13,
           readbackPolarity: 'active-high',
-          autoArm: true,
         },
       });
 
@@ -282,7 +306,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
     }
   });
 
-  it('handles watchdog trip: marks armed as tripped, preserves commanded history, and rejects actuation', async () => {
+  it('handles watchdog trip: marks armed as tripped, preserves commanded history, rejects actuation, and requires explicit lamp.arm to re-arm', async () => {
     const transport = simulatedEsp32();
     const runtime = new PinoutRuntime();
     try {
@@ -293,16 +317,17 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           pin: 2,
           polarity: 'active-high',
           safeLevel: 'low',
-          autoArm: true,
           autoHeartbeat: false,
           watchdogTimeoutMs: 100,
         },
       });
 
+      // 1. Arm explicitly
+      await runtime.invoke('lamp-wd-test', 'lamp.arm', { timeoutMs: 100 });
       await runtime.invoke('lamp-wd-test', 'lamp.on', {});
       expect(transport.state.levels.get(2)).toBe(true);
 
-      // Trigger watchdog expiry on the simulated device
+      // 2. Trigger watchdog expiry on the simulated device
       transport.expireWatchdog();
 
       // Give device.tripped event a tick to process
@@ -318,6 +343,17 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       await expect(runtime.invoke('lamp-wd-test', 'lamp.on', {})).rejects.toThrowError(
         /WATCHDOG_TRIPPED|watchdog/i,
       );
+
+      // 3. Explicit re-arm via lamp.arm recovers the device
+      const rearmRes = await runtime.invoke('lamp-wd-test', 'lamp.arm', { timeoutMs: 5000 });
+      expect(rearmRes).toMatchObject({ armed: 'armed' });
+
+      const statusAfterRearm = await runtime.invoke('lamp-wd-test', 'lamp.status', {});
+      expect(statusAfterRearm.armed).toBe('armed');
+
+      // 4. Actuation succeeds again after explicit re-arm
+      await runtime.invoke('lamp-wd-test', 'lamp.on', {});
+      expect(transport.state.levels.get(2)).toBe(true);
     } finally {
       await runtime.close();
     }
@@ -335,10 +371,10 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           polarity: 'active-high',
           safeLevel: 'low',
           maxOnMs: 60,
-          autoArm: true,
         },
       });
 
+      await runtime.invoke('lamp-timed', 'lamp.arm', {});
       await runtime.invoke('lamp-timed', 'lamp.on', {});
       expect(transport.state.levels.get(2)).toBe(true);
 
@@ -356,18 +392,22 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
 });
 
 describe('Lamp Module - In-Process Simulated Backend', () => {
-  it('supports pure in-process SimulatedLampBackend without transport', async () => {
+  it('supports pure in-process SimulatedLampBackend without transport and explicit arm/disarm', async () => {
     const backend = new SimulatedLampBackend({
       pin: 2,
       polarity: 'active-high',
       safeLevel: 'low',
-      autoArm: false,
     });
 
     try {
+      const initialStatus = await backend.invoke('lamp.status', {});
+      expect(initialStatus.armed).toBe('disarmed');
+
       await expect(backend.invoke('lamp.on', {})).rejects.toThrowError(/NOT_ARMED|disarmed/i);
 
-      await backend.arm();
+      const armRes = await backend.invoke('lamp.arm', { timeoutMs: 2000 });
+      expect(armRes).toEqual({ armed: 'armed', timeoutMs: 2000 });
+
       const onRes = await backend.invoke('lamp.on', {});
       expect(onRes).toEqual({ on: true });
 
@@ -384,6 +424,12 @@ describe('Lamp Module - In-Process Simulated Backend', () => {
       await expect(backend.invoke('lamp.on', {})).rejects.toMatchObject({
         code: 'WATCHDOG_TRIPPED',
       });
+
+      // Disarm from tripped state
+      const disarmRes = await backend.invoke('lamp.disarm', {});
+      expect(disarmRes).toEqual({ armed: 'disarmed' });
+      const disarmedStatus = await backend.invoke('lamp.status', {});
+      expect(disarmedStatus.armed).toBe('disarmed');
     } finally {
       await backend.close();
     }
@@ -438,20 +484,26 @@ describe('Lamp Module - Legacy Firmware Guarantee', () => {
       }
     }
 
-    await expect(
-      createEsp32LampBackend({
-        transport: new LegacyTransport(),
-        pin: 2,
-        polarity: 'active-high',
-        safeLevel: 'low',
-        requireWatchdog: true,
-      }),
-    ).rejects.toThrowError(/WATCHDOG_NOT_SUPPORTED|does not advertise watchdog/i);
+    const legacyBackend = await createEsp32LampBackend({
+      transport: new LegacyTransport(),
+      pin: 2,
+      polarity: 'active-high',
+      safeLevel: 'low',
+      requireWatchdog: true,
+    });
+
+    try {
+      await expect(legacyBackend.invoke('lamp.arm', {})).rejects.toThrowError(
+        /WATCHDOG_NOT_SUPPORTED|does not advertise watchdog/i,
+      );
+    } finally {
+      await legacyBackend.close();
+    }
   });
 });
 
 describe('Lamp Module - Agent MCP Tooling & Config File Integration', () => {
-  it('exposes semantic tool names without leaking GPIO pin numbers to the agent', async () => {
+  it('exposes semantic tool names including lamp_arm/lamp_disarm without leaking GPIO pin numbers to the agent', async () => {
     const runtime = new PinoutRuntime();
     try {
       await runtime.registerFromModule(lampModuleId, {
@@ -468,6 +520,8 @@ describe('Lamp Module - Agent MCP Tooling & Config File Integration', () => {
       const lampTools = tools.filter((tool) => tool.mcpName.startsWith('workbench_lamp__'));
 
       expect(lampTools.map((t) => t.mcpName)).toEqual([
+        'workbench_lamp__lamp_arm',
+        'workbench_lamp__lamp_disarm',
         'workbench_lamp__lamp_on',
         'workbench_lamp__lamp_off',
         'workbench_lamp__lamp_set',
@@ -476,14 +530,15 @@ describe('Lamp Module - Agent MCP Tooling & Config File Integration', () => {
       ]);
 
       // Agent sees semantic schemas with no pin parameter
-      const onTool = lampTools.find((t) => t.mcpName === 'workbench_lamp__lamp_on');
-      expect(onTool?.inputSchema.properties).not.toHaveProperty('pin');
+      for (const tool of lampTools) {
+        expect(tool.inputSchema.properties).not.toHaveProperty('pin');
+      }
     } finally {
       await runtime.close();
     }
   });
 
-  it('boots runtime from devices config file containing lamp definition', async () => {
+  it('boots runtime from devices config file containing lamp definition and executes explicit arm/actuate flow', async () => {
     const tempDir = mkdtempSync(join(tmpdir(), 'pinout-lamp-config-'));
     const configPath = join(tempDir, 'devices.json');
     const devicesFileContent = {
@@ -516,9 +571,13 @@ describe('Lamp Module - Agent MCP Tooling & Config File Integration', () => {
         expect(runtime.hasDevice('room-lamp')).toBe(true);
         const status = await runtime.invoke('room-lamp', 'lamp.status', {});
         expect(status.provenance).toBe('simulated');
+        expect(status.armed).toBe('disarmed');
+
+        await runtime.invoke('room-lamp', 'lamp.arm', {});
         await runtime.invoke('room-lamp', 'lamp.on', {});
         const statusOn = await runtime.invoke('room-lamp', 'lamp.status', {});
         expect(statusOn.commanded.on).toBe(true);
+        expect(statusOn.armed).toBe('armed');
       } finally {
         await runtime.close();
       }

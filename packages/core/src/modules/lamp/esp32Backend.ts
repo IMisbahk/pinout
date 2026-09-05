@@ -1,5 +1,6 @@
 import { connect } from '../../connect.js';
 import { DeviceError } from '../../errors.js';
+import { createLogger } from '../../logger.js';
 import { simulatedEsp32 } from '../../drivers/esp32/simulatedTransport.js';
 import { ProtocolDeviceBackend } from '../../runtime/protocolBackend.js';
 import type { BackendInvocationContext, DeviceBackend } from '../../runtime/types.js';
@@ -45,6 +46,11 @@ export class Esp32LampBackend implements DeviceBackend {
 
   static async create(options: Record<string, unknown> = {}): Promise<Esp32LampBackend> {
     const config = validateLampConfig(options);
+    if (config.autoArm) {
+      createLogger('warn', { module: 'pinout:lamp' }).warn(
+        'autoArm is enabled on lamp backend; this is for demo/testing only and bypasses explicit arming safety.',
+      );
+    }
     const transport =
       (config.transport as Transport | undefined) ??
       (options.transport as Transport | undefined) ??
@@ -139,6 +145,39 @@ export class Esp32LampBackend implements DeviceBackend {
       return this.readStatus(context);
     }
 
+    if (action === 'lamp.arm') {
+      const armOptions: {
+        timeoutMs?: number;
+        heartbeatIntervalMs?: number;
+        requireWatchdog?: boolean;
+      } = {
+        requireWatchdog: this.config.requireWatchdog,
+      };
+      if (typeof payload.timeoutMs === 'number') {
+        armOptions.timeoutMs = payload.timeoutMs;
+      } else if (this.config.watchdogTimeoutMs !== undefined) {
+        armOptions.timeoutMs = this.config.watchdogTimeoutMs;
+      }
+      if (this.config.heartbeatIntervalMs !== undefined) {
+        armOptions.heartbeatIntervalMs = this.config.heartbeatIntervalMs;
+      }
+
+      const armResult = await this.protocolBackend.arm(armOptions);
+      return {
+        armed: 'armed',
+        timeoutMs:
+          typeof armResult.timeoutMs === 'number'
+            ? armResult.timeoutMs
+            : (armOptions.timeoutMs ?? 1000),
+      };
+    }
+
+    if (action === 'lamp.disarm') {
+      this.clearMaxOnTimer();
+      await this.protocolBackend.disarm();
+      return { armed: 'disarmed' };
+    }
+
     if (action === 'lamp.on' || action === 'lamp.off' || action === 'lamp.set') {
       let targetOn: boolean;
       if (action === 'lamp.on') {
@@ -151,12 +190,15 @@ export class Esp32LampBackend implements DeviceBackend {
 
       const opState = this.protocolBackend.getOperationalState();
       if (opState.state === 'disarmed') {
-        throw new DeviceError('NOT_ARMED', 'Device is disarmed. Explicit arming is required.');
+        throw new DeviceError(
+          'NOT_ARMED',
+          'Device is disarmed. Explicit arming (lamp.arm) is required before actuation.',
+        );
       }
       if (opState.state === 'tripped') {
         throw new DeviceError(
           'WATCHDOG_TRIPPED',
-          'Device watchdog tripped. Re-arming is required.',
+          'Device watchdog tripped. Re-arming (lamp.arm) is required before actuation.',
         );
       }
 

@@ -1,5 +1,59 @@
 import type { CapabilityDescriptor } from '../../types.js';
 
+export const lampArmCapability: CapabilityDescriptor = {
+  name: 'lamp.arm',
+  description:
+    'Explicitly arm the lamp for physical actuation and configure/kick the host-loss watchdog.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      timeoutMs: {
+        type: 'integer',
+        minimum: 1,
+        description: 'Watchdog timeout in milliseconds.',
+      },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['armed'],
+    properties: {
+      armed: { type: 'string', enum: ['armed'] },
+      timeoutMs: { type: 'integer', minimum: 0 },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes:
+      'Transitions lamp into armed state allowing physical actuation. Requires host-loss watchdog.',
+  },
+};
+
+export const lampDisarmCapability: CapabilityDescriptor = {
+  name: 'lamp.disarm',
+  description:
+    'Disarm the lamp, stop the watchdog timer, and apply the commissioned safe level immediately.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {},
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['armed'],
+    properties: {
+      armed: { type: 'string', enum: ['disarmed'] },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Disarms the lamp and enforces the commissioned safe level.',
+  },
+};
+
 export const lampOnCapability: CapabilityDescriptor = {
   name: 'lamp.on',
   description: 'Turn the lamp on (energize output).',
@@ -134,6 +188,8 @@ export const lampStatusReadCapability: CapabilityDescriptor = {
 };
 
 export const lampCapabilities = [
+  lampArmCapability,
+  lampDisarmCapability,
   lampOnCapability,
   lampOffCapability,
   lampSetCapability,

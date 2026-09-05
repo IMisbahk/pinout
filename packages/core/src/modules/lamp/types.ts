@@ -94,7 +94,7 @@ export function validateLampConfig(
       safeLevel: 'low',
       readbackPolarity: 'active-high',
       requireWatchdog: true,
-      autoArm: true,
+      autoArm: false,
       simulated: rawConfig.simulated !== false,
       provenance: 'simulated',
       transport: rawConfig.transport as Transport | undefined,
@@ -177,7 +177,7 @@ export function validateLampConfig(
     requireWatchdog: rawConfig.requireWatchdog !== false,
     watchdogTimeoutMs:
       typeof rawConfig.watchdogTimeoutMs === 'number' ? rawConfig.watchdogTimeoutMs : undefined,
-    autoArm: rawConfig.autoArm !== false,
+    autoArm: rawConfig.autoArm === true,
     autoHeartbeat:
       typeof rawConfig.autoHeartbeat === 'boolean' ? rawConfig.autoHeartbeat : undefined,
     heartbeatIntervalMs:

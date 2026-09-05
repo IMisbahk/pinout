@@ -5,6 +5,8 @@ The **Lamp** module (`pinout/lamp`, device class `actuator.lamp`) provides commi
 ## Product Promise: Semantic Abstraction
 
 An AI agent or autonomous operator interacting through the Model Context Protocol (MCP) or Pinout SDK sees **only semantic tool interfaces**:
+- `lamp.arm`
+- `lamp.disarm`
 - `lamp.on`
 - `lamp.off`
 - `lamp.set`
@@ -14,12 +16,27 @@ The agent **never sees or manipulates GPIO pin numbers, electrical logic levels,
 
 ---
 
+## Explicit Arming & Host-Loss Watchdog
+
+Pinout operates on a strict **fail-closed, explicit-arming model**:
+
+1. **Disarmed at Boot & Reconnect**: Upon initialization, boot, transport reconnection, or reset, the device starts in the `disarmed` state. No physical actuation occurs implicitly.
+2. **First Action is Explicit Arming (`lamp.arm`)**: An agent or operator must explicitly call `lamp.arm` (optionally configuring `timeoutMs`) before issuing any actuation commands (`lamp.on`, `lamp.off`, `lamp.set`). Calling actuation commands while `disarmed` is immediately rejected with error code `NOT_ARMED`.
+3. **Continuous Deadman Heartbeat**: When armed, a deadman watchdog counts down. If host communication ceases, the device locally trips to its declared safe level and enters the `tripped` state.
+4. **No Automatic Resumption After Trip**: Following a watchdog trip or link fault, commands are rejected with `WATCHDOG_TRIPPED`. The **only** way back to `armed` is an explicit `lamp.arm` call.
+5. **Explicit Disarm (`lamp.disarm`)**: When finished or in safe shutdown, `lamp.disarm` stops the watchdog timer and immediately applies the commissioned fail-safe electrical level.
+6. **`autoArm` Configuration Flag**: `autoArm` defaults to `false`. If explicitly set to `true` in deployment configuration, it is treated strictly as an opt-in for automated tests or legacy demos and logs a runtime safety warning.
+
+---
+
 ## Capabilities & MCP Tools
 
 | Capability | Tool Name (MCP) | Input | Output | Safety & Semantics |
 | :--- | :--- | :--- | :--- | :--- |
+| `lamp.arm` | `<id>__lamp_arm` | `{ timeoutMs? }` | `{ armed: "armed", timeoutMs? }` | Actuation gate. Arms the lamp and configures/kicks the host-loss watchdog. |
+| `lamp.disarm` | `<id>__lamp_disarm` | `{}` | `{ armed: "disarmed" }` | Actuation gate. Disarms the lamp and enforces the commissioned safe level. |
 | `lamp.on` | `<id>__lamp_on` | `{ validityMs? }` | `{ on: true }` | Physical actuation. Energizes the lamp output. Requires `armed` state. |
-| `lamp.off` | `<id>__lamp_off` | `{ validityMs? }` | `{ on: false }` | Physical actuation. De-energizes the lamp output. |
+| `lamp.off` | `<id>__lamp_off` | `{ validityMs? }` | `{ on: false }` | Physical actuation. De-energizes the lamp output. Requires `armed` state. |
 | `lamp.set` | `<id>__lamp_set` | `{ on: boolean, validityMs? }` | `{ on: boolean }` | Physical actuation. Sets lamp output state. Requires `armed` state. |
 | `lamp.status` | `<id>__lamp_status` | `{}` | `LampStatus` object | Read-only. Returns multi-stage evidence model, freshness, provenance, and armed state. |
 
@@ -112,7 +129,7 @@ Wiring is specified in deployment configuration (`devices.json`), not in code.
 | `maxOnMs` | number | Optional | Maximum continuous on-time in milliseconds. If exceeded, the lamp automatically turns off. |
 | `requireWatchdog`| boolean | Optional | Enforces that firmware must support host-loss deadman watchdog. Defaults to `true`. |
 | `watchdogTimeoutMs` | number | Optional | Negotiated watchdog timeout interval. |
-| `autoArm` | boolean | Optional | Whether to automatically arm upon initialization. Defaults to `true`. |
+| `autoArm` | boolean | Optional | Whether to automatically arm upon initialization (defaults to `false`; demo/test opt-in only). |
 
 ### Polarity & Fail-Safe Inversion Rules
 
@@ -140,9 +157,9 @@ Before any actuation write occurs, the lamp backend commissions the pin safe sta
    - If the host watchdog expires, the device firmware applies safe state and enters `tripped` state.
    - Actuation is rejected with `WATCHDOG_TRIPPED`.
    - `commanded` and `acknowledged` values are **not** falsely overwritten with a claimed "off"; they retain their audit history.
-   - Re-arming (`sys.arm`) is required to resume physical actuation.
+   - Re-arming (`lamp.arm`) is required to resume physical actuation.
 3. **Continuous On-Time Limits (`maxOnMs`)**:
-   - If `maxOnMs` is configured, an automatic watchdog timer de-energizes the lamp if it remains on beyond the configured duration, protecting thermal and optical ratings.
+   - If `maxOnMs` is configured, an automatic timer de-energizes the lamp if it remains on beyond the configured duration, protecting thermal and optical ratings.
 
 ---
 
