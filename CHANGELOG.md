@@ -4,6 +4,52 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added (Phases 1–5 sprint)
+
+- **MCP Stdio Lifecycle & Governance Fix** (`packages/mcp`): Repaired process lifecycle in `runStdio.ts` so the stdio transport maintains session lifetime across sequential calls, exits cleanly on stdin EOF and `SIGINT`/`SIGTERM`, and returns structured `DAEMON_UNAVAILABLE` errors without transport crashes when `pinoutd` is offline.
+- **Control Plane Governance Alignment**: Standardized daemon URL environment variables (`PINOUT_DAEMON_URL` with fallback to `PINOUT_URL`) and `PINOUT_OWNER` across CLI, MCP, and Python SDK; documented intentional direct `@pinout/core` SDK bypass semantics in [ADR 0006](docs/adr/0006-daemon-governance-and-direct-access.md) and [docs/architecture.md](docs/architecture.md).
+- **Protocol v1 Safety Additions**:
+  - Negotiated deadman command watchdog (`watchdog.configure`, `watchdog.kick`) with autonomous microcontroller timeout tripping.
+  - Circuit-aware per-output safe-state configuration (`gpio.configSafeState`) specifying fail-safe levels (`low`, `high`, `high-z`, `hold`) and load polarity (`active-high`, `active-low`).
+  - Bounded command validity (`validityMs` TTL / `COMMAND_EXPIRED`).
+  - Strict 1024-byte protocol line limit unified across firmware and host line readers.
+  - New structured error codes: `NOT_ARMED`, `WATCHDOG_TRIPPED`, `WATCHDOG_NOT_SUPPORTED`, `COMMAND_EXPIRED`, `UNSUPPORTED_CONFIGURATION`, `LINE_TOO_LONG`, `FRAME_MISSING`, `TRANSFORM_STALE`.
+- **Governed Arming State Machine & CLI Commands**:
+  - Enforced explicit arming gate (`sys.arm` / `sys.disarm`): devices initialize disarmed at boot, reconnect, or reset; actuation while disarmed/tripped is strictly rejected.
+  - Added daemon-routed `pinout arm <deviceId>` and `pinout disarm <deviceId>` CLI commands with timeout options.
+  - `autoArm` option in simulator backends defaults to `false` and is strictly scoped to demo/testing with logged runtime warnings.
+- **Commissioned Lamp Module (`pinout/lamp`)**:
+  - First-party semantic actuator module exposing `lamp.arm`, `lamp.disarm`, `lamp.on`, `lamp.off`, `lamp.set`, and `lamp.status` without exposing raw GPIOs to agents.
+  - Built-in `Esp32LampBackend` and in-process `SimulatedLampBackend` with shared conformance suite `runLampConformance()`.
+- **Modbus Lamp Backend (`@pinout/protocols-modbus`, SIMULATED)**:
+  - Second physical backend implementing the semantic lamp contract over Modbus TCP/RTU coils with independent discrete input readback.
+  - Passes shared `runLampConformance()` suite against `SimulatedModbusServer`.
+- **Evidence-Qualified State & Prerequisite Enforcement**:
+  - Multi-stage state contract (`commanded`, `acknowledged`, `observed`, `freshnessMs`, `stale`, `provenance`) in `packages/core/src/spec/evidence.ts`.
+  - The "Honesty Rule": write operations record `commanded` and `acknowledged` without inferring `observed` physical effect unless independently sensed.
+  - Action prerequisite gating: rejects invocation prior to actuation when required state prerequisites are missing or stale.
+  - Exposed via `/v1/devices/:id/state`, SSE event stream envelopes, MCP `pinout__describe_device`/`pinout__read_state`, and Python SDK.
+- **Recovery & Mandatory Reconciliation Model**:
+  - Hardened operation lifecycle across crash windows: Window A (pre-dispatch → `aborted`), Window B (dispatched/unacked → `requires_reconciliation`), Window C (completed → restored intact).
+  - Explicit reconciliation endpoint `POST /v1/operations/:id/reconcile` and SDK `reconcile()` supporting `observedComplete`, `observedNotDone`, and `abandoned` ([ADR 0007](docs/adr/0007-reconciliation-required-for-uncertain-operations.md)).
+  - Distinguishes cooperative cancellation requested (`cancelling`) from confirmed stop (`cancelled`/`stopped`) and unconfirmed stop (`stop_unconfirmed`).
+  - Volatile lease clearing across daemon restart to prevent stale sessions from resuming actuation.
+- **Doctor Diagnostic Workflow & Setup Guide**:
+  - Added non-actuating `pinout doctor` command (`packages/cli/src/doctor/`) diagnosing environment, daemon, configuration, ports, and firmware identity.
+  - Added step-by-step setup guide ([docs/setup.md](docs/setup.md)) with a 15-minute second-tester target and reference circuit breadboard guide ([hardware/reference/esp32-classic-led-sensor.md](hardware/reference/esp32-classic-led-sensor.md)).
+- **ROS 2 Sidecar Boundary (`@pinout/ros2-sidecar`, SIMULATED)**:
+  - Narrow sidecar module mapping single bounded Cartesian manipulation action (`arm.move_to_pose`) and stop (`arm.stop`) into Pinout runtime ([ADR 0008](docs/adr/0008-ros2-sidecar-boundary.md)).
+  - Minimal `RosActionTransport` abstraction and `FakeRosActionServer`.
+  - Frame tree validation (`FRAME_MISSING`) and transform freshness gating (`TRANSFORM_STALE`).
+  - High-rate feedback isolation to `StreamBus` (`ros2-arm:feedback`), keeping high-rate streams off MCP and operation journals.
+  - Controller loss mid-motion surfaces as `requires_reconciliation`.
+  - In-process benchmark suite (`packages/ros2-sidecar/tests/benchmark.test.ts`) validating declared task limits (overhead p99 <= 15 ms, stop response p99 <= 30 ms).
+- **Acceptance Ledger**: Comprehensive verification status matrix across all Phases 1–5 acceptance criteria in [docs/acceptance-ledger.md](docs/acceptance-ledger.md).
+
+### Breaking Changes (Phases 1–5 sprint)
+
+- **Explicit Arming Required for Actuation**: Calling actuation capabilities (`gpio.write`, `gpio.toggle`, `gpio.pulse`, `gpio.pwm`, `gpio.servo`, `gpio.motor`, `lamp.on`, etc.) on un-armed devices is now rejected with `NOT_ARMED` or `WATCHDOG_TRIPPED`. Callers must explicitly issue `sys.arm` or `lamp.arm` before actuating.
+
 ### Added (platform v1 sprint)
 
 - **Spec v1 layer** (`packages/core/src/spec`): canonical versioned contracts — device identity/health/descriptors, capability kinds with danger levels and units, operations, leases, frames/poses, safety constraints with provenance, module manifest shape, support statuses. Deterministic unit conversions that refuse ambiguous conversions. Documented under `docs/spec/`.

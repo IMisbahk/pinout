@@ -118,11 +118,13 @@ Applications and agents interact with **Pinout capabilities**, not the underlyin
 
 | Target | Status |
 | --- | --- |
-| ESP32 classic DevKit/WROOM (bridge firmware: GPIO, PWM, ADC, I2C, SPI, servo/motor) | `COMPILE_TESTED` reference path (simulator and transport-tested; no hardware-in-the-loop claim) |
+| ESP32 classic DevKit/WROOM (bridge firmware: GPIO, PWM, ADC, I2C, SPI, servo/motor) | `COMPILE_TESTED` reference path (simulator and transport-tested; physical HIL pending) |
 | MicroPython / CircuitPython boards (generic bridge) | `EXPERIMENTAL` — host-validated protocol only |
-| Simulated devices (arm, mobile base, chamber, coffee machine, motors, sensors, …) | `SIMULATED` |
+| Modbus Lamp (Coil + Discrete Input Readback) | `SIMULATED` (`@pinout/protocols-modbus` backend tested against simulator; physical HIL pending) |
+| ROS 2 Sidecar (`@pinout/ros2-sidecar`) | `SIMULATED` (narrow Cartesian action mapped to fake ROS action server; physical platform pending) |
+| Simulated devices (lamp, arm, mobile base, chamber, coffee machine, motors, sensors, …) | `SIMULATED` |
 | Modbus TCP/RTU, SCPI instruments, MQTT | `IMPLEMENTED` adapter packages (scripted/in-process tests; not physical-equipment verified or automatically registered as runtime devices) |
-| Universal Robots, OPC UA, MAVLink, ROS 2 | `PLANNED` |
+| Universal Robots, OPC UA, MAVLink | `PLANNED` |
 
 The architecture is deliberately transport- and module-agnostic; the matrix describes evidence for each concrete adapter, not a platform limit. Never blur these statuses: `SIMULATED` is not hardware-verified, and a mocked test proves nothing about hardware.
 
@@ -501,19 +503,21 @@ git clone https://github.com/IMisbahk/pinout.git
 cd pinout
 npm install
 npm test
+npm run pinout -- doctor
 npm run pinout -- hello --mock
-npm run pinout -- gpio write 2 high --mock
+npm run demo:lamp
 npm run demo:robotics
 ```
 
-No board is needed: `--mock` and the robotics demo run locally. Simulators share the real device contracts, but their readings and policy denials are integration aids, not evidence of physical performance.
+No board is needed: `--mock`, `demo:lamp`, and `demo:robotics` run locally over simulators. Simulators share the real device contracts, but their readings and policy denials are integration aids, not evidence of physical performance. See [`docs/setup.md`](docs/setup.md) for the 15-minute hardware setup guide.
 
-Use the SDK directly:
+Use the SDK directly (explicit arming required for actuation):
 
 ```ts
 import { connect, simulatedEsp32 } from '@pinout/core';
 
 const board = await connect({ transport: simulatedEsp32() });
+await board.invoke('sys.arm', {});
 await board.gpio.write(2, true);
 await board.close();
 ```
@@ -532,6 +536,7 @@ from pinout import Pinout
 
 p = Pinout()                     # talks to pinoutd
 arm = p.device("arm-01")
+p.arm("arm-01")                  # explicit arming gate
 op = arm.invoke("motion.home")
 print(op.result())
 ```
@@ -542,11 +547,13 @@ The first hardware target is a classic ESP32 DevKit (WROOM / 30-pin) running [`f
 
 ```bash
 npm run pinout -- ports
+npm run pinout -- doctor --port /dev/cu.usbserial-10
 npm run pinout -- hello --port /dev/cu.usbserial-10
+npm run pinout -- arm esp32-01 --port /dev/cu.usbserial-10
 npm run example:blink -- --port /dev/cu.usbserial-10
 ```
 
-This path exercises the SDK, protocol framing, ready handshake, host-side validation, serial transport, and firmware. It does not make Pinout responsible for wiring, voltage, mechanics, emergency stops, or the behavior of an attached load.
+This path exercises the SDK, protocol framing, ready handshake, explicit arming gate, host-side validation, serial transport, and firmware. It does not make Pinout responsible for wiring, voltage, mechanics, emergency stops, or the behavior of an attached load.
 
 ## Try the heterogeneous runtime
 
