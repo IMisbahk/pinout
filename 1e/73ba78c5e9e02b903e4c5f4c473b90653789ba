@@ -1,0 +1,23 @@
+packages/core/tests/session.test.ts
+  s_67ccf019af85c7::t_902a1bf6fe47e9 86-105
+packages/core/tests/protocol.test.ts
+  s_67ccf019af85c7::t_1cf2967a2f0d47 96
+packages/core/tests/lineReader.test.ts
+  s_67ccf019af85c7::t_2240fa2e383587 3-4,29-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "1e73ba78c5e9e02b903e4c5f4c473b90653789ba",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
