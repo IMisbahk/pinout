@@ -1,0 +1,28 @@
+packages/core/src/journal/journal.ts
+  s_7fc1ef99a1a0c9::t_fd8696c7eb5284 56-59
+packages/core/tests/recoveryCrashWindows.test.ts
+  s_7fc1ef99a1a0c9::t_ee37dec2b33c79 1-208
+packages/core/src/operation/operationManager.ts
+  s_7fc1ef99a1a0c9::t_41f71323c9ecec 7,10-12,20-24,29-62,70-73,80-87,111-115,129-133,143,159-164,189,198-205,211-212,218-221,224-252,254-255,257-259,262,268-316,321-348,351-359,361-393,396-411,413-475,481-483,496,607,610,612-613,628-649,651-657,660-670,672-709,712,716-720,831-846,850,854-870,878-949,1016,1023-1074,1092,1098
+  s_7fc1ef99a1a0c9::t_00f0b14762f2ad 256,263-266,349-350,360,412,534-535,611,650,658-659,671,710-711,713-714,789
+  s_7fc1ef99a1a0c9::t_f55e4562d241bd 715
+  s_7fc1ef99a1a0c9::t_c8911da082fe21 721
+packages/core/src/operation/idempotencyStore.ts
+  s_7fc1ef99a1a0c9::t_15343c4b85865b 120-133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "8bb76cf123ab0172f32009d1a3e787bb06083577",
+  "prompts": {},
+  "sessions": {
+    "s_7fc1ef99a1a0c9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b8c2b0f-252d-458f-92bf-ce82755e04b1",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
