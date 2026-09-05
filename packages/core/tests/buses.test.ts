@@ -11,6 +11,7 @@ import {
 describe('ESP32 I2C simulator', () => {
   it('writes then reads back stored bytes', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(handleBridgeAction('i2c.begin', {}, state)).toMatchObject({
       sda: 21,
       scl: 22,
@@ -28,8 +29,10 @@ describe('ESP32 I2C simulator', () => {
   });
 
   it('rejects invalid I2C addresses', () => {
+    const state = createGpioState();
+    state.deviceState = 'armed';
     expect(() =>
-      handleBridgeAction('i2c.write', { address: 200, data: [1] }, createGpioState()),
+      handleBridgeAction('i2c.write', { address: 200, data: [1] }, state),
     ).toThrow(DeviceError);
   });
 
@@ -41,6 +44,7 @@ describe('ESP32 I2C simulator', () => {
 describe('ESP32 SPI simulator', () => {
   it('loopback-transfers bytes on the default chip-select', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(handleBridgeAction('spi.begin', {}, state)).toMatchObject({
       sck: 18,
       miso: 19,
@@ -57,6 +61,7 @@ describe('ESP32 SPI simulator', () => {
 describe('ESP32 GPIO servo and motor', () => {
   it('commands a servo angle on a PWM pin', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(handleBridgeAction('gpio.servo', { pin: 13, angle: 90 }, state)).toEqual({
       pin: 13,
       angle: 90,
@@ -65,6 +70,7 @@ describe('ESP32 GPIO servo and motor', () => {
 
   it('drives a motor with optional reverse', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(
       handleBridgeAction('gpio.motor', { pwmPin: 25, dirPin: 26, speed: -0.4 }, state),
     ).toEqual({ pwmPin: 25, dirPin: 26, speed: -0.4 });
@@ -81,6 +87,7 @@ describe('ESP32 bus capabilities via Device', () => {
       expect(device.supports('i2c.write')).toBe(true);
       expect(device.supports('spi.transfer')).toBe(true);
       expect(device.info.version).toBe('0.3.0');
+      await device.arm();
 
       await device.invoke('i2c.write', { address: 0x48, data: [0x01, 0x02] });
       await expect(device.invoke('i2c.read', { address: 0x48, length: 2 })).resolves.toEqual({

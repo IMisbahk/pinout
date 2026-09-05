@@ -16,6 +16,7 @@ describe('sdk to simulated ESP32', () => {
     try {
       expect(device.info.firmware).toBe('esp32-bridge');
       expect(device.supports('gpio.write')).toBe(true);
+      await device.arm();
       await device.gpio.write(2, true);
       await expect(device.gpio.read(2)).resolves.toBe(true);
       await device.gpio.write(2, false);
@@ -57,6 +58,7 @@ describe('sdk to simulated ESP32', () => {
   it('ignores serial boot garbage until the ready event', async () => {
     const device = await connect({ transport: new BootNoiseTransport() });
     try {
+      await device.arm();
       await device.gpio.write(2, true);
       await expect(device.gpio.read(2)).resolves.toBe(true);
     } finally {
@@ -68,6 +70,7 @@ describe('sdk to simulated ESP32', () => {
     const device = await connect({ transport: new ReadylessTransport(), timeoutMs: 500 });
     try {
       expect(device.info.firmware).toBe('esp32-bridge');
+      await device.arm();
       await device.gpio.write(2, true);
       await expect(device.gpio.read(2)).resolves.toBe(true);
     } finally {

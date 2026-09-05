@@ -6,6 +6,7 @@ describe('gpio family via simulated ESP32', () => {
   it('invokes gpio.mode, toggle, pwm, and analogRead', async () => {
     const device = await connect({ transport: simulatedEsp32() });
     try {
+      await device.arm();
       expect(device.supports('gpio.mode')).toBe(true);
       expect(device.supports('gpio.toggle')).toBe(true);
       expect(device.supports('gpio.pwm')).toBe(true);
@@ -48,6 +49,7 @@ describe('gpio family via simulated ESP32', () => {
       }
     })();
 
+    await transport.write(new TextEncoder().encode(encodeRequest('arm1', 'sys.arm', {})));
     await transport.write(new TextEncoder().encode(encodeRequest('w1', 'gpio.watch', { pin: 2 })));
     await transport.write(
       new TextEncoder().encode(encodeRequest('w2', 'gpio.write', { pin: 2, value: true })),
@@ -72,6 +74,7 @@ describe('gpio family via simulated ESP32', () => {
       }
     })();
 
+    await transport.write(new TextEncoder().encode(encodeRequest('arm1', 'sys.arm', {})));
     await transport.write(new TextEncoder().encode(encodeRequest('p1', 'gpio.watch', { pin: 2 })));
     await transport.write(
       new TextEncoder().encode(
@@ -91,6 +94,7 @@ describe('gpio family via simulated ESP32', () => {
   it('cancels a pending pulse restoration when stopAll is requested', async () => {
     const device = await connect({ transport: simulatedEsp32() });
     try {
+      await device.arm();
       await device.invoke('gpio.pulse', { pin: 2, value: true, durationMs: 40 });
       await device.invoke('gpio.stopAll', {});
       await delay(70);
@@ -106,6 +110,7 @@ describe('gpio family via simulated ESP32', () => {
   it('does not let a pulse restoration overwrite a newer explicit write', async () => {
     const device = await connect({ transport: simulatedEsp32() });
     try {
+      await device.arm();
       await device.invoke('gpio.write', { pin: 2, value: true });
       await device.invoke('gpio.pulse', { pin: 2, value: false, durationMs: 30 });
       await device.invoke('gpio.write', { pin: 2, value: false });

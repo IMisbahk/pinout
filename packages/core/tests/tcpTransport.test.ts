@@ -31,6 +31,7 @@ describe('tcpTransport', () => {
       timeoutMs: 2000,
     });
     try {
+      await device.arm();
       await device.gpio.write(2, true);
       await expect(device.gpio.read(2)).resolves.toBe(true);
     } finally {

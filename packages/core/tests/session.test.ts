@@ -14,6 +14,7 @@ describe('session', () => {
   it('isolates concurrent in-flight requests by id', async () => {
     const device = await connect({ transport: simulatedEsp32() });
     try {
+      await device.arm();
       const [writeResult, readResult] = await Promise.all([
         device.invoke('gpio.write', { pin: 2, value: true }),
         device.invoke('gpio.read', { pin: 13 }),
@@ -40,6 +41,7 @@ describe('session', () => {
       signal: controller.signal,
     });
     try {
+      await device.arm();
       const pending = device.invoke('gpio.write', { pin: 2, value: true });
       controller.abort();
       await expect(pending).rejects.toBeInstanceOf(AbortedError);

@@ -55,6 +55,7 @@ describe('gpio validation', () => {
 describe('esp32 bridge handler', () => {
   it('writes and reads back GPIO state', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(handleBridgeAction('gpio.write', { pin: 2, value: true }, state)).toEqual({
       pin: 2,
       value: true,
@@ -64,6 +65,7 @@ describe('esp32 bridge handler', () => {
 
   it('applies batch writes atomically and stops tracked outputs', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(
       handleBridgeAction(
         'gpio.batchWrite',
@@ -115,11 +117,13 @@ describe('esp32 bridge handler', () => {
 
   it('rejects unknown actions and invalid pins', () => {
     expect(() => handleBridgeAction('motor.setSpeed', {}, createGpioState())).toThrow(DeviceError);
+    const state = createGpioState();
+    state.deviceState = 'armed';
     expect(() =>
-      handleBridgeAction('gpio.write', { pin: 34, value: true }, createGpioState()),
+      handleBridgeAction('gpio.write', { pin: 34, value: true }, state),
     ).toThrow(/input-only/);
     expect(() =>
-      handleBridgeAction('gpio.write', { pin: 2, value: 'high' }, createGpioState()),
+      handleBridgeAction('gpio.write', { pin: 2, value: 'high' }, state),
     ).toThrow(DeviceError);
   });
 
@@ -140,6 +144,7 @@ describe('esp32 bridge handler', () => {
 
   it('toggles output pins', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     handleBridgeAction('gpio.write', { pin: 2, value: false }, state);
     expect(handleBridgeAction('gpio.toggle', { pin: 2 }, state)).toEqual({ pin: 2, value: true });
     expect(handleBridgeAction('gpio.toggle', { pin: 2 }, state)).toEqual({ pin: 2, value: false });
@@ -147,6 +152,7 @@ describe('esp32 bridge handler', () => {
 
   it('returns pulse metadata for simulator scheduling', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     handleBridgeAction('gpio.write', { pin: 2, value: false }, state);
     expect(
       handleBridgeAction('gpio.pulse', { pin: 2, value: true, durationMs: 50 }, state),
@@ -160,6 +166,7 @@ describe('esp32 bridge handler', () => {
 
   it('configures pwm channels', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     expect(
       handleBridgeAction('gpio.pwm', { pin: 2, duty: 0.75, frequency: 1000, channel: 1 }, state),
     ).toEqual({ pin: 2, duty: 0.75, frequency: 1000, channel: 1 });
@@ -193,6 +200,7 @@ describe('esp32 bridge handler', () => {
 
   it('emits gpio.changed when a watched pin changes', () => {
     const state = createGpioState();
+    state.deviceState = 'armed';
     const events: Array<Record<string, unknown>> = [];
     handleBridgeAction('gpio.watch', { pin: 2 }, state);
     handleBridgeAction('gpio.write', { pin: 2, value: true }, state, {
