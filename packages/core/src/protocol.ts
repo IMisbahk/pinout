@@ -2,7 +2,10 @@ import { ProtocolError } from './errors.js';
 import type { DeviceInfo } from './types.js';
 
 export const protocolVersion = 1;
-export const maxProtocolLineBytes = 512;
+// Maximum protocol frame size in bytes (1024).
+// Accommodates comprehensive capability advertisements, features, and batch commands
+// while easily fitting within ESP32 SRAM (520 KB) with minimal buffer pressure.
+export const maxProtocolLineBytes = 1024;
 
 export interface ProtocolRequest {
   v: number;

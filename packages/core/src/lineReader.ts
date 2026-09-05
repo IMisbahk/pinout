@@ -1,6 +1,13 @@
+import { maxProtocolLineBytes } from './protocol.js';
+
+export interface ReadLinesOptions {
+  onOversize?: (length: number) => void;
+}
+
 export async function* readLines(
   readable: AsyncIterable<Uint8Array>,
-  maxLineBytes = 1024,
+  maxLineBytes = maxProtocolLineBytes,
+  options: ReadLinesOptions = {},
 ): AsyncGenerator<string, void, void> {
   const decoder = new TextDecoder();
   let buffer = '';
@@ -14,6 +21,8 @@ export async function* readLines(
       buffer = buffer.slice(newlineAt + 1);
       if (!discardingOversizeLine && line.length <= maxLineBytes && line.length > 0) {
         yield line;
+      } else if (line.length > maxLineBytes) {
+        options.onOversize?.(line.length);
       }
       discardingOversizeLine = false;
       newlineAt = buffer.indexOf('\n');
@@ -21,6 +30,7 @@ export async function* readLines(
     if (buffer.length > maxLineBytes) {
       // Retain only the post-newline tail on the next chunk. The oversized
       // frame is untrusted input and must never grow memory without bound.
+      options.onOversize?.(buffer.length);
       buffer = '';
       discardingOversizeLine = true;
     }
@@ -30,6 +40,8 @@ export async function* readLines(
   const leftover = buffer.replace(/\r$/, '').trim();
   if (!discardingOversizeLine && leftover.length > 0 && leftover.length <= maxLineBytes) {
     yield leftover;
+  } else if (leftover.length > maxLineBytes) {
+    options.onOversize?.(leftover.length);
   }
 }
 

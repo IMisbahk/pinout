@@ -9,7 +9,10 @@
 #include <Wire.h>
 
 constexpr uint32_t baudRate = 115200;
-constexpr size_t lineMax = 512;
+// Maximum protocol frame size in bytes (1024).
+// Accommodates comprehensive capability advertisements, features, and batch commands
+// while easily fitting within ESP32 SRAM (520 KB) with minimal buffer pressure.
+constexpr size_t lineMax = 1024;
 constexpr int protocolVersion = 1;
 constexpr const char* firmwareName = "esp32-bridge";
 constexpr const char* firmwareVersion = "0.0.1-alpha.1";
@@ -1232,7 +1235,7 @@ void handleLine(char* line) {
 }
 
 void setup() {
-  Serial.setRxBufferSize(1024);
+  Serial.setRxBufferSize(2048);
   Serial.begin(baudRate);
   bootMillis = millis();
   // Native USB Serial/JTAG boards (such as the ESP32-C3 SuperMini) can boot

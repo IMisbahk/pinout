@@ -27,7 +27,8 @@ except ImportError:  # pragma: no cover - config always ships with the bridge
 PROTOCOL_VERSION = 1
 FIRMWARE_NAME = "micropython-bridge"
 FIRMWARE_VERSION = "0.1.0"
-LINE_MAX = 512
+# Maximum protocol frame size in bytes (1024) matching host and ESP32 bridge.
+LINE_MAX = 1024
 
 CAPABILITIES = [
     "sys.ping",

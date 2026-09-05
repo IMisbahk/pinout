@@ -10,7 +10,7 @@ The protocol is not ESP32-specific. ESP32 is the first device that speaks it.
 - One JSON object per line
 - Lines end with `\n` (`\r\n` is accepted)
 - Lines that do not start with `{` are ignored (ESP32 ROM boot logs, debug prints)
-- Maximum request line: 512 bytes on the ESP32 bridge (`maxProtocolLineBytes` in the SDK)
+- Maximum request and response line: 1024 bytes on the ESP32 bridge (`maxProtocolLineBytes` in the SDK, `lineMax` in firmware)
 
 ## Request (host → device)
 
