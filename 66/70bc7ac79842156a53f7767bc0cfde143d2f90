@@ -1,0 +1,28 @@
+docs/mcp.md
+  s_3f967323127a65::t_ecd079901c350e 27-48
+sdk/python/src/pinout/client.py
+  s_3f967323127a65::t_cff497162a10b5 147-150
+docs/daemon.md
+  s_3f967323127a65::t_17150a30024c43 107,109,134-136
+sdk/python/tests/test_client.py
+  s_3f967323127a65::t_622f0928742e19 47-62,69-97
+  s_3f967323127a65::t_edd5cc37f9d02a 204-211
+sdk/python/src/pinout/async_client.py
+  s_3f967323127a65::t_865151b7bffbb7 88-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "6670bc7ac79842156a53f7767bc0cfde143d2f90",
+  "prompts": {},
+  "sessions": {
+    "s_3f967323127a65": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "60121f85-2480-4253-963f-15afa697cbbe",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
