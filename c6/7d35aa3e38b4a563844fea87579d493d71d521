@@ -1,0 +1,36 @@
+docs/modules.md
+  s_922762322ff9e0::t_8b1aca2ef7c0bd 139
+packages/core/src/modules/lamp/esp32Backend.ts
+  s_922762322ff9e0::t_dbb1d7852d7b54 3,49-53,148-180,193-196,201
+examples/lamp.ts
+  s_922762322ff9e0::t_bebd32d99eee61 6-7,9,29,31,34-43,48,50,64,69-77
+packages/core/src/modules/lamp/simulator.ts
+  s_922762322ff9e0::t_75c453f7ecaec9 2,30-32,34-35,54,60,66-70,103,108-113
+  s_922762322ff9e0::t_abbae19815cfeb 55-58,104-107,126-129,134
+  s_922762322ff9e0::t_520f0d977a133b 114
+docs/lamp.md
+  s_922762322ff9e0::t_e5c034b2fd6b93 8-9,19-31,36-37,39,132,160,162
+packages/core/tests/lamp.test.ts
+  s_922762322ff9e0::t_726d83d58966dc 24,30-31,81,86,140,160,172,186-188,190-198,216,226,231-242,248,262,309,325-326,330,346-356,377,395,403-405,408-410,427-432,487-501,506,523-524,533-535,541,574-576,580
+packages/core/src/modules/lamp/types.ts
+  s_922762322ff9e0::t_679326e494d31d 97,180
+packages/core/src/modules/lamp/capabilities.ts
+  s_922762322ff9e0::t_abbae19815cfeb 5-6,29-30,36-37
+  s_922762322ff9e0::t_83106d6fe8a719 3-4,7-28,31-35,38-56,191-192
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "c67d35aa3e38b4a563844fea87579d493d71d521",
+  "prompts": {},
+  "sessions": {
+    "s_922762322ff9e0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "dd7a9c21-b024-4fee-a3d9-9154200e80a8",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
