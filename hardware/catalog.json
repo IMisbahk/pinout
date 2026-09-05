@@ -78,6 +78,14 @@
     },
     {
       "category": "protocol",
+      "target": "Modbus Lamp (Coil + Discrete Input Readback)",
+      "integration": "@pinout/protocols-modbus ModbusLampBackend",
+      "status": "SIMULATED",
+      "testedHow": "in-process SimulatedModbusServer unit tests and @pinout/core shared runLampConformance suite; simulated wiring fault test",
+      "notes": "Semantic lamp contract over Modbus TCP/RTU. Actuation writes coil (acknowledged state); independent discrete input provides observed state. Physical hardware verification is pending (hardware/records/2026-09-05-modbus-lamp-pending.md)."
+    },
+    {
+      "category": "protocol",
       "target": "SCPI instruments (serial/TCP)",
       "integration": "@pinout/protocols-scpi",
       "status": "IMPLEMENTED",

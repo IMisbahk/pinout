@@ -19,6 +19,14 @@ For the alpha release, the classic ESP32 DevKit (`esp32-devkit-v1` / ESP-WROOM-3
 
 ESP32-C3/S2/S3/C6, Raspberry Pi, BLE, and industrial protocol integrations remain experimental, planned, or software-only as recorded in the catalog.
 
+## Modbus Lamp Backend (SIMULATED)
+
+The second physical backend for the semantic `lamp` contract is implemented over Modbus TCP / RTU (`@pinout/protocols-modbus`):
+
+- **Catalog Status:** `SIMULATED` (tested in software against `SimulatedModbusServer` and `@pinout/core` shared lamp conformance suite).
+- **Physical Verification:** **PENDING** — physical bench tests with physical Modbus Remote I/O units or PLCs are tracked in [`hardware/records/2026-09-05-modbus-lamp-pending.md`](../hardware/records/2026-09-05-modbus-lamp-pending.md).
+- **Documentation:** See [`docs/lamp-modbus.md`](lamp-modbus.md) for coil actuation, discrete input observation, and watchdog safety details.
+
 ## Flashing Policy: Never Auto-Flash Unidentified Hardware
 
 Pinout enforces a strict safety boundary around device flashing:
