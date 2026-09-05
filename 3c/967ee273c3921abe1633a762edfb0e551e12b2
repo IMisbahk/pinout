@@ -1,0 +1,22 @@
+packages/core/src/runtime/protocolBackend.ts
+  s_67ccf019af85c7::t_c4856d02e9aed2 160-162
+packages/core/src/session.ts
+  s_67ccf019af85c7::t_c9412533bfdf4d 202,206-207,213,224-225,231-238
+  s_67ccf019af85c7::t_a54101eb1138bd 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "3c967ee273c3921abe1633a762edfb0e551e12b2",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
