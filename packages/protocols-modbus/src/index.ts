@@ -25,3 +25,15 @@ export type {
   RegisterMapDevice,
   RegisterMapOptions,
 } from './registerMap.js';
+export {
+  SimulatedModbusServer,
+  createSimulatedModbusServer,
+  type SimulatedModbusServerOptions,
+} from './simulator.js';
+export {
+  ModbusLampBackend,
+  createModbusLampBackend,
+  validateModbusLampConfig,
+  type ModbusLampConfig,
+  type ValidatedModbusLampConfig,
+} from './lampBackend.js';
