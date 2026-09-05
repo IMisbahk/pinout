@@ -22,6 +22,9 @@ export interface ProtocolDeviceBackendOptions {
   watchdogTimeoutMs?: number | undefined;
   requireWatchdog?: boolean | undefined;
   outputs?: OutputSafeConfig[] | undefined;
+  /**
+   * @deprecated Demo/test-only. Explicit arming via arm() is required for governed operation.
+   */
   autoArm?: boolean | undefined;
 }
 
@@ -157,9 +160,6 @@ export class ProtocolDeviceBackend implements DeviceBackend {
     payload: Record<string, unknown>,
     context?: BackendInvocationContext,
   ): Promise<Record<string, unknown>> {
-    if (this.state === 'disarmed' && this.options.autoArm !== false) {
-      await this.arm().catch(() => undefined);
-    }
     return this.device.invoke(action, payload, context?.signal ? { signal: context.signal } : {});
   }
 

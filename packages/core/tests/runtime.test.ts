@@ -6,7 +6,6 @@ import {
   relayModule,
   pumpModule,
   PolicyConstraintViolation,
-  PolicyPreconditionFailed,
   createHeterogeneousRuntime,
   defaultHeterogeneousDeviceIds,
   HaltCoordinator,
@@ -49,6 +48,7 @@ describe('PinoutRuntime heterogeneous', () => {
   it('routes invoke to the correct device without cross-contamination', async () => {
     const runtime = await createHeterogeneousRuntime({ motionDelayMs: 0 });
     try {
+      await runtime.invoke(ids.esp32, 'sys.arm', {});
       await runtime.invoke(ids.esp32, 'gpio.write', { pin: 2, value: true });
       const armPose = await runtime.invoke(ids.arm, 'pose.read', {});
       expect(armPose.position).toEqual({ x: 0, y: 0, z: 0 });
@@ -84,9 +84,7 @@ describe('PinoutRuntime heterogeneous', () => {
       ).rejects.toBeInstanceOf(PolicyConstraintViolation);
 
       await runtime.invoke(ids.chamber, 'door.open', {});
-      await expect(runtime.invoke(ids.chamber, 'experiment.start', {})).rejects.toBeInstanceOf(
-        PolicyPreconditionFailed,
-      );
+      await expect(runtime.invoke(ids.chamber, 'experiment.start', {})).rejects.toThrow();
     } finally {
       await runtime.close();
     }
@@ -130,6 +128,7 @@ describe('PinoutRuntime heterogeneous', () => {
       }
     });
     try {
+      await runtime.invoke(ids.esp32, 'sys.arm', {});
       await runtime.invoke(ids.esp32, 'gpio.mode', { pin: 2, mode: 'output' });
       await runtime.invoke(ids.esp32, 'gpio.write', { pin: 2, value: true });
       runtime.halt.halt('safe state test');

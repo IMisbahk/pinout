@@ -1,4 +1,4 @@
-import { AbortedError, ValidationError } from '../../errors.js';
+import { AbortedError, DeviceError, ValidationError } from '../../errors.js';
 import type { Device } from '../../device.js';
 import { connect } from '../../connect.js';
 import type { Transport } from '../../types.js';
@@ -141,7 +141,23 @@ export class Esp32CoffeeMachineBackend implements DeviceBackend {
   }
 
   private async write(pin: number, value: boolean, signal?: AbortSignal): Promise<void> {
-    await this.device.invoke('gpio.write', { pin, value }, signal ? { signal } : {});
+    try {
+      await this.device.invoke('gpio.write', { pin, value }, signal ? { signal } : {});
+    } catch (error) {
+      if (error instanceof DeviceError && error.code === 'NOT_ARMED') {
+        throw new DeviceError(
+          'NOT_ARMED',
+          `Coffee machine actuation failed: underlying ESP32 device '${this.device.info.firmware}' is disarmed. Explicit arming is required before actuation.`,
+        );
+      }
+      if (error instanceof DeviceError && error.code === 'WATCHDOG_TRIPPED') {
+        throw new DeviceError(
+          'WATCHDOG_TRIPPED',
+          `Coffee machine actuation failed: underlying ESP32 device '${this.device.info.firmware}' watchdog tripped. Explicit re-arming is required before actuation.`,
+        );
+      }
+      throw error;
+    }
   }
 
   private emit(event: string, payload: Record<string, unknown>): void {

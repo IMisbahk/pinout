@@ -144,6 +144,7 @@ describe('@pinout/mcp server', () => {
 
   it('invokes gpio.write through tools/call', async () => {
     const device = await connect({ transport: simulatedEsp32() });
+    await device.arm();
     const server = createPinoutMcpServer(device);
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     const client = new Client({ name: 'pinout-mcp-test', version: '0.0.0' });

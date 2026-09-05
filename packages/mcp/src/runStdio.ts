@@ -38,6 +38,7 @@ async function runEmbeddedServer(): Promise<void> {
   await runtime.registerModuleDevice(esp32Module, {
     id: 'esp32-01',
     transport: await createMcpTransport(),
+    backendOptions: { autoArm: true },
   });
   const server = createRuntimeMcpServer(runtime, { owner: 'mcp-stdio' });
   await runStdioSession(server, runtime);

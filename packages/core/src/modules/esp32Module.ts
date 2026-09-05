@@ -1,6 +1,7 @@
 import { describeCapabilities, firstPartyCapabilities } from '../capabilities.js';
 import { connect } from '../connect.js';
 import { simulatedEsp32 } from '../drivers/esp32/simulatedTransport.js';
+import { createLogger } from '../logger.js';
 import {
   assertEsp32WritePin,
   assertGpioPin,
@@ -63,7 +64,12 @@ export const esp32Module: PinoutModuleDefinition = {
     }
 
     const device = await connect(connectOptions);
-    const autoArm = options.autoArm !== false;
+    const autoArm = options.autoArm === true;
+    if (autoArm) {
+      createLogger('warn').warn(
+        'autoArm is enabled on ESP32 protocol backend; this is for demo/testing only and bypasses explicit arming safety.',
+      );
+    }
     const backend = new ProtocolDeviceBackend(device, {
       outputs: validatedOutputs.length > 0 ? validatedOutputs : undefined,
       requireWatchdog: typeof options.requireWatchdog === 'boolean' ? options.requireWatchdog : undefined,
@@ -75,10 +81,9 @@ export const esp32Module: PinoutModuleDefinition = {
       autoArm,
     });
 
+    await backend.initializeOutputs();
     if (autoArm) {
       await backend.arm();
-    } else if (validatedOutputs.length > 0) {
-      await backend.initializeOutputs();
     }
 
     return backend;

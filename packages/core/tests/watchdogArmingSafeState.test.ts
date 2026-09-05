@@ -359,7 +359,7 @@ describe('Phase 2 Item A: ProtocolDeviceBackend & Legacy Firmware Guarantee', ()
     }
   });
 
-  it('initializes output safe states via esp32Module and applies on halt', async () => {
+  it('initializes output safe states via esp32Module and arms through runtime invocation', async () => {
     const runtime = new PinoutRuntime();
     try {
       const instance = await runtime.registerFromModule(esp32Module.id, {
@@ -374,14 +374,38 @@ describe('Phase 2 Item A: ProtocolDeviceBackend & Legacy Firmware Guarantee', ()
       });
 
       expect(instance).toBeDefined();
+
+      // Governed capability exposure
+      const capabilities = instance.capabilities.map((c) => c.name);
+      expect(capabilities).toContain('sys.arm');
+      expect(capabilities).toContain('sys.disarm');
+      expect(capabilities).toContain('watchdog.configure');
+      expect(capabilities).toContain('watchdog.kick');
+      expect(capabilities).toContain('gpio.configSafeState');
+
+      // Defaults to disarmed at bind
       const opState = instance.getOperationalStateSnapshot();
       expect(opState).toMatchObject({
-        armed: true,
-        state: 'armed',
+        disarmed: true,
+        armed: false,
+        state: 'disarmed',
       });
 
-      // Drive active-low pin 2 LOW
-      await runtime.invoke('esp-safety-test', 'gpio.write', { pin: 2, value: false });
+      // Actuation before arming is rejected
+      await expect(
+        runtime.invoke('esp-safety-test', 'gpio.write', { pin: 2, value: false }),
+      ).rejects.toThrow(/NOT_ARMED|disarmed/i);
+
+      // Arm through the runtime path
+      const armResult = await runtime.invoke('esp-safety-test', 'sys.arm', { timeoutMs: 2000 });
+      expect(armResult).toMatchObject({
+        state: 'armed',
+        armed: true,
+      });
+
+      // Actuation after arming succeeds
+      const writeResult = await runtime.invoke('esp-safety-test', 'gpio.write', { pin: 2, value: false });
+      expect(writeResult).toEqual({ pin: 2, value: false });
 
       // Halt the runtime
       runtime.halt.halt('test safe-state');
