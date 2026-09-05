@@ -1,0 +1,40 @@
+docs/cli.md
+  s_67ccf019af85c7::t_f52f29d2d285cd 50-51
+packages/cli/src/runCli.ts
+  s_67ccf019af85c7::t_f4a59a474b6c41 301-303
+packages/cli/tests/cli.test.ts
+  s_67ccf019af85c7::t_7d84fbbadc9517 81,99,116
+packages/cli/tests/daemonCommands.test.ts
+  s_67ccf019af85c7::t_f73065ae182059 119-130,154-155
+  s_67ccf019af85c7::t_6fa76714885b8f 141-142,152-153
+  s_67ccf019af85c7::t_634c3bcecffdbc 45,47-51,156
+  s_67ccf019af85c7::t_3dace6036a8180 118,131-140,143-151
+  s_67ccf019af85c7::t_5c1525e18e1de4 5-11
+  s_922762322ff9e0::t_0c975644e37dc1 157
+packages/cli/src/daemonCommands.ts
+  s_67ccf019af85c7::t_37e68277831f70 105-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "21268fb831006e4107ca1d8ced29ec018b3df220",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_922762322ff9e0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "dd7a9c21-b024-4fee-a3d9-9154200e80a8",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
