@@ -1,0 +1,25 @@
+docs/state-evidence.md
+  s_1133f3b5c822c2::t_76862b01c61a33 1-229
+docs/daemon.md
+  s_1133f3b5c822c2::t_c36daeba6299c6 88-134
+  s_1133f3b5c822c2::t_e2bd8bef8d07af 54
+  s_1133f3b5c822c2::t_fbd6ffc51b5f6b 135
+docs/architecture.md
+  s_1133f3b5c822c2::t_a829292965665e 79-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "de5a2fc2001ec93d7551e4ae161942688aaf2ea0",
+  "prompts": {},
+  "sessions": {
+    "s_1133f3b5c822c2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8301dd70-fde5-437f-85c2-3c156f9cf796",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
