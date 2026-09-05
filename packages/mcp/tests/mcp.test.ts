@@ -100,6 +100,108 @@ describe('@pinout/mcp daemon client', () => {
       await server.close();
     }
   });
+
+  it('passes stateEvidence through in pinout__describe_device and pinout__read_state', async () => {
+    const fetchStub: typeof fetch = async (input) => {
+      const pathname = new URL(String(input)).pathname;
+      if (pathname === '/v1/devices') {
+        return new Response(JSON.stringify({ devices: [{ id: 'relay-01', simulated: true }] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      if (pathname === '/v1/devices/relay-01') {
+        return new Response(
+          JSON.stringify({
+            identity: { id: 'relay-01', deviceClass: 'actuator.relay' },
+            capabilityDescriptors: [],
+            operationalState: { on: true },
+            stateEvidence: {
+              on: {
+                commanded: { value: true, source: 'commanded', at: '2026-09-05T00:00:00.000Z' },
+                acknowledged: { value: true, source: 'acknowledged', at: '2026-09-05T00:00:00.000Z' },
+                observed: { value: null, source: 'none', at: null },
+                freshnessMs: null,
+                stale: false,
+                provenance: 'simulated',
+              },
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      if (pathname === '/v1/devices/relay-01/state') {
+        return new Response(
+          JSON.stringify({
+            deviceId: 'relay-01',
+            state: { on: true },
+            stateEvidence: {
+              on: {
+                commanded: { value: true, source: 'commanded', at: '2026-09-05T00:00:00.000Z' },
+                acknowledged: { value: true, source: 'acknowledged', at: '2026-09-05T00:00:00.000Z' },
+                observed: { value: null, source: 'none', at: null },
+                freshnessMs: null,
+                stale: false,
+                provenance: 'simulated',
+              },
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      }
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    };
+
+    const server = createDaemonMcpServer({
+      baseUrl: 'http://pinoutd.test',
+      fetch: fetchStub,
+    });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'daemon-evidence-test', version: '0.0.0' });
+
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+
+      const described = await client.callTool({
+        name: 'pinout__describe_device',
+        arguments: { deviceId: 'relay-01' },
+      });
+      expect(described.isError).not.toBe(true);
+      expect(described.structuredContent).toMatchObject({
+        identity: { id: 'relay-01' },
+        operationalState: { on: true },
+        stateEvidence: {
+          on: expect.objectContaining({
+            commanded: expect.objectContaining({ value: true }),
+            observed: expect.objectContaining({ source: 'none' }),
+          }),
+        },
+      });
+
+      const readState = await client.callTool({
+        name: 'pinout__read_state',
+        arguments: { deviceId: 'relay-01' },
+      });
+      expect(readState.isError).not.toBe(true);
+      expect(readState.structuredContent).toMatchObject({
+        deviceId: 'relay-01',
+        state: { on: true },
+        stateEvidence: {
+          on: expect.objectContaining({
+            commanded: expect.objectContaining({ value: true }),
+            observed: expect.objectContaining({ source: 'none' }),
+          }),
+        },
+      });
+    } finally {
+      await client.close();
+      await server.close();
+    }
+  });
 });
 
 describe('@pinout/mcp server', () => {
@@ -258,7 +360,103 @@ describe('@pinout/mcp heterogeneous runtime', () => {
         capabilities: expect.arrayContaining([
           expect.objectContaining({ name: 'temperature.read' }),
         ]),
+        stateEvidence: expect.any(Object),
       });
+
+      const { tools } = await client.listTools();
+      const readStateTool = tools.find((t) => t.name === 'pinout__read_state');
+      expect(readStateTool?.description).toContain(
+        '`observed` is the only field that reflects independent physical evidence; `commanded`/`acknowledged` do not prove physical effect.',
+      );
+      const describeDeviceTool = tools.find((t) => t.name === 'pinout__describe_device');
+      expect(describeDeviceTool?.description).toContain(
+        '`observed` is the only field that reflects independent physical evidence; `commanded`/`acknowledged` do not prove physical effect.',
+      );
+    } finally {
+      await client.close();
+      await server.close();
+      await runtime.close();
+    }
+  });
+
+  it('surfaces evidence-qualified state across write and read actions honestly to agents', async () => {
+    const runtime = await createHeterogeneousRuntime({ motionDelayMs: 0 });
+    const server = createRuntimeMcpServer(runtime);
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'pinout-mcp-evidence-test', version: '0.0.0' });
+
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+
+      // 0. Explicitly arm device via MCP tool
+      const armResult = await client.callTool({
+        name: 'esp32_01__sys_arm',
+        arguments: {},
+      });
+      expect(armResult.isError).not.toBe(true);
+
+      // 1. Actuation write via MCP tool
+      const writeResult = await client.callTool({
+        name: 'esp32_01__gpio_write',
+        arguments: { pin: 2, value: true },
+      });
+      expect(writeResult.isError).not.toBe(true);
+
+      // 2. Read state via MCP tool: shows commanded/acknowledged set, observed remains none
+      const stateAfterWrite = await client.callTool({
+        name: 'pinout__read_state',
+        arguments: { deviceId: 'esp32-01' },
+      });
+      expect(stateAfterWrite.isError).not.toBe(true);
+      const evidenceAfterWrite = (stateAfterWrite.structuredContent as {
+        stateEvidence: Record<string, {
+          commanded: { value: unknown; source: string; at: string | null };
+          acknowledged: { value: unknown; source: string; at: string | null };
+          observed: { value: unknown; source: string; at: string | null };
+          freshnessMs: number | null;
+          stale: boolean;
+        }>;
+      }).stateEvidence;
+
+      expect(evidenceAfterWrite['gpio.2']).toBeDefined();
+      expect(evidenceAfterWrite['gpio.2']?.commanded.value).toBe(true);
+      expect(evidenceAfterWrite['gpio.2']?.commanded.source).toBe('commanded');
+      expect(evidenceAfterWrite['gpio.2']?.acknowledged.value).toBe(true);
+      expect(evidenceAfterWrite['gpio.2']?.acknowledged.source).toBe('acknowledged');
+      // Honest reporting: observed is none
+      expect(evidenceAfterWrite['gpio.2']?.observed.value).toBeNull();
+      expect(evidenceAfterWrite['gpio.2']?.observed.source).toBe('none');
+      expect(evidenceAfterWrite['gpio.2']?.freshnessMs).toBeNull();
+
+      // 3. Independent sensor read via MCP tool
+      const readResult = await client.callTool({
+        name: 'esp32_01__gpio_read',
+        arguments: { pin: 2 },
+      });
+      expect(readResult.isError).not.toBe(true);
+
+      // 4. Read state again: observed is now populated with evidence and freshness
+      const stateAfterRead = await client.callTool({
+        name: 'pinout__read_state',
+        arguments: { deviceId: 'esp32-01' },
+      });
+      expect(stateAfterRead.isError).not.toBe(true);
+      const evidenceAfterRead = (stateAfterRead.structuredContent as {
+        stateEvidence: Record<string, {
+          commanded: { value: unknown };
+          acknowledged: { value: unknown };
+          observed: { value: unknown; source: string; at: string | null };
+          freshnessMs: number | null;
+          stale: boolean;
+        }>;
+      }).stateEvidence;
+
+      expect(evidenceAfterRead['gpio.2']?.observed.value).toBe(true);
+      expect(evidenceAfterRead['gpio.2']?.observed.source).toBe('simulated');
+      expect(evidenceAfterRead['gpio.2']?.observed.at).toBeTruthy();
+      expect(typeof evidenceAfterRead['gpio.2']?.freshnessMs).toBe('number');
+      expect(evidenceAfterRead['gpio.2']?.stale).toBe(false);
     } finally {
       await client.close();
       await server.close();

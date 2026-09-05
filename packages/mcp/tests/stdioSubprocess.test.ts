@@ -102,6 +102,7 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
     expect(describeResult.isError).not.toBe(true);
     expect(describeResult.structuredContent).toMatchObject({
       identity: { id: 'relay-mcp' },
+      stateEvidence: expect.any(Object),
     });
 
     // 3. Acquire lease
@@ -136,6 +137,13 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
     expect(stateResult.structuredContent).toMatchObject({
       deviceId: 'relay-mcp',
       state: expect.objectContaining({ on: true }),
+      stateEvidence: expect.objectContaining({
+        on: expect.objectContaining({
+          commanded: expect.objectContaining({ value: true, source: 'commanded' }),
+          acknowledged: expect.objectContaining({ value: true, source: 'acknowledged' }),
+          observed: expect.objectContaining({ value: true, source: 'simulated' }),
+        }),
+      }),
     });
 
     // 6. Close client and assert child process exits cleanly with code 0
@@ -156,8 +164,15 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
 
     const toolsResult = await session.client.listTools();
     const toolNames = toolsResult.tools.map((tool) => tool.name);
+    expect(toolNames).toContain('esp32_01__sys_arm');
     expect(toolNames).toContain('esp32_01__gpio_write');
     expect(toolNames).toContain('esp32_01__gpio_read');
+
+    const armResult = await session.client.callTool({
+      name: 'esp32_01__sys_arm',
+      arguments: {},
+    });
+    expect(armResult.isError).not.toBe(true);
 
     const invokeResult = await session.client.callTool({
       name: 'esp32_01__gpio_write',
