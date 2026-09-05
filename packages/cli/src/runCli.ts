@@ -181,14 +181,39 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
 
   program
     .command('doctor')
-    .description('Check Node, serialport, ports, and simulator readiness.')
-    .action(async () => {
-      const output = outputFor(program, io);
-      const code = await runDoctor(output);
-      if (code !== 0) {
-        throw new DoctorFailedError();
-      }
-    });
+    .description(
+      'Staged diagnostic: environment, daemon, serial discovery, firmware identity, and registry checks.',
+    )
+    .option('-p, --port <path>', 'serial port path to probe firmware identity')
+    .option('-d, --device <id>', 'enrolled device id to probe firmware identity')
+    .option('--mock', 'probe simulated ESP32 instead of serial hardware')
+    .option('--no-daemon', 'skip daemon reachability check')
+    .option('--url <url>', 'daemon base URL (overrides PINOUT_DAEMON_URL)')
+    .option('--timeout <ms>', 'handshake and discovery timeout in ms', parsePositiveInt)
+    .action(
+      async (options: {
+        port?: string;
+        device?: string;
+        mock?: boolean;
+        daemon?: boolean;
+        url?: string;
+        timeout?: number;
+      }) => {
+        const output = outputFor(program, io);
+        const code = await runDoctor(output, {
+          port: options.port,
+          device: options.device,
+          mock: options.mock,
+          daemon: options.daemon,
+          url: options.url,
+          timeoutMs: options.timeout,
+          json: program.opts<{ json?: boolean }>().json ?? false,
+        });
+        if (code !== 0) {
+          throw new DoctorFailedError();
+        }
+      },
+    );
 
   program
     .command('pins')
