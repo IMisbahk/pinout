@@ -1,0 +1,39 @@
+packages/core/tests/tcpTransport.test.ts
+  s_67ccf019af85c7::t_898d0c85e3076c 34
+packages/core/tests/buses.test.ts
+  s_67ccf019af85c7::t_38b33d4089d6f9 14,32-33,35,47,64,73,90
+packages/core/tests/bridge.test.ts
+  s_67ccf019af85c7::t_eeaee70088bee4 58,68,120-121,123,126,147,155,169,203
+packages/core/tests/session.test.ts
+  s_67ccf019af85c7::t_3676c3f0b3f98b 17
+  s_67ccf019af85c7::t_fc6f0c1e1d23e1 44
+packages/core/tests/integration.test.ts
+  s_67ccf019af85c7::t_05421aa1ff744f 61,73
+  s_67ccf019af85c7::t_47d9cbd3b7bc74 19
+packages/core/tests/watchdogArmingSafeState.test.ts
+  s_67ccf019af85c7::t_71ada11ad0f615 246
+  s_67ccf019af85c7::t_5cc16a38c04cab 203-205
+  s_67ccf019af85c7::t_04e8a3a6b2c826 317-319
+  s_67ccf019af85c7::t_d95f7946401122 1-202,206-245,247,249-250,258-316,320-400
+  s_67ccf019af85c7::t_8b8bfc1d3a480c 248,251-257
+packages/core/tests/gpio.integration.test.ts
+  s_67ccf019af85c7::t_b737497c1fec2b 77,97,113
+  s_67ccf019af85c7::t_7148f961128c7f 9
+  s_67ccf019af85c7::t_544a11f8aef694 52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "f75515ea7beadad4bcc663495f53df0be874bca9",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
