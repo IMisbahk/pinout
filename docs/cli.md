@@ -58,7 +58,7 @@ These commands run in-process for local module authoring, testing, and single-de
 | --- | --- |
 | `devices` | List configured/active Pinout runtime devices from local config |
 | `ports` | List discoverable serial ports on host |
-| `doctor` | Node, serialport, port list, and mock handshake checks |
+| `doctor` | Staged diagnostic: environment, daemon, serial discovery, firmware identity, and registry checks |
 | `pins` | ESP32 safe/forbidden pin table |
 | `hello` | Connect and print capabilities (single device) |
 | `exec <action>` | Invoke action on directly connected device (`--payload '{...}'`) |
@@ -92,7 +92,35 @@ npm run pinout -- device add sensor-01 --module weird-sensor/thermometer --simul
 npm run pinout -- devices
 npm run pinout -- invoke sensor-01 temperature.read --payload '{}'
 npm run pinout -- blink --mock --count 3
+
+# Diagnostics and bring-up
+npm run pinout -- doctor
+npm run pinout -- doctor --port /dev/cu.usbserial-0001
+npm run pinout -- doctor --no-daemon
+npm run pinout -- doctor --json
 ```
+
+### Diagnostic doctor (`pinout doctor`)
+
+`pinout doctor` executes a multi-stage, non-actuating diagnostic:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `-p, --port <path>` | — | Serial port path to probe firmware identity |
+| `-d, --device <id>` | — | Enrolled device id to probe firmware identity |
+| `--mock` | false | Probe simulated ESP32 instead of serial hardware |
+| `--no-daemon` | false | Skip daemon reachability check |
+| `--url <url>` | `PINOUT_DAEMON_URL` or `http://127.0.0.1:8787` | Override daemon base URL |
+| `--timeout <ms>` | 3000 | Handshake and discovery timeout |
+| `--json` | false | Emit structured JSON output |
+
+Stages evaluated:
+- **Environment**: Node version ($\ge 20$), `~/.pinout` home directory presence and write permissions, and resolved `PINOUT_*` environment variables.
+- **Daemon**: Reachability and health probe of `pinoutd`.
+- **Serial Discovery**: Serial port enumeration with USB VID/PID matching against board descriptors in `firmware/boards/`. Unidentified boards generate a warning explaining that Pinout will never auto-flash.
+- **Firmware Identity**: Bounded `sys.hello` handshake verifying firmware name, version, protocol version, and advertised watchdog/arming features (legacy firmware without watchdog/arming is warned).
+- **Configuration**: Enrolled devices from `~/.pinout/devices.json` and verification of physical port presence.
+- **Simulator**: Baseline software simulation verification.
 
 The stop command invokes only stop capabilities advertised by each selected device, records unsupported devices and partial failures, and requires `--yes`. It cannot replace a hardware interlock or safety-rated emergency-stop circuit.
 
