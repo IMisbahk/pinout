@@ -1,11 +1,24 @@
-import { DisconnectedError, UnsupportedCapabilityError, PinoutError } from '../errors.js';
+import { DisconnectedError, UnsupportedCapabilityError, PinoutError, PinoutStructuredError } from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
-import type { SafetyEngine } from '../policy/safety.js';
-import type { SafetyReservation } from '../policy/safety.js';
+import type { SafetyEngine, SafetyReservation } from '../policy/safety.js';
 import type { PolicyRule } from '../policy/types.js';
 import type { HaltCoordinator } from '../halt/haltCoordinator.js';
 import { validateInputSchema, validateOutputSchema } from '../schema.js';
 import type { CapabilityDescriptor } from '../types.js';
+import {
+  computeFreshness,
+  formatIsoTimestamp,
+  recordAcknowledged,
+  recordCommanded,
+  recordObserved,
+  unknownEvidence,
+  type DeviceStateEvidence,
+  type EvidenceProvenance,
+  type EvidenceSource,
+  type EvidenceState,
+  type EvidenceValue,
+  type StatePrerequisite,
+} from '../spec/evidence.js';
 import type {
   DeviceBackend,
   DeviceClass,
@@ -27,15 +40,18 @@ export interface DeviceInstanceOptions {
   activeTransportKind?: string;
   transportKinds: string[];
   getOperationalState: () => Record<string, unknown>;
-  onRuntimeEvent?: RuntimeEventHandler;
+  getOperationalStateEvidence?: (() => Record<string, EvidenceState<unknown>>) | undefined;
+  prerequisites?: Record<string, StatePrerequisite[]> | undefined;
+  maxStateAgeMs?: number | Record<string, number> | undefined;
+  onRuntimeEvent?: RuntimeEventHandler | undefined;
   /** Global safety halt gate consulted before physical invocations. */
-  halt?: HaltCoordinator;
+  halt?: HaltCoordinator | undefined;
   /**
    * Safety engine v2 for rate/interlock/sequence/approval/lease/deadman/
    * resource rules. Give it ONLY v2 rules; the legacy kinds in `policies`
    * are already evaluated on every invoke.
    */
-  safetyEngine?: SafetyEngine;
+  safetyEngine?: SafetyEngine | undefined;
 }
 
 /** Per-invocation options (leases, dry-run). */
@@ -62,6 +78,11 @@ export class DeviceInstance {
   private halt: HaltCoordinator | undefined;
   private safetyEngine: SafetyEngine | undefined;
   private readonly getOperationalState: () => Record<string, unknown>;
+  private readonly getOperationalStateEvidenceFn: (() => Record<string, EvidenceState<unknown>>) | undefined;
+  private readonly evidenceMap = new Map<string, EvidenceState<unknown>>();
+  private readonly prerequisitesMap = new Map<string, StatePrerequisite[]>();
+  private readonly maxStateAgeMap = new Map<string, number>();
+  private defaultMaxStateAgeMs: number | undefined;
   private readonly runtimeEventHandlers = new Set<RuntimeEventHandler>();
   private health: DeviceHealth;
   private activeInvocations = 0;
@@ -78,8 +99,28 @@ export class DeviceInstance {
     this.activeTransportKind = options.activeTransportKind ?? options.backend.kind;
     this.transportKinds = options.transportKinds;
     this.getOperationalState = options.getOperationalState;
+    this.getOperationalStateEvidenceFn =
+      options.getOperationalStateEvidence ??
+      (options.backend.getOperationalStateEvidence
+        ? () => options.backend.getOperationalStateEvidence!()
+        : undefined);
     this.halt = options.halt;
     this.safetyEngine = options.safetyEngine;
+
+    if (typeof options.maxStateAgeMs === 'number') {
+      this.defaultMaxStateAgeMs = options.maxStateAgeMs;
+    } else if (options.maxStateAgeMs && typeof options.maxStateAgeMs === 'object') {
+      for (const [key, maxAge] of Object.entries(options.maxStateAgeMs)) {
+        this.maxStateAgeMap.set(key, maxAge);
+      }
+    }
+
+    if (options.prerequisites) {
+      for (const [capability, reqs] of Object.entries(options.prerequisites)) {
+        this.prerequisitesMap.set(capability, [...reqs]);
+      }
+    }
+
     if (options.onRuntimeEvent) {
       this.runtimeEventHandlers.add(options.onRuntimeEvent);
     }
@@ -92,7 +133,7 @@ export class DeviceInstance {
       if (!event) {
         return;
       }
-      this.emitRuntimeEvent(event, payload);
+      this.handleIncomingEvent(event, payload);
     });
   }
 
@@ -119,12 +160,200 @@ export class DeviceInstance {
     return this.identity.moduleId;
   }
 
+  get provenance(): EvidenceProvenance {
+    return this.simulated ? 'simulated' : 'hardware';
+  }
+
   getHealth(): DeviceHealth {
     return { ...this.health };
   }
 
   getOperationalStateSnapshot(): Record<string, unknown> {
     return { ...this.getOperationalState() };
+  }
+
+  getMaxAgeMs(key: string): number | undefined {
+    return this.maxStateAgeMap.get(key) ?? this.defaultMaxStateAgeMs;
+  }
+
+  setMaxAgeMs(keyOrAge: string | number, maxAgeMs?: number): void {
+    if (typeof keyOrAge === 'number') {
+      this.defaultMaxStateAgeMs = keyOrAge;
+    } else if (typeof maxAgeMs === 'number') {
+      this.maxStateAgeMap.set(keyOrAge, maxAgeMs);
+    }
+  }
+
+  setPrerequisite(capability: string, prerequisite: StatePrerequisite): void {
+    const current = this.prerequisitesMap.get(capability) ?? [];
+    current.push(prerequisite);
+    this.prerequisitesMap.set(capability, current);
+  }
+
+  getStateEvidence(): DeviceStateEvidence {
+    const snapshot: DeviceStateEvidence = {};
+    const now = Date.now();
+
+    // 1. Backend-provided evidence if available
+    const backendEvidence = this.getOperationalStateEvidenceFn?.() ?? {};
+    for (const [key, state] of Object.entries(backendEvidence)) {
+      snapshot[key] = computeFreshness(state, now, this.getMaxAgeMs(key));
+    }
+
+    // 2. Check if getOperationalState returns evidence-shaped fields (e.g., status/lamp)
+    const opState = this.getOperationalState();
+    if (
+      opState &&
+      typeof opState === 'object' &&
+      'commanded' in opState &&
+      'acknowledged' in opState &&
+      'observed' in opState
+    ) {
+      const lampEvidence: EvidenceState<unknown> = {
+        commanded: (opState.commanded as EvidenceValue<unknown>) ?? { value: null, at: null, source: 'none' },
+        acknowledged: (opState.acknowledged as EvidenceValue<unknown>) ?? { value: null, at: null, source: 'none' },
+        observed: (opState.observed as EvidenceValue<unknown>) ?? { value: null, at: null, source: 'none' },
+        freshnessMs: typeof opState.freshnessMs === 'number' ? opState.freshnessMs : null,
+        stale: false,
+        provenance: (opState.provenance as EvidenceProvenance) ?? this.provenance,
+      };
+      snapshot.status = computeFreshness(lampEvidence, now, this.getMaxAgeMs('status'));
+    }
+
+    // 3. Local instance evidence
+    for (const [key, state] of this.evidenceMap.entries()) {
+      snapshot[key] = computeFreshness(state, now, this.getMaxAgeMs(key));
+    }
+
+    return snapshot;
+  }
+
+  getEvidence(key: string): EvidenceState<unknown> | undefined {
+    return this.getStateEvidence()[key];
+  }
+
+  recordCommandedState<T = unknown>(
+    key: string,
+    value: T | null,
+    at?: string | number | Date | null,
+  ): EvidenceState<T> {
+    const existing =
+      (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
+      unknownEvidence<T>(this.provenance);
+    const updated = recordCommanded(existing, value, at, this.provenance);
+    this.evidenceMap.set(key, updated as EvidenceState<unknown>);
+    return updated;
+  }
+
+  recordAcknowledgedState<T = unknown>(
+    key: string,
+    value: T | null,
+    at?: string | number | Date | null,
+  ): EvidenceState<T> {
+    const existing =
+      (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
+      unknownEvidence<T>(this.provenance);
+    const updated = recordAcknowledged(existing, value, at, this.provenance);
+    this.evidenceMap.set(key, updated as EvidenceState<unknown>);
+    return updated;
+  }
+
+  recordObservedState<T = unknown>(
+    key: string,
+    value: T | null,
+    source: 'gpio-readback' | 'sensor' | 'simulated' = this.simulated ? 'simulated' : 'sensor',
+    at?: string | number | Date | null,
+  ): EvidenceState<T> {
+    const existing =
+      (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
+      unknownEvidence<T>(this.provenance);
+    const updated = recordObserved(existing, value, source, at, this.provenance, this.getMaxAgeMs(key));
+    this.evidenceMap.set(key, updated as EvidenceState<unknown>);
+    return updated;
+  }
+
+  evaluatePrerequisites(capability: string): void {
+    const prerequisites = this.prerequisitesMap.get(capability) ?? [];
+    if (prerequisites.length === 0) {
+      return;
+    }
+
+    const allEvidence = this.getStateEvidence();
+    const now = Date.now();
+
+    for (const prereq of prerequisites) {
+      const evidence = allEvidence[prereq.key];
+
+      // Missing check: no evidence or observed value is null or source is 'none'
+      if (
+        !evidence ||
+        evidence.observed.value === null ||
+        evidence.observed.at === null ||
+        evidence.observed.source === 'none'
+      ) {
+        throw new PinoutStructuredError(
+          'PREREQUISITE_MISSING',
+          'SAFETY',
+          `Prerequisite '${prereq.key}' is missing or has no observed physical evidence for capability '${capability}'.`,
+          {
+            device: this.id,
+            capability,
+            details: {
+              key: prereq.key,
+              expectedValue: prereq.expectedValue,
+              observedValue: evidence?.observed.value ?? null,
+              observedSource: evidence?.observed.source ?? 'none',
+              observedAt: evidence?.observed.at ?? null,
+            },
+          },
+        );
+      }
+
+      // Expected value match check
+      if (prereq.expectedValue !== undefined && evidence.observed.value !== prereq.expectedValue) {
+        throw new PinoutStructuredError(
+          'PREREQUISITE_MISSING',
+          'SAFETY',
+          `Prerequisite '${prereq.key}' expected value '${String(prereq.expectedValue)}' but observed '${String(evidence.observed.value)}' for capability '${capability}'.`,
+          {
+            device: this.id,
+            capability,
+            details: {
+              key: prereq.key,
+              expectedValue: prereq.expectedValue,
+              observedValue: evidence.observed.value,
+              observedSource: evidence.observed.source,
+              observedAt: evidence.observed.at,
+            },
+          },
+        );
+      }
+
+      // Staleness check
+      const maxAge = prereq.maxAgeMs ?? this.getMaxAgeMs(prereq.key);
+      if (maxAge !== undefined) {
+        const obsMs = new Date(evidence.observed.at).getTime();
+        const ageMs = now - obsMs;
+        if (ageMs > maxAge || ageMs < 0 || Number.isNaN(obsMs)) {
+          throw new PinoutStructuredError(
+            'PREREQUISITE_STALE',
+            'SAFETY',
+            `Prerequisite '${prereq.key}' observed value is stale (${ageMs}ms > maxAge ${maxAge}ms) for capability '${capability}'.`,
+            {
+              device: this.id,
+              capability,
+              details: {
+                key: prereq.key,
+                maxAgeMs: maxAge,
+                ageMs,
+                observedAt: evidence.observed.at,
+                observedValue: evidence.observed.value,
+              },
+            },
+          );
+        }
+      }
+    }
   }
 
   subscribeRuntimeEvents(handler: RuntimeEventHandler): () => void {
@@ -147,7 +376,7 @@ export class DeviceInstance {
   ): void {
     for (const event of events) {
       const handler = (payload: Record<string, unknown>): void => {
-        this.emitRuntimeEvent(event, payload);
+        this.handleIncomingEvent(event, payload);
       };
       subscribe(event, handler);
       this.protocolUnsubscribers.push(() => unsubscribe(event, handler));
@@ -168,6 +397,9 @@ export class DeviceInstance {
 
     const descriptor = this.resolveCapability(capability);
     const payload = validateInputSchema(descriptor.inputSchema, input);
+
+    // Prerequisite check: reject before any mutation or side-effect
+    this.evaluatePrerequisites(capability);
 
     // Safety order: halt gate (skipped for dry-run: planning during a halt
     // is safe and useful — nothing executes) → legacy policies → v2 rules.
@@ -213,6 +445,15 @@ export class DeviceInstance {
       };
     }
 
+    // Record commanded state
+    const nowIso = formatIsoTimestamp();
+    for (const [k, v] of Object.entries(payload)) {
+      this.recordCommandedState(k, v, nowIso);
+    }
+    if (typeof payload.pin === 'number') {
+      this.recordCommandedState(`gpio.${payload.pin}`, payload.value ?? null, nowIso);
+    }
+
     this.activeInvocations += 1;
     this.setLifecycle('busy');
     try {
@@ -227,7 +468,40 @@ export class DeviceInstance {
         throw error;
       }
       safetyReservation?.commit();
-      return validateOutputSchema(descriptor.outputSchema, result);
+
+      const validated = validateOutputSchema(descriptor.outputSchema, result);
+      const ackIso = formatIsoTimestamp();
+
+      // Record acknowledged state on successful execution
+      for (const [k, v] of Object.entries(validated)) {
+        this.recordAcknowledgedState(k, v, ackIso);
+      }
+      if (typeof validated.pin === 'number') {
+        this.recordAcknowledgedState(`gpio.${validated.pin}`, validated.value ?? null, ackIso);
+      }
+
+      // DO NOT infer physical success: only independent reads or sensor queries update observed state!
+      const isReadAction =
+        !descriptor.safety.physicalOutput ||
+        capability.endsWith('.read') ||
+        capability === 'gpio.read' ||
+        capability.startsWith('sensor.');
+
+      if (isReadAction) {
+        const source: EvidenceSource = this.simulated ? 'simulated' : 'sensor';
+        for (const [k, v] of Object.entries(validated)) {
+          this.recordObservedState(k, v, source, ackIso);
+        }
+        if (typeof validated.pin === 'number' && validated.value !== undefined) {
+          const pinSource: EvidenceSource = this.simulated ? 'simulated' : 'gpio-readback';
+          this.recordObservedState(`gpio.${validated.pin}`, validated.value, pinSource, ackIso);
+          if (validated.value !== undefined) {
+            this.recordObservedState('value', validated.value, pinSource, ackIso);
+          }
+        }
+      }
+
+      return validated;
     } finally {
       this.activeInvocations -= 1;
       if (!this.closing) {
@@ -260,12 +534,30 @@ export class DeviceInstance {
     }
   }
 
+  private handleIncomingEvent(event: string, payload: Record<string, unknown>): void {
+    const nowIso = formatIsoTimestamp();
+    if (event === 'gpio.changed' && typeof payload.pin === 'number' && payload.value !== undefined) {
+      const source: EvidenceSource = this.simulated ? 'simulated' : 'gpio-readback';
+      this.recordObservedState(`gpio.${payload.pin}`, payload.value, source, nowIso);
+      this.recordObservedState('value', payload.value, source, nowIso);
+    } else if (event.endsWith('.changed') || event.endsWith('.reading') || event.endsWith('.sample')) {
+      const source: EvidenceSource = this.simulated ? 'simulated' : 'sensor';
+      for (const [k, v] of Object.entries(payload)) {
+        if (k !== 'driver' && k !== 'event') {
+          this.recordObservedState(k, v, source, nowIso);
+        }
+      }
+    }
+    this.emitRuntimeEvent(event, payload);
+  }
+
   private emitRuntimeEvent(event: string, payload: Record<string, unknown>): void {
     const envelope: RuntimeEventEnvelope = {
       deviceId: this.id,
       event,
       payload,
       timestamp: Date.now(),
+      stateEvidence: this.getStateEvidence(),
     };
     for (const handler of this.runtimeEventHandlers) {
       handler(envelope);

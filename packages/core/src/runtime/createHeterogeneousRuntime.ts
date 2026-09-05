@@ -46,7 +46,7 @@ export async function createHeterogeneousRuntime(
     if (options.useHardwareEsp32 && config.port) {
       esp32Transport = serialPort({ path: config.port, baudRate: config.baudRate });
     } else {
-      esp32Transport = createEsp32SimulatedTransport();
+      esp32Transport = createEsp32SimulatedTransport({ autoArm: true });
     }
   }
 
@@ -55,6 +55,7 @@ export async function createHeterogeneousRuntime(
     label: options.useHardwareEsp32 ? 'ESP32 hardware' : 'ESP32 simulator',
     simulated: !options.useHardwareEsp32,
     transport: esp32Transport,
+    backendOptions: { autoArm: true },
   });
 
   if (options.includeArm !== false) {

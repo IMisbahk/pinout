@@ -1,6 +1,7 @@
 import { DeviceError } from '../errors.js';
 import type { PolicyRule } from '../policy/types.js';
 import type { CapabilityDescriptor } from '../types.js';
+import type { StatePrerequisite } from '../spec/evidence.js';
 import type { DeviceBackend, RuntimeEventEnvelope } from './types.js';
 import { DeviceInstance } from './deviceInstance.js';
 
@@ -117,6 +118,8 @@ export interface CreateCompositeDeviceOptions extends CompositeBackendOptions {
   model?: string;
   simulated?: boolean;
   transportKinds?: string[];
+  prerequisites?: Record<string, StatePrerequisite[]>;
+  maxStateAgeMs?: number | Record<string, number>;
   onRuntimeEvent?: (event: RuntimeEventEnvelope) => void;
 }
 
@@ -168,6 +171,8 @@ export function createCompositeDevice(options: CreateCompositeDeviceOptions): De
       ...new Set(Object.values(options.drivers).map((driver) => driver.kind)),
     ],
     getOperationalState: () => backend.getOperationalState?.() ?? {},
+    prerequisites: options.prerequisites,
+    maxStateAgeMs: options.maxStateAgeMs,
     ...(options.onRuntimeEvent ? { onRuntimeEvent: options.onRuntimeEvent } : {}),
   });
 }

@@ -10,6 +10,7 @@ import { createRuntimeFromConfig, type FromConfigOptions } from './fromConfig.js
 import type {
   DeviceIdentity,
   DeviceSummary,
+  DeviceStateEvidence,
   PinoutModuleDefinition,
   RegisterModuleDeviceOptions,
   RuntimeEventEnvelope,
@@ -73,6 +74,7 @@ export class PinoutRuntime {
         activeTransportKind: device.activeTransportKind,
         lifecycle: device.getHealth().lifecycle,
         simulated: device.simulated,
+        stateEvidence: device.getStateEvidence(),
       };
       if (device.identity.vendor !== undefined) {
         summary.vendor = device.identity.vendor;
@@ -85,6 +87,19 @@ export class PinoutRuntime {
       }
       return summary;
     });
+  }
+
+  getStateEvidence(deviceId: string): DeviceStateEvidence;
+  getStateEvidence(): Record<string, DeviceStateEvidence>;
+  getStateEvidence(deviceId?: string): DeviceStateEvidence | Record<string, DeviceStateEvidence> {
+    if (deviceId !== undefined) {
+      return this.getDevice(deviceId).getStateEvidence();
+    }
+    const all: Record<string, DeviceStateEvidence> = {};
+    for (const [id, device] of this.deviceMap.entries()) {
+      all[id] = device.getStateEvidence();
+    }
+    return all;
   }
 
   getDevice(id: string): DeviceInstance {
@@ -170,6 +185,11 @@ export class PinoutRuntime {
       activeTransportKind: options.transport?.kind ?? backend.kind,
       transportKinds: module.supportedTransportKinds,
       getOperationalState: () => backend.getOperationalState?.() ?? {},
+      getOperationalStateEvidence: backend.getOperationalStateEvidence
+        ? () => backend.getOperationalStateEvidence!()
+        : undefined,
+      prerequisites: options.prerequisites,
+      maxStateAgeMs: options.maxStateAgeMs,
       halt: this.halt,
       safetyEngine: this.safetyEngine,
     });
