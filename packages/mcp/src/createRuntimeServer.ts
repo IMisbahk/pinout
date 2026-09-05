@@ -51,6 +51,7 @@ export function createRuntimeMcpServer(
           supportedTransportKinds: device.transportKinds,
           capabilities: device.capabilities,
           operationalState: device.getOperationalStateSnapshot(),
+          stateEvidence: device.getStateEvidence(),
         });
       } catch (error) {
         return formatToolError(error);
@@ -62,9 +63,11 @@ export function createRuntimeMcpServer(
         return formatToolError(new Error('deviceId must be a non-empty string.'));
       }
       try {
+        const device = runtime.getDevice(args.deviceId);
         return success({
           deviceId: args.deviceId,
-          state: runtime.getDevice(args.deviceId).getOperationalStateSnapshot(),
+          state: device.getOperationalStateSnapshot(),
+          stateEvidence: device.getStateEvidence(),
         });
       } catch (error) {
         return formatToolError(error);
@@ -123,7 +126,7 @@ export function controlPlaneTools() {
     {
       name: readStateToolName,
       description:
-        'Read the latest operational state for one device; inspect observedAt before acting.',
+        'Read the latest operational state for one device; inspect observedAt before acting. `observed` is the only field that reflects independent physical evidence; `commanded`/`acknowledged` do not prove physical effect.',
       inputSchema: {
         type: 'object' as const,
         additionalProperties: false,
@@ -132,7 +135,11 @@ export function controlPlaneTools() {
       },
       outputSchema: {
         type: 'object' as const,
-        properties: { deviceId: { type: 'string' }, state: { type: 'object' } },
+        properties: {
+          deviceId: { type: 'string' },
+          state: { type: 'object' },
+          stateEvidence: { type: 'object' },
+        },
         required: ['deviceId', 'state'],
       },
       annotations: {
@@ -178,7 +185,7 @@ export function controlPlaneTools() {
     {
       name: describeDeviceToolName,
       description:
-        'Inspect one Pinout device, including identity, health, capabilities, transport, and current operational state.',
+        'Inspect one Pinout device, including identity, health, capabilities, transport, and current operational state. `observed` is the only field that reflects independent physical evidence; `commanded`/`acknowledged` do not prove physical effect.',
       inputSchema: {
         type: 'object' as const,
         additionalProperties: false,
@@ -204,6 +211,7 @@ export function controlPlaneTools() {
           supportedTransportKinds: { type: 'array', items: { type: 'string' } },
           capabilities: { type: 'array', items: { type: 'object' } },
           operationalState: { type: 'object' },
+          stateEvidence: { type: 'object' },
         },
       },
       annotations: {

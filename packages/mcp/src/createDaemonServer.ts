@@ -79,12 +79,21 @@ export function createDaemonMcpServer(options: DaemonMcpServerOptions = {}): Ser
             supportedTransportKinds: rawSupportedTransports,
             capabilities: capabilityDescriptors,
             operationalState: (raw.operationalState as Record<string, unknown>) ?? {},
+            stateEvidence: (raw.stateEvidence as Record<string, unknown>) ?? {},
           });
         }
-        case 'pinout__read_state':
-          return success(
-            await client.call('GET', `/v1/devices/${segment(required(args, 'deviceId'))}/state`),
+        case 'pinout__read_state': {
+          const raw = await client.call(
+            'GET',
+            `/v1/devices/${segment(required(args, 'deviceId'))}/state`,
           );
+          return success({
+            deviceId: raw.deviceId,
+            state: (raw.state as Record<string, unknown>) ?? {},
+            stateEvidence: (raw.stateEvidence as Record<string, unknown>) ?? {},
+            ...(raw.health ? { health: raw.health } : {}),
+          });
+        }
         case 'pinout__safety_status':
           return success(await client.call('GET', '/v1/safety'));
         case 'pinout__acquire_lease':
