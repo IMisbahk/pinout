@@ -1,0 +1,38 @@
+packages/core/src/modules/lamp/conformance.ts
+  s_922762322ff9e0::t_61fa48d27ebbc1 1-49,54-55,60-76,81-105,110-116,121-123,128,131-151,156-167,173-174,179-200,207-208,213-222,227-231,238-239,244-245,250-265
+  s_922762322ff9e0::t_9b3d5947e31c4c 50-53,56-59,77-80,106-109,117-120,124-127,129-130,152-155,168-172,175-178,201-206,209-212,223-226,232-237,240-243,246-249
+packages/core/src/modules/lampModule.ts
+  s_922762322ff9e0::t_c34c7bf45f6416 36,49,52-56
+  s_922762322ff9e0::t_57b81cfdba5dfa 6
+  s_922762322ff9e0::t_3fd9b74143479f 51,57
+packages/core/tests/lampConformance.test.ts
+  s_922762322ff9e0::t_9b3d5947e31c4c 29-35,59
+  s_922762322ff9e0::t_c8eba528fd4253 1-28,36-58,60-62
+packages/core/src/index.ts
+  s_922762322ff9e0::t_53fa9bd84bd8d7 290,303-308
+  s_67ccf019af85c7::t_362934d78760d3 445
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "f9395bbfddf3d74d23c4b6cff03e2571fc7c4c5f",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_922762322ff9e0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "dd7a9c21-b024-4fee-a3d9-9154200e80a8",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
