@@ -1,0 +1,23 @@
+docs/hardware-support.md
+  s_369368440b2937::t_af30541a65de6d 5,7-30
+docs/troubleshooting.md
+  s_369368440b2937::t_b13df88b1da8ea 3-8
+firmware/esp32-bridge/README.md
+  s_369368440b2937::t_a8b88ad58b1b0f 26,28-30,39-43,47,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "4337839e2d1ea1feef2d64ef315594ae1f2afc63",
+  "prompts": {},
+  "sessions": {
+    "s_369368440b2937": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "0558ee6d-238e-466b-9ada-d7ecd3e06a82",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
