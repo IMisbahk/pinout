@@ -1,0 +1,19 @@
+firmware/esp32-bridge/src/main.cpp
+  s_67ccf019af85c7::t_dfc29402e21d5c 22-52,202-205,207,226-231,242-303,323-451,478-501,569,1100-1101,1104-1105,1108-1109,1112-1113,1116-1117,1120-1121,1124-1125,1128-1129,1160-1191,1193,1198,1203,1253,1262
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "a8a123f21385390aba93ad3ae16cf3fd495c8ead",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
