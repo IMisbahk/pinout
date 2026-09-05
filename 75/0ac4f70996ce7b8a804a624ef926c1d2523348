@@ -1,0 +1,59 @@
+packages/ros2-sidecar/src/index.ts
+  s_ccaf8b21abb3ac::t_6d2b23e8504fcf 1-34,36-41
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 35
+packages/ros2-sidecar/tsconfig.json
+  s_ccaf8b21abb3ac::t_868dff71c15a3b 1-10
+packages/ros2-sidecar/src/transport.ts
+  s_ccaf8b21abb3ac::t_ace6797abcb04d 1-19
+packages/ros2-sidecar/src/fakeRosActionServer.ts
+  s_ccaf8b21abb3ac::t_5de912733cb3ae 382-391,393-407
+  s_ccaf8b21abb3ac::t_5da3396b49e8f1 1-47,53-381,392,408-473
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 48-52
+packages/ros2-sidecar/src/sidecar.ts
+  s_ccaf8b21abb3ac::t_fe91fe6d602c82 1-34,40-67,70-130,139-299,309-461,463-580,582-590
+  s_ccaf8b21abb3ac::t_b70b96003f9201 35-39
+  s_ccaf8b21abb3ac::t_4637f5defc37f6 131-138
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 68-69,300-308,462,581
+packages/ros2-sidecar/tests/sidecar.test.ts
+  s_ccaf8b21abb3ac::t_ab265ec9ea0a6e 227-231,239-240,249
+  s_ccaf8b21abb3ac::t_ba73e9ac4bbde6 2-18,20,23-24,27-28,30-50,52-58,60-63,65-68,70-76,78-86,88-96,98-107,109-114,116-121,125,127-226,232-238,241-248,250-260,287-288
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 1
+  s_ccaf8b21abb3ac::t_049f0d15b1fe50 26,51,59
+  s_ccaf8b21abb3ac::t_2693fa5dc2e0f5 19,21-22,25,29,64,69,77,87,97,108,115,122-124,126,261-286
+packages/ros2-sidecar/tests/transport.test.ts
+  s_ccaf8b21abb3ac::t_880a7d6aa1209a 1-153
+packages/ros2-sidecar/package.json
+  s_ccaf8b21abb3ac::t_1d7e933b205a1e 1-26
+packages/ros2-sidecar/src/types.ts
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 22
+  s_ccaf8b21abb3ac::t_379d5a21a45452 1,3-21,23-95,97-102
+  s_ccaf8b21abb3ac::t_11d9084551816b 2,96
+packages/ros2-sidecar/README.md
+  s_ccaf8b21abb3ac::t_3b1a05894de0b2 1-47
+tsconfig.json
+  s_ccaf8b21abb3ac::t_97144311705ff6 36-38
+packages/ros2-sidecar/src/benchmark.ts
+  s_ccaf8b21abb3ac::t_8fc2d49b129bc6 1-191
+packages/ros2-sidecar/tests/benchmark.test.ts
+  s_ccaf8b21abb3ac::t_69c2b998a8bbb6 1-36
+packages/ros2-sidecar/src/capabilities.ts
+  s_ccaf8b21abb3ac::t_779ed6c4222ce6 183-184,186-187,189-206
+  s_ccaf8b21abb3ac::t_ef6c586c99e6a8 6-51,54-182,185,207-208
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 1-5,52-53,188
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "750ac4f70996ce7b8a804a624ef926c1d2523348",
+  "prompts": {},
+  "sessions": {
+    "s_ccaf8b21abb3ac": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a4ee9ae-0a0d-42dd-abdc-c6cf92c73921",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
