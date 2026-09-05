@@ -3,6 +3,7 @@ import { lampCapabilities, lampCapabilityNames } from './lamp/capabilities.js';
 import { createSimulatedLampBackend, SimulatedLampBackend } from './lamp/simulator.js';
 import { createEsp32LampBackend, Esp32LampBackend } from './lamp/esp32Backend.js';
 import { validateLampConfig } from './lamp/types.js';
+import { runLampConformance } from './lamp/conformance.js';
 
 export const lampModuleId = 'pinout/lamp';
 
@@ -32,6 +33,7 @@ export {
   validateLampConfig,
   lampCapabilities,
   lampCapabilityNames,
+  runLampConformance,
 };
 export type {
   LampConfig,
@@ -44,4 +46,12 @@ export type {
   LampCommandedState,
   LampAcknowledgedState,
   LampObservedState,
+  LampEvidenceBundle,
 } from './lamp/types.js';
+export type {
+  LampBackendLike,
+  LampConformanceCheck,
+  LampConformanceOptions,
+  LampConformanceResult,
+  LampCheckStatus,
+} from './lamp/conformance.js';

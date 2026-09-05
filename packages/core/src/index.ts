@@ -287,6 +287,7 @@ export {
   Esp32LampBackend,
   validateLampConfig,
   lampCapabilities,
+  runLampConformance,
 } from './modules/lampModule.js';
 export type {
   LampConfig,
@@ -299,6 +300,12 @@ export type {
   LampCommandedState,
   LampAcknowledgedState,
   LampObservedState,
+  LampEvidenceBundle,
+  LampBackendLike,
+  LampConformanceCheck,
+  LampConformanceOptions,
+  LampConformanceResult,
+  LampCheckStatus,
 } from './modules/lampModule.js';
 export {
   coffeeMachineModule,
@@ -435,6 +442,7 @@ export type {
   PinoutModuleDefinition,
   RegisterModuleDeviceOptions,
   DeviceBackend,
+  BackendInvocationContext,
 } from './runtime/types.js';
 export type { PolicyRule, PolicyContext } from './policy/types.js';
 export type { LogContext, LogLevel, Logger } from './logger.js';
