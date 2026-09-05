@@ -23,3 +23,11 @@ Capability descriptions explicitly label physical side effects,
 reversibility, and lease requirements. `_pinout.idempotencyKey` is the retry
 boundary; never retry a physical action under a new key unless a fresh action
 is intended.
+
+## Lifecycle
+
+- **Session duration**: The stdio server stays connected across multiple sequential requests on the same session.
+- **Process exit**: When the client closes stdin (EOF), `pinout-mcp` closes the server and runtime cleanly, exiting with status code 0 without hanging.
+- **Signal handling**: `SIGINT` and `SIGTERM` trigger a graceful shutdown of the MCP server and any active runtime, exiting with code 0.
+- **Daemon unreachability**: If `pinoutd` is unreachable at `PINOUT_DAEMON_URL`, the stdio transport remains open. Discovery succeeds with control-plane tools, and tool calls return a structured `DAEMON_UNAVAILABLE` error with diagnostic details rather than closing the connection unexpectedly.
+
