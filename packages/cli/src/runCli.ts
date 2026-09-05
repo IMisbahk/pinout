@@ -298,6 +298,9 @@ export async function runCli(argv: string[], io: CliIo = defaultIo): Promise<num
     const connection = resolveConnectionOptions(options);
     const halfDelay = connection.mock ? Math.min(options.delay, 50) : options.delay;
     await withDevice(options, async (device) => {
+      if (device.supports('sys.arm')) {
+        await governedInvoke(device, 'sys.arm', {});
+      }
       for (let index = 0; index < options.count; index += 1) {
         await governedInvoke(device, 'gpio.write', { pin: options.pin, value: true });
         await delay(halfDelay);

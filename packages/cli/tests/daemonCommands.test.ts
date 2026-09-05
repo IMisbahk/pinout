@@ -2,7 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PinoutRuntime, relayModule, registerModule } from '@pinout/core';
+import {
+  PinoutRuntime,
+  relayModule,
+  esp32Module,
+  createEsp32SimulatedTransport,
+  registerModule,
+} from '@pinout/core';
 import { startDaemon } from '@pinout/daemon';
 import { runCli } from '../src/runCli.js';
 
@@ -36,7 +42,13 @@ beforeAll(async () => {
   harness = makeHarness();
   const runtime = new PinoutRuntime();
   registerModule(relayModule);
+  registerModule(esp32Module);
   await runtime.registerFromModule(relayModule.id, { id: 'relay-cli', simulated: true });
+  await runtime.registerFromModule(esp32Module.id, {
+    id: 'esp32-cli',
+    simulated: true,
+    transport: createEsp32SimulatedTransport(),
+  });
   journalDir = await mkdtemp(join(tmpdir(), 'pinout-cli-'));
   const daemon = await startDaemon(runtime, { port: 0, journalPath: join(journalDir, 'j.jsonl') });
   process.env.PINOUT_URL = `http://127.0.0.1:${daemon.port}`;
@@ -101,6 +113,46 @@ describe('CLI daemon commands', () => {
     expect(opsCode).toBe(0);
     const logsCode = await harness.run(['logs', '--limit', '5', '--json']);
     expect(logsCode).toBe(0);
+  });
+
+  it('arms and disarms a registered device through daemon', async () => {
+    // Acquire lease first as arming is safety-governed and requires a lease
+    const acquireCode = await harness.run([
+      'lease',
+      'acquire',
+      'esp32-cli',
+      '--owner',
+      'operator-1',
+      '--json',
+    ]);
+    expect(acquireCode).toBe(0);
+    const leaseData = JSON.parse(harness.lines[0]!) as { lease: { id: string } };
+
+    const armCode = await harness.run([
+      'arm',
+      'esp32-cli',
+      '--owner',
+      'operator-1',
+      '--timeout',
+      '2000',
+      '--json',
+    ]);
+    expect(armCode).toBe(0);
+    const armData = JSON.parse(harness.lines[0]!) as { result: { state: string; armed: boolean } };
+    expect(armData.result).toMatchObject({ state: 'armed', armed: true });
+
+    const disarmCode = await harness.run([
+      'disarm',
+      'esp32-cli',
+      '--owner',
+      'operator-1',
+      '--json',
+    ]);
+    expect(disarmCode).toBe(0);
+    const disarmData = JSON.parse(harness.lines[0]!) as { result: { state: string; armed: boolean } };
+    expect(disarmData.result).toMatchObject({ state: 'disarmed', armed: false });
+
+    await harness.run(['lease', 'release', leaseData.lease.id, '--owner', 'operator-1', '--json']);
   });
 
   it('respects PINOUT_DAEMON_URL over PINOUT_URL', async () => {

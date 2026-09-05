@@ -47,6 +47,8 @@ These commands route through `pinoutd` and enforce centralized safety, leases, a
 | `lease list` | List all active leases across devices and capabilities |
 | `lease acquire <deviceId> [--owner <name>] [--ttl <ms>] [--shared]` | Acquire an exclusive or shared-read lease |
 | `lease release <leaseId> [--owner <name>]` | Release an active lease |
+| `arm <deviceId> [--owner <name>] [--timeout <ms>]` | Arm a registered device for actuation (daemon-routed) |
+| `disarm <deviceId> [--owner <name>]` | Disarm a registered device (daemon-routed) |
 | `operations [--device <id>]` | List tracked daemon operations and status |
 | `logs [--device <id>] [--limit <n>]` | Inspect the append-only daemon control journal |
 

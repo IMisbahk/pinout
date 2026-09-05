@@ -102,6 +102,53 @@ export function registerDaemonCommands(program: Command, outputFor: OutputFactor
       out().log(await call(program, 'POST', '/v1/estop/clear', {}));
     });
 
+  program
+    .command('arm <deviceId>')
+    .description('Arm a registered device for actuation (daemon-routed).')
+    .option('--owner <owner>', 'operation owner (default PINOUT_OWNER or "cli-arm")')
+    .option('--timeout <ms>', 'watchdog timeout in milliseconds')
+    .action(
+      async (
+        deviceId: string,
+        options: { owner?: string; timeout?: string },
+      ) => {
+        const owner = options.owner ?? process.env.PINOUT_OWNER ?? 'cli-arm';
+        const args: Record<string, unknown> = {};
+        if (options.timeout !== undefined) {
+          args.timeoutMs = Number.parseInt(options.timeout, 10);
+        }
+        out().log(
+          await call(program, 'POST', `/v1/devices/${encodeURIComponent(deviceId)}/invoke`, {
+            capability: 'sys.arm',
+            args,
+            owner,
+            waitFor: 'result',
+          }),
+        );
+      },
+    );
+
+  program
+    .command('disarm <deviceId>')
+    .description('Disarm a registered device (daemon-routed).')
+    .option('--owner <owner>', 'operation owner (default PINOUT_OWNER or "cli-disarm")')
+    .action(
+      async (
+        deviceId: string,
+        options: { owner?: string },
+      ) => {
+        const owner = options.owner ?? process.env.PINOUT_OWNER ?? 'cli-disarm';
+        out().log(
+          await call(program, 'POST', `/v1/devices/${encodeURIComponent(deviceId)}/invoke`, {
+            capability: 'sys.disarm',
+            args: {},
+            owner,
+            waitFor: 'result',
+          }),
+        );
+      },
+    );
+
   const lease = program.command('lease').description('Device leases on the daemon.');
 
   lease
