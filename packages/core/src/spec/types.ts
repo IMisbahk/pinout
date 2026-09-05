@@ -255,7 +255,11 @@ export type OperationStatus =
   | 'failed'
   | 'cancelled'
   | 'timed_out'
-  | 'rejected';
+  | 'rejected'
+  | 'requires_reconciliation'
+  | 'uncertain'
+  | 'aborted'
+  | 'stop_unconfirmed';
 
 export interface OperationProgress {
   /** 0..1, or `null` when the device cannot report determinate progress. */

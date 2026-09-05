@@ -1,5 +1,15 @@
 import type { CapabilityDescriptor, Transport } from '../types.js';
 import type { PolicyRule } from '../policy/types.js';
+import type { EvidenceState, StatePrerequisite } from '../spec/evidence.js';
+
+export type {
+  EvidenceSource,
+  EvidenceProvenance,
+  EvidenceValue,
+  EvidenceState,
+  StatePrerequisite,
+  DeviceStateEvidence,
+} from '../spec/evidence.js';
 
 export type DeviceClass = string;
 
@@ -33,6 +43,7 @@ export interface RuntimeEventEnvelope {
   event: string;
   payload: Record<string, unknown>;
   timestamp: number;
+  stateEvidence?: Record<string, EvidenceState<unknown>>;
 }
 
 export type RuntimeEventHandler = (event: RuntimeEventEnvelope) => void;
@@ -52,6 +63,7 @@ export interface DeviceBackend {
   close(): Promise<void>;
   subscribe(handler: (event: string, payload: Record<string, unknown>) => void): () => void;
   getOperationalState?(): Record<string, unknown>;
+  getOperationalStateEvidence?(): Record<string, EvidenceState<unknown>>;
   /** Best-effort command that places this backend in its module-defined safe state. */
   safeState?(): Promise<Record<string, unknown> | void>;
 }
@@ -77,6 +89,8 @@ export interface RegisterModuleDeviceOptions {
   transport?: Transport;
   backendOptions?: Record<string, unknown>;
   deploymentPolicies?: PolicyRule[];
+  prerequisites?: Record<string, StatePrerequisite[]>;
+  maxStateAgeMs?: number | Record<string, number>;
 }
 
 export interface DeviceSummary {
@@ -89,4 +103,5 @@ export interface DeviceSummary {
   vendor?: string;
   model?: string;
   label?: string;
+  stateEvidence?: Record<string, EvidenceState<unknown>>;
 }
