@@ -1,0 +1,19 @@
+package.json
+  s_c149cfa220e73b::t_bdd7d3896dbba6 37-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "4397e2cb3723c7b6262e5f1494e234984f58d694",
+  "prompts": {},
+  "sessions": {
+    "s_c149cfa220e73b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "981503d1-7d1c-46ec-b9e6-339cfe3c451a",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
