@@ -21,10 +21,12 @@ DEFAULT_BASE_URL = "http://127.0.0.1:8787"
 class _Http:
     """Minimal JSON HTTP layer with bearer-token support."""
 
-    def __init__(self, base_url: str, token: str | None = None, timeout: float = 30.0) -> None:
+    def __init__(self, base_url: str, token: str | None = None, timeout: float = 30.0,
+                 owner: str | None = None) -> None:
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.timeout = timeout
+        self.owner = owner
 
     def request(self, method: str, path: str, body: dict | None = None,
                 stream: bool = False, timeout: float | None = None) -> Any:
@@ -169,8 +171,9 @@ class Device:
             body["timeoutMs"] = int(timeout * 1000)
         if idempotency_key:
             body["idempotencyKey"] = idempotency_key
-        if owner:
-            body["owner"] = owner
+        effective_owner = owner if owner is not None else self._http.owner
+        if effective_owner:
+            body["owner"] = effective_owner
         if dry_run:
             body["dryRun"] = True
 
@@ -181,23 +184,32 @@ class Device:
             return payload["result"]
         return Operation(self._http, payload["operation"])
 
-    def acquire_lease(self, owner: str, ttl: float = 60.0, mode: str = "exclusive") -> dict:
+    def acquire_lease(self, owner: str | None = None, ttl: float = 60.0, mode: str = "exclusive") -> dict:
+        effective_owner = owner or self._http.owner
+        if not effective_owner:
+            raise ValueError("owner is required to acquire a lease (provide owner or set PINOUT_OWNER)")
         payload = self._http.request("POST", "/v1/leases", {
-            "owner": owner,
+            "owner": effective_owner,
             "scope": {"kind": "device", "deviceId": self.id},
             "ttlMs": int(ttl * 1000),
             "mode": mode,
         })
         return payload["lease"]
 
-    def release_lease(self, lease_id: str, owner: str) -> None:
+    def release_lease(self, lease_id: str, owner: str | None = None) -> None:
         """Release a lease using the same owner principal that acquired it."""
         from urllib.parse import quote
-        self._http.request("DELETE", f"/v1/leases/{lease_id}?owner={quote(owner, safe='')}")
+        effective_owner = owner or self._http.owner
+        if not effective_owner:
+            raise ValueError("owner is required to release a lease (provide owner or set PINOUT_OWNER)")
+        self._http.request("DELETE", f"/v1/leases/{lease_id}?owner={quote(effective_owner, safe='')}")
 
-    def renew_lease(self, lease_id: str, owner: str, ttl: float = 60.0) -> dict:
+    def renew_lease(self, lease_id: str, owner: str | None = None, ttl: float = 60.0) -> dict:
+        effective_owner = owner or self._http.owner
+        if not effective_owner:
+            raise ValueError("owner is required to renew a lease (provide owner or set PINOUT_OWNER)")
         payload = self._http.request("POST", f"/v1/leases/{lease_id}/renew", {
-            "owner": owner,
+            "owner": effective_owner,
             "ttlMs": int(ttl * 1000),
         })
         return payload["lease"]
@@ -206,15 +218,24 @@ class Device:
 class Pinout:
     """Entry point for the sync Python SDK.
 
-    ``base_url`` defaults to ``PINOUT_URL`` or the standard local daemon
-    address. Tokens default to ``PINOUT_TOKEN``; prefer environment variables
-    over literals in code.
+    ``base_url`` defaults to ``PINOUT_DAEMON_URL``, ``PINOUT_URL``, or the standard
+    local daemon address. Tokens default to ``PINOUT_TOKEN``; owner defaults to
+    ``PINOUT_OWNER``.
     """
 
     def __init__(self, base_url: str | None = None, token: str | None = None,
-                 timeout: float = 30.0, stream_timeout: float | None = None) -> None:
-        url = base_url or os.environ.get("PINOUT_URL") or DEFAULT_BASE_URL
-        self._http = _Http(url, token or os.environ.get("PINOUT_TOKEN"), timeout)
+                 owner: str | None = None, timeout: float = 30.0,
+                 stream_timeout: float | None = None) -> None:
+        url = (
+            base_url
+            or os.environ.get("PINOUT_DAEMON_URL")
+            or os.environ.get("PINOUT_URL")
+            or DEFAULT_BASE_URL
+        )
+        resolved_token = token if token is not None else os.environ.get("PINOUT_TOKEN")
+        resolved_owner = owner if owner is not None else os.environ.get("PINOUT_OWNER")
+        self.owner = resolved_owner
+        self._http = _Http(url, resolved_token, timeout, owner=resolved_owner)
         self._stream_timeout = stream_timeout
 
     def health(self) -> dict:
@@ -239,17 +260,43 @@ class Pinout:
         return self._http.request("GET", "/v1/safety")
 
     def halt(self, reason: str, actor: str | None = None) -> dict:
-        return self._http.request("POST", "/v1/halt", {"reason": reason, "actor": actor})
+        effective_actor = actor or self._http.owner
+        return self._http.request("POST", "/v1/halt", {"reason": reason, "actor": effective_actor})
 
     def resume(self, reason: str | None = None, actor: str | None = None) -> dict:
-        return self._http.request("POST", "/v1/resume", {"reason": reason, "actor": actor})
+        effective_actor = actor or self._http.owner
+        return self._http.request("POST", "/v1/resume", {"reason": reason, "actor": effective_actor})
 
     def estop(self, reason: str, actor: str | None = None) -> dict:
         """Software emergency-stop request. NOT a certified e-stop system."""
-        return self._http.request("POST", "/v1/estop", {"reason": reason, "actor": actor})
+        effective_actor = actor or self._http.owner
+        return self._http.request("POST", "/v1/estop", {"reason": reason, "actor": effective_actor})
 
     def clear_estop(self, actor: str | None = None) -> dict:
-        return self._http.request("POST", "/v1/estop/clear", {"actor": actor})
+        effective_actor = actor or self._http.owner
+        return self._http.request("POST", "/v1/estop/clear", {"actor": effective_actor})
+
+    def approve(self, approval_id: str, device_id: str, capability: str, granted_by: str | None = None,
+                expires_at: float | None = None, granted_at: float | None = None) -> dict:
+        effective_granter = granted_by or self._http.owner
+        if not effective_granter:
+            raise ValueError("granted_by is required (provide granted_by or set PINOUT_OWNER)")
+        body: dict[str, Any] = {
+            "id": approval_id,
+            "deviceId": device_id,
+            "capability": capability,
+            "grantedBy": effective_granter,
+        }
+        if expires_at is not None:
+            body["expiresAt"] = int(expires_at * 1000) if expires_at < 1e11 else int(expires_at)
+        if granted_at is not None:
+            body["grantedAt"] = int(granted_at * 1000) if granted_at < 1e11 else int(granted_at)
+        return self._http.request("POST", "/v1/approvals", body)["approval"]
+
+    def heartbeat(self, device_id: str, actor: str | None = None) -> dict:
+        effective_actor = actor or self._http.owner
+        return self._http.request("POST", f"/v1/devices/{device_id}/heartbeat",
+                                  {"actor": effective_actor} if effective_actor else {})
 
     # -- Events ------------------------------------------------------------------
 

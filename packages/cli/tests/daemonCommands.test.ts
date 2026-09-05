@@ -78,10 +78,21 @@ describe('CLI daemon commands', () => {
     ]);
     if (acquireCode !== 0) console.error('acquire output:', harness.lines.join(' | '));
     expect(acquireCode).toBe(0);
+    const parsed = JSON.parse(harness.lines[0]!) as { lease: { id: string } };
 
     const listCode = await harness.run(['lease', 'list', '--json']);
     expect(listCode).toBe(0);
     expect(harness.lines.join('\n')).toContain('cli-agent');
+
+    const releaseCode = await harness.run([
+      'lease',
+      'release',
+      parsed.lease.id,
+      '--owner',
+      'cli-agent',
+      '--json',
+    ]);
+    expect(releaseCode).toBe(0);
   });
 
   it('lists operations and logs', async () => {
@@ -90,6 +101,38 @@ describe('CLI daemon commands', () => {
     expect(opsCode).toBe(0);
     const logsCode = await harness.run(['logs', '--limit', '5', '--json']);
     expect(logsCode).toBe(0);
+  });
+
+  it('respects PINOUT_DAEMON_URL over PINOUT_URL', async () => {
+    const originalUrl = process.env.PINOUT_URL;
+    process.env.PINOUT_DAEMON_URL = originalUrl;
+    process.env.PINOUT_URL = 'http://127.0.0.1:59999';
+    try {
+      const code = await harness.run(['daemon', 'status', '--json']);
+      expect(code).toBe(0);
+      expect(harness.lines.join('\n')).toContain('ok');
+    } finally {
+      delete process.env.PINOUT_DAEMON_URL;
+      process.env.PINOUT_URL = originalUrl;
+    }
+  });
+
+  it('uses PINOUT_OWNER when --owner is omitted', async () => {
+    process.env.PINOUT_OWNER = 'env-agent';
+    try {
+      const acquireCode = await harness.run(['lease', 'acquire', 'relay-cli', '--json']);
+      expect(acquireCode).toBe(0);
+      const parsed = JSON.parse(harness.lines[0]!) as { lease: { id: string } };
+
+      const listCode = await harness.run(['lease', 'list', '--json']);
+      expect(listCode).toBe(0);
+      expect(harness.lines.join('\n')).toContain('env-agent');
+
+      const releaseCode = await harness.run(['lease', 'release', parsed.lease.id, '--json']);
+      expect(releaseCode).toBe(0);
+    } finally {
+      delete process.env.PINOUT_OWNER;
+    }
   });
 
   it('fails cleanly when the daemon is unreachable', async () => {

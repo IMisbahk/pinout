@@ -13,7 +13,12 @@ const DEFAULT_DAEMON_URL = 'http://127.0.0.1:8787';
 
 function daemonUrl(program: Command): string {
   const opts = program.opts<{ url?: string }>();
-  return opts.url ?? process.env.PINOUT_URL ?? DEFAULT_DAEMON_URL;
+  return (
+    opts.url ??
+    process.env.PINOUT_DAEMON_URL ??
+    process.env.PINOUT_URL ??
+    DEFAULT_DAEMON_URL
+  );
 }
 
 async function call(
@@ -53,7 +58,7 @@ async function call(
 export function registerDaemonCommands(program: Command, outputFor: OutputFactory): void {
   program.option(
     '--url <url>',
-    'Pinout daemon base URL (default PINOUT_URL or http://127.0.0.1:8787)',
+    'Pinout daemon base URL (default PINOUT_DAEMON_URL, PINOUT_URL, or http://127.0.0.1:8787)',
   );
 
   const out = (): CliOutput => outputFor();
@@ -108,29 +113,36 @@ export function registerDaemonCommands(program: Command, outputFor: OutputFactor
 
   lease
     .command('acquire <deviceId>')
-    .requiredOption('--owner <owner>')
+    .option('--owner <owner>', 'lease owner (default PINOUT_OWNER or "cli-lease")')
     .option('--ttl <ms>', 'TTL in milliseconds', '60000')
     .option('--shared', 'acquire a shared-read lease instead of exclusive')
-    .action(async (deviceId: string, options: { owner: string; ttl: string; shared?: boolean }) => {
-      out().log(
-        await call(program, 'POST', '/v1/leases', {
-          owner: options.owner,
-          scope: { kind: 'device', deviceId },
-          ttlMs: Number.parseInt(options.ttl, 10),
-          mode: options.shared ? 'shared-read' : 'exclusive',
-        }),
-      );
-    });
+    .action(
+      async (
+        deviceId: string,
+        options: { owner?: string; ttl: string; shared?: boolean },
+      ) => {
+        const owner = options.owner ?? process.env.PINOUT_OWNER ?? 'cli-lease';
+        out().log(
+          await call(program, 'POST', '/v1/leases', {
+            owner,
+            scope: { kind: 'device', deviceId },
+            ttlMs: Number.parseInt(options.ttl, 10),
+            mode: options.shared ? 'shared-read' : 'exclusive',
+          }),
+        );
+      },
+    );
 
   lease
     .command('release <leaseId>')
-    .requiredOption('--owner <owner>')
-    .action(async (leaseId: string, options: { owner: string }) => {
+    .option('--owner <owner>', 'lease owner (default PINOUT_OWNER or "cli-lease")')
+    .action(async (leaseId: string, options: { owner?: string }) => {
+      const owner = options.owner ?? process.env.PINOUT_OWNER ?? 'cli-lease';
       out().log(
         await call(
           program,
           'DELETE',
-          `/v1/leases/${encodeURIComponent(leaseId)}?owner=${encodeURIComponent(options.owner)}`,
+          `/v1/leases/${encodeURIComponent(leaseId)}?owner=${encodeURIComponent(owner)}`,
         ),
       );
     });

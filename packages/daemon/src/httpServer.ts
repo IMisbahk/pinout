@@ -699,7 +699,6 @@ export class DaemonHttpServer {
         ...(limit ? { limit: Number.parseInt(limit, 10) } : {}),
       });
       sendJson(res, 200, { entries });
-      sendJson(res, 200, { entries });
     });
 
     // -- Modules (informational) -------------------------------------------------
