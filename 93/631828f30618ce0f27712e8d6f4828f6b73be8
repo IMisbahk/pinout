@@ -1,0 +1,22 @@
+docs/modules.md
+  s_922762322ff9e0::t_43c7f3fdd52383 139
+  s_922762322ff9e0::t_aabf01ad28c12b 46
+docs/lamp.md
+  s_922762322ff9e0::t_344a80e2264eb7 1-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "93631828f30618ce0f27712e8d6f4828f6b73be8",
+  "prompts": {},
+  "sessions": {
+    "s_922762322ff9e0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "dd7a9c21-b024-4fee-a3d9-9154200e80a8",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
