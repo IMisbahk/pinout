@@ -66,3 +66,14 @@ await runtime.invoke('arm-sim-01', 'motion.move_to', { x: 2, y: 0, z: 0.5 });
 ```
 
 Policies run against the device **operational state** snapshot at invoke time (door status, arm pose metadata, etc.).
+
+## Daemon safety engine (v2 rules)
+
+When invocations run through `pinoutd`, the daemon layers its centralized `SafetyEngine` around the runtime pipeline:
+
+1. **Lease verification**: Enforces that physical-output capabilities are held by an active exclusive or shared lease for the declaring `owner`.
+2. **Approval tokens**: Verifies single-use or time-bounded approval tokens (`POST /v1/approvals`) for high-consequence operations.
+3. **Deadman heartbeats**: Enforces periodic heartbeat intervals (`POST /v1/devices/:id/heartbeat`) for continuous motion or dangerous actuators.
+4. **Halt gate coordination**: Blocks execution while the daemon is in `HALTED` or `ESTOP_REQUESTED` state (while allowing non-actuating `dryRun` requests).
+
+Direct `@pinout/core` SDK and local single-device CLI invocations evaluate module JSON schemas and legacy policies, but bypass the daemon's cross-process lease manager and multi-agent coordination (see [Intentional low-level SDK access](architecture.md#intentional-low-level-sdk-access)).

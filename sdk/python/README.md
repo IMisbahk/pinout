@@ -16,7 +16,7 @@ pip install pinout[async]   # + asyncio client (httpx)
 ```python
 from pinout import Pinout
 
-p = Pinout()                       # PINOUT_URL / PINOUT_TOKEN env-aware
+p = Pinout()                       # PINOUT_DAEMON_URL / PINOUT_URL / PINOUT_TOKEN / PINOUT_OWNER env-aware
 arm = p.device("arm-01")
 
 print(arm.state())

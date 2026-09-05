@@ -19,6 +19,17 @@ node packages/daemon/dist/main.js --demo
 #   --journal <path>   persist the control journal to a JSONL file
 ```
 
+## Environment variables
+
+Clients interacting with `pinoutd` (CLI daemon commands, Python SDK, MCP adapter) configure connectivity through standard environment variables:
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `PINOUT_DAEMON_URL` | Base URL of the running `pinoutd` instance | `http://127.0.0.1:8787` |
+| `PINOUT_URL` | Fallback alias for `PINOUT_DAEMON_URL` | `http://127.0.0.1:8787` |
+| `PINOUT_TOKEN` | Shared bearer token for authenticated routes | None (unauthenticated on loopback) |
+| `PINOUT_OWNER` | Default client / agent principal for leases and invocations | `cli-lease`, `mcp-stdio`, or caller-specified |
+
 ## Security model
 
 - **Loopback by default.** The daemon refuses to bind a non-loopback host
@@ -43,6 +54,9 @@ node packages/daemon/dist/main.js --demo
 | `GET/POST /v1/leases`, `POST /v1/leases/:id/renew`, `DELETE /v1/leases/:id` | Lease management |
 | `GET /v1/safety`, `POST /v1/halt`, `POST /v1/resume`, `POST /v1/estop`, `POST /v1/estop/clear` | Safety state |
 | `GET /v1/events` | Server-Sent Events stream of runtime/operation/safety events |
+| `POST /v1/approvals` | Record policy approval token for privileged capabilities |
+| `POST /v1/devices/:id/heartbeat` | Safety deadman switch heartbeat |
+| `GET /v1/modules` | List active device module identifiers |
 | `GET /v1/streams`, `GET /v1/streams/:id/snapshot` | Stream metadata and latest-frame snapshots |
 | `WS /v1/streams/:id/frames` | Authenticated stream frames with bounded buffering |
 | `GET /v1/journal` | Journal inspection |

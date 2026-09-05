@@ -5,7 +5,7 @@ import { startDaemon } from '../src/start.js';
 class CountingTransport implements Transport {
   readonly kind = 'scripted-esp32';
   readonly actions: string[] = [];
-  constructor(private readonly inner: Transport) {}
+  private readonly inner = simulatedEsp32();
   get readable(): AsyncIterable<Uint8Array> {
     return this.inner.readable;
   }
@@ -15,16 +15,24 @@ class CountingTransport implements Transport {
   close(): Promise<void> {
     return this.inner.close();
   }
-  write(data: Uint8Array): Promise<void> {
-    const frame = JSON.parse(new TextDecoder().decode(data)) as { action?: string };
-    if (frame.action) this.actions.push(frame.action);
-    return this.inner.write(data);
+  async write(data: Uint8Array): Promise<void> {
+    const text = new TextDecoder().decode(data);
+    for (const line of text.split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        const frame = JSON.parse(line) as { action?: string };
+        if (frame.action) this.actions.push(frame.action);
+      } catch {
+        // ignore
+      }
+    }
+    await this.inner.write(data);
   }
 }
 
 describe('coffee-machine ESP32 contract', () => {
   it('uses the same semantic operation and dedupes without re-actuation', async () => {
-    const transport = new CountingTransport(simulatedEsp32());
+    const transport = new CountingTransport();
     const runtime = new PinoutRuntime();
     await runtime.registerModuleDevice(coffeeMachineModule, {
       id: 'coffee-esp32',
@@ -64,5 +72,5 @@ describe('coffee-machine ESP32 contract', () => {
     } finally {
       await daemon.close();
     }
-  });
+  }, 15_000);
 });

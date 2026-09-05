@@ -135,6 +135,38 @@ The SDK does not depend on MCP.
 
 Firmware and the simulator may emit `{ v, event, payload }` lines. `ready` is the handshake. Other events (`gpio.changed`) are dispatched to `device.on()` / `once()` / `off()`.
 
+## Access routes and governance
+
+Pinout provides multiple client surfaces depending on the execution context. Production and AI agent access is routed through the daemon control plane (`pinoutd`), while low-level direct access to `@pinout/core` is intentionally retained for driver development, simulation, and single-process test harnesses.
+
+| Route | Entry point | Goes through daemon? | Auth token | Leases / Ownership | Policy & Schema enforcement | Operation Journal & Idempotency | Halt & Safe-state | Audit / Events | Guarantees bypassed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **CLI (Daemon commands)** | `pinout daemon`, `pinout lease`, `pinout halt`, `pinout resume`, `pinout estop`, `pinout operations`, `pinout logs` | **Yes** (HTTP to `pinoutd`) | Bearer (`PINOUT_TOKEN`) | Enforced (`--owner`, `PINOUT_OWNER`) | Enforced by daemon | Enforced by daemon | Enforced by daemon | Enforced by daemon | None |
+| **CLI (Direct commands)** | `pinout hello`, `pinout exec`, `pinout run`, `pinout blink`, `pinout gpio *`, `pinout invoke` | **No** (Direct in-process serial or `devices.json` runtime) | Bypassed | Ephemeral (`cli-direct`) | Schema + module policies enforced in-process | Bypassed (local stdout/stderr only) | Local in-process only; bypasses daemon halt | Bypassed (no daemon journal/SSE) | Centralized leases, multi-agent arbitration, daemon audit journal, daemon halt latch, SSE events |
+| **Python SDK (Sync & Async)** | `from pinout import Pinout`, `AsyncPinout` | **Yes** (HTTP to `pinoutd`) | Bearer (`PINOUT_TOKEN`) | Enforced (`owner`, `PINOUT_OWNER`) | Enforced by daemon | Enforced by daemon (`Operation` handles, `idempotencyKey`) | Enforced by daemon (`halt`, `estop`, `clear_estop`, `resume`) | Enforced by daemon (`events()`, `journal()`) | None |
+| **MCP (Daemon mode - default)** | `@pinout/mcp` stdio server (`createDaemonMcpServer`) | **Yes** (HTTP to `pinoutd`) | Bearer (`PINOUT_TOKEN`) | Enforced (`PINOUT_OWNER`, `pinout__acquire_lease`) | Enforced by daemon | Enforced by daemon (`_pinout` control block) | Enforced by daemon | Enforced by daemon | None |
+| **MCP (Embedded / Demo modes)** | `PINOUT_MCP_EMBEDDED=1` or `PINOUT_DEMO=heterogeneous` | **No** (In-process `PinoutRuntime`) | Bypassed | Explicitly unavailable (`CONTROL_PLANE_UNAVAILABLE` on lease tools) | Schema + module policies enforced in-process | Unavailable (`CONTROL_PLANE_UNAVAILABLE` on operation tools) | In-process runtime halt only | In-process handlers only | Centralized leases, daemon audit journal, daemon E-stop latch, daemon SSE events |
+| **Direct Core SDK (Node.js)** | `import { connect, PinoutRuntime } from '@pinout/core'` | **No** (Direct in-process `Device` / `PinoutRuntime`) | Bypassed | Bypassed unless custom in-process engine is wired | Schema + module policies enforced in-process | Bypassed | In-process only (if configured) | In-process only | Cross-process leases, daemon authentication, persistent journal, centralized halt latch, live event streams |
+
+## Intentional low-level SDK access
+
+Direct access to `@pinout/core` (via `connect()`, `new PinoutRuntime()`, or direct CLI hardware commands) is an intentional and supported developer surface for specific non-agent workflows:
+
+1. **Driver and module authoring**: Developing, benchmarking, and debugging hardware modules with `defineModule()` and `pinout module test` without running a background service.
+2. **Deterministic unit and integration testing**: Running fast, zero-dependency simulator tests (`simulatedEsp32()`, loopback transports) in isolated CI jobs.
+3. **Single-process embedded demos**: Self-contained exploratory scripts and single-board utilities where multi-agent coordination is irrelevant.
+4. **Hardware bring-up and flashing diagnostics**: Verifying serial wiring, baud rates, pin safety tables (`pinout pins`, `pinout doctor`), and boot ROM banners.
+
+### What direct access bypasses
+
+When code bypasses `pinoutd` and invokes `@pinout/core` directly:
+- **No cross-process lease coordination**: Direct callers claim local device instances without checking or reserving leases in `pinoutd`. If an agent is running under a lease via `pinoutd`, a direct CLI or SDK invocation on the same serial port may cause serial port conflicts, packet collisions, or safety interlock violations.
+- **No centralized audit journal**: Operations and raw events are logged to the local process only and will not appear in the daemon's persistent control journal (`/v1/journal`).
+- **No shared halt or E-stop latch**: If `pinoutd` is placed into a `HALTED` or `ESTOP_REQUESTED` state by an operator or safety rule, direct `@pinout/core` callers maintain their own isolated halt state and will not observe the daemon-wide halt.
+- **No operation deduplication**: Requests do not pass through the daemon's `OperationManager`, bypassing idempotency key caching, background progress polling, and cooperative cancellation.
+
+**Rule of thumb**: All production deployments, LLM agents, and multi-client workflows must communicate with `pinoutd` (via MCP daemon mode, the Python SDK, or daemon HTTP/CLI routes). Direct `@pinout/core` access is reserved for driver authoring, offline testing, and hardware bring-up.
+
 ## Intentionally deferred
 
 - BLE and CAN transports
