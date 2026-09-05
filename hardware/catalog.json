@@ -18,7 +18,7 @@
       "integration": "firmware/esp32-bridge + @pinout/core esp32 driver",
       "status": "COMPILE_TESTED",
       "testedHow": "classic esp32dev firmware compile; unit tests against simulator; TCP/serial transport tests",
-      "notes": "The classic ESP32 is the alpha reference firmware. GPIO/PWM/ADC/I2C/SPI are simulator- and compile-tested, but no dated hardware-in-the-loop record exists. Not certified."
+      "notes": "The classic ESP32 is the alpha reference firmware. GPIO/PWM/ADC/I2C/SPI are simulator- and compile-tested, but physical HIL execution remains pending (see hardware/reference/esp32-classic-led-sensor.md and hardware/records/2026-09-05-esp32-classic-reference-circuit-pending.md). Not certified."
     },
     {
       "category": "embedded",
