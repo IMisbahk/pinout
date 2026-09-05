@@ -35,6 +35,7 @@ import {
   type Lease,
   type LeaseScopeInput,
   type LeaseMode,
+  type ReconciliationResolution,
 } from '@pinout/core';
 
 export interface DaemonConfig {
@@ -379,13 +380,15 @@ export class DaemonHttpServer {
     } catch (error) {
       const structured = toStructuredError(error);
       const status =
-        structured.code === 'DEVICE_NOT_FOUND'
+        structured.code === 'DEVICE_NOT_FOUND' || structured.code === 'OPERATION_NOT_FOUND'
           ? 404
           : structured.category === 'VALIDATION'
             ? 400
             : structured.code === 'UNSUPPORTED_CAPABILITY'
               ? 400
-              : structured.category === 'LEASE' ||
+              : structured.code === 'OPERATION_REQUIRES_RECONCILIATION' ||
+                  structured.code === 'OPERATION_NOT_UNCERTAIN' ||
+                  structured.category === 'LEASE' ||
                   structured.category === 'SAFETY' ||
                   structured.category === 'POLICY'
                 ? 409
@@ -444,6 +447,22 @@ export class DaemonHttpServer {
           : undefined;
       if (existing?.operationId && c.operations.get(existing.operationId)) {
         const handle = c.operations.getHandle(existing.operationId);
+        const snapshot = handle.snapshot();
+        if (snapshot.status === 'requires_reconciliation' || snapshot.status === 'uncertain') {
+          sendJson(res, 409, {
+            error: {
+              code: 'OPERATION_REQUIRES_RECONCILIATION',
+              category: 'OPERATION',
+              message:
+                'Operation outcome is uncertain after process restart and requires reconciliation before reuse.',
+              operation: snapshot.id,
+              status: snapshot.status,
+            },
+            operation: snapshot,
+            deduped: true,
+          });
+          return;
+        }
         if (waitFor === 'result') {
           const result = await handle.waitForResult();
           sendJson(res, 200, { operation: handle.snapshot(), result, deduped: true });
@@ -522,6 +541,28 @@ export class DaemonHttpServer {
     this.route('POST', '/v1/operations/:id/cancel', async (c, _req, res, match, body) => {
       const reason = typeof body?.reason === 'string' ? body.reason : undefined;
       const snapshot = await c.operations.cancel(match.params.id!, reason);
+      sendJson(res, 200, { operation: snapshot });
+    });
+
+    this.route('POST', '/v1/operations/:id/reconcile', async (c, _req, res, match, body) => {
+      const operationId = match.params.id!;
+      const resolution = requiredString(body, 'resolution') as ReconciliationResolution;
+      if (
+        resolution !== 'observedComplete' &&
+        resolution !== 'observedNotDone' &&
+        resolution !== 'abandoned'
+      ) {
+        throw new ValidationError(
+          "body.resolution must be 'observedComplete', 'observedNotDone', or 'abandoned'.",
+        );
+      }
+      const note = typeof body?.note === 'string' ? body.note : undefined;
+      const actor = typeof body?.actor === 'string' ? body.actor : undefined;
+      const snapshot = await c.operations.reconcile(operationId, {
+        resolution,
+        ...(note !== undefined ? { note } : {}),
+        ...(actor !== undefined ? { actor } : {}),
+      });
       sendJson(res, 200, { operation: snapshot });
     });
 
