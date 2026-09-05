@@ -178,6 +178,7 @@ export class DaemonContext {
         {
           event: envelope.event,
           payload: envelope.payload,
+          ...(envelope.stateEvidence ? { stateEvidence: envelope.stateEvidence } : {}),
         },
       );
       this.events.publish({ kind: 'runtime.event', at: envelope.timestamp, data: { ...envelope } });
@@ -412,6 +413,7 @@ export class DaemonHttpServer {
         capabilities: device.capabilityNames(),
         capabilityDescriptors: device.capabilities,
         operationalState: device.getOperationalStateSnapshot(),
+        stateEvidence: device.getStateEvidence(),
       });
     });
 
@@ -420,6 +422,7 @@ export class DaemonHttpServer {
       sendJson(res, 200, {
         deviceId: device.id,
         state: device.getOperationalStateSnapshot(),
+        stateEvidence: device.getStateEvidence(),
         health: device.getHealth(),
       });
     });
@@ -845,14 +848,25 @@ export class DaemonHttpServer {
 
 function deviceSummary(device: ReturnType<PinoutRuntime['getDevice']>): Record<string, unknown> {
   const health = device.getHealth();
-  return {
+  const summary: Record<string, unknown> = {
     id: device.id,
     deviceClass: device.deviceClass,
     moduleId: device.moduleId,
     lifecycle: health.lifecycle,
     simulated: device.simulated,
     activeTransportKind: device.activeTransportKind,
+    stateEvidence: device.getStateEvidence(),
   };
+  if (device.identity.vendor !== undefined) {
+    summary.vendor = device.identity.vendor;
+  }
+  if (device.identity.model !== undefined) {
+    summary.model = device.identity.model;
+  }
+  if (device.identity.label !== undefined) {
+    summary.label = device.identity.label;
+  }
+  return summary;
 }
 
 function requiredString(body: Record<string, unknown> | undefined, field: string): string {
