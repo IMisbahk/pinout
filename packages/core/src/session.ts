@@ -8,7 +8,7 @@ import {
 } from './errors.js';
 import { createLogger, type Logger } from './logger.js';
 import { readLines } from './lineReader.js';
-import { encodeRequest, parseDeviceInfo, parseLine } from './protocol.js';
+import { encodeRequest, maxProtocolLineBytes, parseDeviceInfo, parseLine } from './protocol.js';
 import type { ProtocolEvent, ProtocolResponse } from './protocol.js';
 import type { DeviceInfo, RequestOptions, Transport } from './types.js';
 
@@ -199,16 +199,18 @@ export class Session {
 
   private async requestHello(): Promise<Record<string, unknown>> {
     const deadline = Date.now() + this.timeoutMs;
-    let lastTimeout: TimeoutError | undefined;
+    let attempts = 0;
 
     while (Date.now() < deadline) {
       const remainingMs = deadline - Date.now();
+      const attemptTimeoutMs = Math.min(Math.max(remainingMs, 100), 300);
+      attempts += 1;
       try {
         return await this.request(
           'sys.hello',
           {},
           {
-            timeoutMs: Math.min(remainingMs, 300),
+            timeoutMs: attemptTimeoutMs,
             ...(this.connectSignal ? { signal: this.connectSignal } : {}),
           },
         );
@@ -216,18 +218,24 @@ export class Session {
         if (!(error instanceof TimeoutError)) {
           throw error;
         }
-        lastTimeout = error;
       }
     }
 
-    throw (
-      lastTimeout ?? new TimeoutError(`Timed out waiting for 'sys.hello' (${this.timeoutMs}ms).`)
+    throw new TimeoutError(
+      `Timed out waiting for 'sys.hello' after ${attempts} attempt${attempts === 1 ? '' : 's'} (${this.timeoutMs}ms total).`,
     );
   }
 
   private async readLoop(): Promise<void> {
     try {
-      for await (const line of readLines(this.transport.readable)) {
+      for await (const line of readLines(this.transport.readable, maxProtocolLineBytes, {
+        onOversize: (length) => {
+          this.logger.warn('discarded oversized protocol line', {
+            length,
+            maxProtocolLineBytes,
+          });
+        },
+      })) {
         let message;
         try {
           message = parseLine(line);
