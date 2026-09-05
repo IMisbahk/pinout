@@ -1,0 +1,21 @@
+packages/core/tests/haltRecovery.test.ts
+  s_7fc1ef99a1a0c9::t_39e8fa2e87b8a0 1-113
+packages/core/tests/leaseRecovery.test.ts
+  s_7fc1ef99a1a0c9::t_c35674bc2afc3e 1-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "4d7975b826cfc795cc40ff9eeed76a14eb898836",
+  "prompts": {},
+  "sessions": {
+    "s_7fc1ef99a1a0c9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b8c2b0f-252d-458f-92bf-ce82755e04b1",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
