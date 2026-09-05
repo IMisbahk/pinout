@@ -1,0 +1,19 @@
+docs/adr/0008-ros2-sidecar-boundary.md
+  s_ccaf8b21abb3ac::t_e0e9ee9d16f076 1-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "70407430525921c1c5f84c7bed8ac2eae66ddcd6",
+  "prompts": {},
+  "sessions": {
+    "s_ccaf8b21abb3ac": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a4ee9ae-0a0d-42dd-abdc-c6cf92c73921",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
