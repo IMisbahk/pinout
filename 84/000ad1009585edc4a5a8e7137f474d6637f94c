@@ -1,0 +1,59 @@
+packages/core/src/index.ts
+  s_922762322ff9e0::t_af90b8fb674fce 282-302,344
+  s_1133f3b5c822c2::t_297dea53ba4daf 80-97
+  s_922762322ff9e0::t_02b2a465a8a687 281,342-343,345-346
+packages/core/src/modules/lamp/capabilities.ts
+  s_922762322ff9e0::t_db5f7e235eb177 98-99,105-106,111,113-114,118
+  s_922762322ff9e0::t_ccad1899386ce2 1-92,94-97,100-104,107-110,112,115-117,119-144
+  s_922762322ff9e0::t_95cc2da0aa7bec 93
+packages/core/src/modules/registry.ts
+  s_922762322ff9e0::t_3aad623d0f5cd1 39
+  s_922762322ff9e0::t_e9a5429d09cb16 15
+packages/core/src/modules/lamp/types.ts
+  s_922762322ff9e0::t_95c796eefc2a2a 1-19,21-25,27-32,34-42,44-46,62-67,69,71,73,76-77,80-190
+  s_922762322ff9e0::t_297078a75f3616 20,26,33,43,47-61,68,70,72,74-75,78-79
+packages/core/tests/lamp.test.ts
+  s_922762322ff9e0::t_a3648515c9ea09 100,103,124,127,468,470,479
+  s_922762322ff9e0::t_4e21beabfcec8b 384-386
+  s_922762322ff9e0::t_2c134de0379a90 1-5,7-15,17,20,22-47,49-55,57-65,75-99,101-102,104-123,125-126,128-210,217-353,439,450-467,469,471-478,480-569
+  s_922762322ff9e0::t_97b4f605ac372d 6,16,18-19,21,66-69,71-74,211-216,354-383,387-411,413-438,440-449
+  s_922762322ff9e0::t_0c0eeac37cd7b3 48
+  s_922762322ff9e0::t_cbb6878f8330b0 56
+  s_922762322ff9e0::t_3ec5bd66b46534 70
+  s_922762322ff9e0::t_b3fc64a9e4c0d9 412
+packages/core/src/modules/semanticModules.ts
+  s_922762322ff9e0::t_073dc23e9cab44 364-369
+packages/core/src/modules/lampModule.ts
+  s_922762322ff9e0::t_7c2222a9ac582f 1-47
+packages/core/src/modules/lamp/simulator.ts
+  s_922762322ff9e0::t_c51c222a1a4927 1-184
+  s_922762322ff9e0::t_175c258adfe426 185-188
+packages/core/src/modules/lamp/esp32Backend.ts
+  s_922762322ff9e0::t_591ead3486fa09 1-6,8-47,49-261
+  s_922762322ff9e0::t_12aa422da6d484 7,48
+  s_922762322ff9e0::t_104f2756b83fa4 262-271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "84000ad1009585edc4a5a8e7137f474d6637f94c",
+  "prompts": {},
+  "sessions": {
+    "s_1133f3b5c822c2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "8301dd70-fde5-437f-85c2-3c156f9cf796",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_922762322ff9e0": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "dd7a9c21-b024-4fee-a3d9-9154200e80a8",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
