@@ -83,6 +83,26 @@ describe('session', () => {
     await device.close();
     await expect(pending).rejects.toBeInstanceOf(DisconnectedError);
   });
+
+  it('formats requestHello timeout error reporting attempt count and total configured timeout', async () => {
+    class ReadylessSilentTransport implements Transport {
+      readonly kind = 'readyless-silent';
+      private readonly inbound = new ByteQueue();
+      get readable(): AsyncIterable<Uint8Array> {
+        return this.inbound;
+      }
+      async open(): Promise<void> {}
+      async write(_data: Uint8Array): Promise<void> {}
+      async close(): Promise<void> {
+        this.inbound.close();
+      }
+    }
+
+    const transport = new ReadylessSilentTransport();
+    await expect(connect({ transport, timeoutMs: 150 })).rejects.toThrowError(
+      /Timed out waiting for 'sys\.hello' after \d+ attempts? \(150ms total\)\./,
+    );
+  });
 });
 
 class HoldWritesTransport implements Transport {

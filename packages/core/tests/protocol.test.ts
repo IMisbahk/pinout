@@ -93,7 +93,7 @@ describe('protocol', () => {
   });
 
   it('exports the firmware max line length', () => {
-    expect(maxProtocolLineBytes).toBe(512);
+    expect(maxProtocolLineBytes).toBe(1024);
   });
 
   it('classifies parse failures through decodeLine', () => {
