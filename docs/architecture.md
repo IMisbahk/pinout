@@ -76,6 +76,8 @@ See [docs/generator.md](generator.md) and [docs/generator-safety.md](generator-s
 
 **Composite backend** — routes one device's declared capabilities across multiple named drivers. Construction rejects missing routes, undeclared routes, duplicate capability names, missing drivers, and duplicate backend references. Events include their driver origin and operational state is aggregated by driver.
 
+**Physical evidence state contract** — separates commanded intent, protocol acknowledgements, and independently observed physical evidence (sensors, readback pins). Software never infers physical success solely from a write acknowledgement. Capabilities can declare prerequisites with max-age freshness bounds; missing or stale prerequisites reject invocation before actuation. See [docs/state-evidence.md](state-evidence.md).
+
 Capability contracts are enforced in both directions: inputs are validated before policy/backend execution, and backend results are validated against the declared output schema before returning to SDK, CLI, or MCP callers.
 
 ## Connection flow

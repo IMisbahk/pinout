@@ -51,6 +51,7 @@ Clients interacting with `pinoutd` (CLI daemon commands, Python SDK, MCP adapter
 | `POST /v1/devices/:id/invoke` | Invoke a capability (see below) |
 | `GET /v1/operations`, `GET /v1/operations/:id` | Operation inspection |
 | `POST /v1/operations/:id/cancel` | Cooperative cancellation |
+| `POST /v1/operations/:id/reconcile` | Reconcile uncertain operation outcome (`observedComplete`, `observedNotDone`, `abandoned`) |
 | `GET/POST /v1/leases`, `POST /v1/leases/:id/renew`, `DELETE /v1/leases/:id` | Lease management |
 | `GET /v1/safety`, `POST /v1/halt`, `POST /v1/resume`, `POST /v1/estop`, `POST /v1/estop/clear` | Safety state |
 | `GET /v1/events` | Server-Sent Events stream of runtime/operation/safety events |
@@ -83,6 +84,54 @@ or resource budgets. Idempotency keys are scoped to device, capability and
 caller; retries return the original operation without executing policy charges
 again. The caller name is supplied by the client, not an authenticated user
 identity: the daemon still uses a shared bearer token.
+
+### Operation reconciliation
+
+Operations in `requires_reconciliation`, `uncertain`, or `stop_unconfirmed` (e.g. following process restart while an actuation command was in flight) require explicit operator resolution via `POST /v1/operations/:id/reconcile`:
+
+```jsonc
+POST /v1/operations/op_1_abc123/reconcile
+{
+  "resolution": "observedComplete", // "observedComplete" | "observedNotDone" | "abandoned"
+  "note": "Visual inspection confirmed valve closed",
+  "actor": "operator-alice"
+}
+```
+
+- `observedComplete`: Confirms physical completion; transitions snapshot to `completed` with `{ reconciled: true, resolution: 'observedComplete' }`. Retries with the original idempotency key observe completion without re-actuating.
+- `observedNotDone`: Confirms physical action never took place or was rolled back; transitions snapshot to `cancelled` with `OPERATION_RECONCILED_NOT_DONE`.
+- `abandoned`: Marks operation indeterminate; transitions snapshot to `failed` with code `OPERATION_ABANDONED`.
+
+### Evidence-qualified state
+
+Device state responses and stream events distinguish **commanded**, **acknowledged**, and **independently observed** physical state.
+
+In `GET /v1/devices`, summaries include `stateEvidence` alongside legacy properties:
+
+```jsonc
+GET /v1/devices
+[
+  {
+    "id": "esp32-01",
+    "deviceClass": "microcontroller",
+    "moduleId": "pinout/esp32",
+    "lifecycle": "ready",
+    "simulated": true,
+    "stateEvidence": {
+      "gpio.2": {
+        "commanded": { "value": true, "at": "2026-09-05T17:18:20.100Z", "source": "commanded" },
+        "acknowledged": { "value": true, "at": "2026-09-05T17:18:20.105Z", "source": "acknowledged" },
+        "observed": { "value": true, "at": "2026-09-05T17:18:20.110Z", "source": "gpio-readback" },
+        "freshnessMs": 15,
+        "stale": false,
+        "provenance": "simulated"
+      }
+    }
+  }
+]
+```
+
+In `GET /v1/devices/:id/state`, legacy callers continue reading `state` without breaking changes while evidence-aware clients inspect structured timestamps, sources, and staleness.
 
 ### Stream frames
 
