@@ -1,0 +1,71 @@
+packages/core/src/drivers/esp32/bridge.ts
+  s_67ccf019af85c7::t_5449c03c1abb2a 453,461-474,518-531
+  s_67ccf019af85c7::t_f4bdfa13c2e438 107
+  s_67ccf019af85c7::t_f1d2ec08f8271b 18-20,24-25,32-35,37,58-64,72,81-94,105-106,108
+  s_67ccf019af85c7::t_ee7674c20e21d3 159-165,182-191,193-195,198-200,209-211,214-216,219-221,232-234,243-245,248-250,253-255,262-388,532
+  s_d7c3116de9f18d::t_e9d86da8224aeb 389,533
+packages/core/src/device.ts
+  s_67ccf019af85c7::t_39c226b74fd32f 54-79
+  s_67ccf019af85c7::t_735063421047b1 18-20,23-24
+  s_67ccf019af85c7::t_f8ce98c55d4b01 80,223-230,251-273,279-287,291-301,306-310,320,331-334,351-355,357,362-365,370,379-382,406-407,411-415,458-460,466-470,482-484
+  s_67ccf019af85c7::t_fa199412bead47 81
+packages/core/src/lineReader.ts
+  s_67ccf019af85c7::t_7cae1482102d6e 3
+packages/core/src/runtime/protocolBackend.ts
+  s_67ccf019af85c7::t_9d0bbaf0b18d99 3-10,13-14,17-19,26-27,30,32-55,57-67,73-82,86-154,164-165,178-187,192-195,197,201,204-245
+  s_67ccf019af85c7::t_92280e13a71f3f 2,15-16,20-25,31,83-85
+packages/core/src/protocol.ts
+  s_67ccf019af85c7::t_e6bb5d5a854bc8 198-201,218
+packages/core/src/modules/esp32Module.ts
+  s_67ccf019af85c7::t_6107575779d300 66,75,78
+  s_67ccf019af85c7::t_b97eb4ed3de268 4-12,15,44-64,67-74,76-77,79-84,88-89
+packages/core/src/types.ts
+  s_67ccf019af85c7::t_2bc2ff04b41071 35
+packages/core/src/index.ts
+  s_67ccf019af85c7::t_4f49e92e6afee6 95
+  s_7fc1ef99a1a0c9::t_a542d12cfa2e55 302,314-317
+packages/core/src/drivers/esp32/pins.ts
+  s_67ccf019af85c7::t_eb58353904c5b8 32-58
+packages/core/src/capabilities.ts
+  s_67ccf019af85c7::t_653d9c7d5ddab2 378
+  s_67ccf019af85c7::t_e06a5d6655c5d0 131-132,150-183
+  s_67ccf019af85c7::t_b3dbc0ef9a7907 194-197,218,251
+  s_67ccf019af85c7::t_1b310c273f6ab2 475,500,529
+  s_67ccf019af85c7::t_f78ec479a1f583 184-185,592-695,700-703,705
+  s_67ccf019af85c7::t_e5c2e1f6087c54 21-26,37,72
+  s_67ccf019af85c7::t_0432be2967c996 186
+packages/core/src/drivers/esp32/simulatedTransport.ts
+  s_67ccf019af85c7::t_98354c45751239 12,14-15,18,23,25,28-35,46,50-51,58-92,140,144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "98c109eaa196b27c368ff52cbf075bb7ed0e095a",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_7fc1ef99a1a0c9": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3b8c2b0f-252d-458f-92bf-ce82755e04b1",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_d7c3116de9f18d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2c203b11-2668-4218-b6e4-4eadbb7f638c",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
