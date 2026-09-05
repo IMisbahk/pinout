@@ -1,6 +1,7 @@
 import { loadPinoutConfig } from '../config.js';
 import { serialPort } from '../serial.js';
 import type { Transport } from '../types.js';
+import { createLogger } from '../logger.js';
 import { chamberModuleId } from '../modules/chamberModule.js';
 import { createEsp32SimulatedTransport, esp32ModuleId } from '../modules/esp32Module.js';
 import { robotArmModuleId } from '../modules/robotArmModule.js';
@@ -16,6 +17,10 @@ export interface HeterogeneousRuntimeOptions {
   motionDelayMs?: number;
   includeArm?: boolean;
   includeChamber?: boolean;
+  /**
+   * @deprecated Demo/test-only. Bypasses explicit arming safety.
+   */
+  autoArm?: boolean;
 }
 
 export async function createHeterogeneousRuntime(
@@ -41,12 +46,18 @@ export async function createHeterogeneousRuntime(
 
   const esp32Id = options.esp32Id ?? 'esp32-01';
   let esp32Transport = options.esp32Transport;
+  const autoArm = options.autoArm === true;
+  if (autoArm) {
+    createLogger('warn').warn(
+      'autoArm is enabled on heterogeneous runtime; this is demo/testing only and bypasses explicit arming safety.',
+    );
+  }
 
   if (!esp32Transport) {
     if (options.useHardwareEsp32 && config.port) {
       esp32Transport = serialPort({ path: config.port, baudRate: config.baudRate });
     } else {
-      esp32Transport = createEsp32SimulatedTransport({ autoArm: true });
+      esp32Transport = createEsp32SimulatedTransport({ autoArm });
     }
   }
 
@@ -55,7 +66,7 @@ export async function createHeterogeneousRuntime(
     label: options.useHardwareEsp32 ? 'ESP32 hardware' : 'ESP32 simulator',
     simulated: !options.useHardwareEsp32,
     transport: esp32Transport,
-    backendOptions: { autoArm: true },
+    ...(autoArm ? { backendOptions: { autoArm: true } } : {}),
   });
 
   if (options.includeArm !== false) {
