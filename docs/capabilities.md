@@ -8,12 +8,12 @@ The catalog below matches `@pinout/core` descriptors and the ESP32 bridge firmwa
 
 ### `sys.hello`
 
-Handshake with the device and return firmware identity plus supported actions.
+Handshake with the device and return firmware identity, supported capabilities, and advertised feature flags.
 
 | | |
 | --- | --- |
 | Input | `{}` |
-| Output | `{ firmware, version, protocol, capabilities }` |
+| Output | `{ firmware, version, protocol, capabilities, features? }` |
 | Safety | Read-only |
 
 Also emitted unsolicited as the `ready` event payload after the transport opens.
@@ -38,43 +38,95 @@ Runtime diagnostics (uptime; free heap on hardware, stubbed on simulator).
 | Output | `{ uptimeMs, freeHeap? }` |
 | Safety | Read-only |
 
+### `sys.arm`
+
+Explicitly arm the device for physical actuation and configure/reset the watchdog timer.
+
+| | |
+| --- | --- |
+| Input | `{ timeoutMs? }` |
+| Output | `{ armed: true, state: "armed", timeoutMs }` |
+| Safety | Arming gate (non-physical) |
+
+### `sys.disarm`
+
+Explicitly disarm the device, stop the watchdog timer, and apply safe state immediately.
+
+| | |
+| --- | --- |
+| Input | `{}` |
+| Output | `{ armed: false, state: "disarmed" }` |
+| Safety | Physical safe-state enforcement |
+
+## Watchdog
+
+### `watchdog.configure`
+
+Configure the hardware/firmware watchdog timeout interval.
+
+| | |
+| --- | --- |
+| Input | `{ timeoutMs: number }` |
+| Output | `{ timeoutMs: number, enabled: boolean }` |
+| Safety | Non-physical configuration |
+
+### `watchdog.kick`
+
+Deadman heartbeat command. Resets the watchdog timer countdown deadline.
+
+| | |
+| --- | --- |
+| Input | `{ validityMs? }` |
+| Output | `{ kicked: true, timeoutMs: number }` |
+| Safety | Non-physical heartbeat |
+
 ## GPIO
+
+### `gpio.configSafeState`
+
+Declare per-pin electrical fail-safe level and circuit polarity.
+
+| | |
+| --- | --- |
+| Input | `{ pin, safeLevel?, polarity? }` (`safeLevel`: `low` \| `high` \| `high-z` \| `hold`; `polarity`: `active-high` \| `active-low`) |
+| Output | `{ pin, safeLevel, polarity }` |
+| Safety | Safety configuration |
 
 ### `gpio.mode`
 
-Configure pin mode: `input`, `output`, `pullup`, or `pulldown`.
+Configure pin mode: `input`, `output`, `pullup`, or `pulldown`. Optional `safeLevel` and `polarity` can configure fail-safe levels during mode initialization.
 
 ### `gpio.write`
 
-Drive a GPIO pin high or low. Input: `{ pin, value }`. Output: `{ pin, value }`. Safety: physical output.
+Drive a GPIO pin high or low. Requires `armed` state. Input: `{ pin, value, validityMs? }`. Output: `{ pin, value }`. Safety: physical output.
 
 ### `gpio.batchWrite`
 
-Validate an entire set of 1–16 `{ pin, value }` writes before applying any of them. This prevents a validation failure from producing a partially applied batch; it is not a timing-synchronous hardware transaction.
+Validate an entire set of 1–16 `{ pin, value }` writes before applying any of them. Requires `armed` state. Input: `{ writes, validityMs? }`.
 
 ### `gpio.stopAll`
 
-Drive outputs tracked by the ESP32 bridge low, clear PWM/motor/servo state, and cancel pending pulses. This is a best-effort software stop—not a certified safety function.
+Drive all tracked and configured outputs to their declared safe levels (`low`, `high`, `high-z`, `hold`), clear PWM/motor/servo state, and cancel pending pulses. Allowed in any state.
 
 ### `gpio.read`
 
-Read pin level. Input: `{ pin }`. Output: `{ pin, value }`. Safety: read-only.
+Read pin level. Input: `{ pin }`. Output: `{ pin, value }`. Safety: read-only. Allowed while disarmed or armed.
 
 ### `gpio.toggle`
 
-Flip the driven level of an output pin.
+Flip the driven level of an output pin. Requires `armed` state.
 
 ### `gpio.pulse`
 
-Drive a pin for `durationMs` without blocking command processing, then restore its previous level. `gpio.stopAll` cancels the restoration and leaves the pin low.
+Drive a pin for `durationMs` without blocking command processing, then restore its previous level. A stop or safe-state trip cancels the restoration. Requires `armed` state.
 
 ### `gpio.pwm`
 
-LEDC PWM: `{ channel, pin, duty, frequency }`. Set duty to `0` to stop.
+LEDC PWM: `{ channel, pin, duty, frequency, validityMs? }`. Requires `armed` state. Set duty to `0` to stop.
 
 ### `gpio.analogRead`
 
-ADC sample on GPIO 32–39. Output `value` is 0–4095.
+ADC sample on GPIO 32–39. Output `value` is 0–4095. Read-only.
 
 ### `gpio.watch` / `gpio.unwatch`
 
@@ -82,15 +134,15 @@ Subscribe or unsubscribe to `gpio.changed` events for a pin.
 
 ### `gpio.servo`
 
-Drive a hobby servo: `{ pin, angle }` with angle 0–180°. Uses 50 Hz LEDC (1–2 ms pulse). Distinct from the `pinout/servo` module, which has no pin — it *is* the servo.
+Drive a hobby servo: `{ pin, angle, validityMs? }` with angle 0–180°. Requires `armed` state.
 
 ### `gpio.motor`
 
-Drive a DC motor: `{ pwmPin, speed, dirPin? }`. Speed is 0–1 without `dirPin`, or −1 to 1 with a direction pin. Distinct from `pinout/dc-motor`.
+Drive a DC motor: `{ pwmPin, speed, dirPin?, validityMs? }`. Requires `armed` state.
 
 ## I2C (ESP32 bridge)
 
-Default pins: SDA 21, SCL 22, 100 kHz. Payloads are capped at 32 bytes by the 512-byte protocol line.
+Default pins: SDA 21, SCL 22, 100 kHz. Payloads are capped at 32 bytes by the protocol line.
 
 ### `i2c.begin`
 
@@ -98,7 +150,7 @@ Optional `{ sda, scl, frequency }`. Result echoes the active bus config.
 
 ### `i2c.write`
 
-Input: `{ address, data }` where `address` is 0–127 and `data` is 1–32 bytes. Hardware returns `BUS_ERROR` on NACK.
+Input: `{ address, data, validityMs? }` where `address` is 0–127 and `data` is 1–32 bytes. Requires `armed` state. Hardware returns `BUS_ERROR` on NACK.
 
 ### `i2c.read`
 
@@ -106,7 +158,7 @@ Input: `{ address, length }`. Output: `{ address, data }`.
 
 ### `i2c.scan`
 
-Returns `{ addresses }` for devices that acknowledge (1–127). The simulator returns addresses that have been written.
+Returns `{ addresses }` for devices that acknowledge (1–127).
 
 ## SPI (ESP32 bridge)
 
@@ -118,7 +170,7 @@ Optional `{ sck, miso, mosi, chipSelect, frequency }`.
 
 ### `spi.transfer`
 
-Input: `{ data, chipSelect? }`. Full-duplex; the simulator echoes `data`.
+Input: `{ data, chipSelect?, validityMs? }`. Full-duplex. Requires `armed` state.
 
 ## Robot manipulator (`pinout/robot-arm`)
 
@@ -245,18 +297,6 @@ Events: `drive.changed`.
 
 `power.set { voltage, currentLimit }`, `power.output { enabled }`, `power.read`, and `status.read`. The built-in simulator limits configuration to 0–60 V and 0–20 A; these are simulator policies, not ratings for arbitrary physical hardware. Emits `power.changed`.
 
-## Agent tools
+## Verification Note
 
-`device.toAgentTools()` maps each advertised capability to an MCP-shaped tool descriptor for **single-device** connections.
-
-`PinoutRuntime` + `@pinout/mcp` derive tools dynamically from all registered devices (`esp32_01__gpio_write`, `arm_sim_01__motion_home`, etc.). The runtime adapter also exposes read-only inventory and device-description tools. Physical-output tools are conservatively marked destructive, and normalized name collisions fail closed. See [modules.md](modules.md).
-
-## Adding a capability
-
-1. Add the descriptor in `packages/core/src/capabilities.ts`.
-2. Implement the action in the ESP32 bridge handler and simulator.
-3. Add validation in `device.invoke()` when host-side checks are needed.
-4. Add CLI support and tests.
-5. Update this file and [docs/protocol.md](protocol.md).
-
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full recipe.
+The protocol commands, arming gates, heartbeat watchdog, and per-output fail-safe levels documented here are verified against the simulator and protocol test suites. Physical hardware testing remains pending bench testing with physical hardware.
