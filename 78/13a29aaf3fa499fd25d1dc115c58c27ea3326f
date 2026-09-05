@@ -1,0 +1,36 @@
+docs/security-model.md
+  s_d7c3116de9f18d::t_8437a3d7ffa3fc 15-24
+packages/daemon/tests/coffeeMachineContract.test.ts
+  s_d7c3116de9f18d::t_b122fc74abab9c 75
+  s_d7c3116de9f18d::t_e3f48e5ac2e2c9 8,18-22,25-26,29,35
+  s_d7c3116de9f18d::t_581dd5d98b7e4f 23-24,27-28
+docs/policies.md
+  s_d7c3116de9f18d::t_de4c1dc0d8aa0a 69-79
+sdk/python/README.md
+  s_d7c3116de9f18d::t_db81e917aaedd1 19
+docs/cli.md
+  s_d7c3116de9f18d::t_b70be836890189 3-6,12-24,36-38,42-61,65,67,73,80-86
+docs/architecture.md
+  s_d7c3116de9f18d::t_30fa7427c51734 138-169
+docs/adr/0006-daemon-governance-and-direct-access.md
+  s_d7c3116de9f18d::t_379e00d6de95cf 1-26
+docs/daemon.md
+  s_d7c3116de9f18d::t_34957e588fbfc4 22-32
+  s_d7c3116de9f18d::t_19610dd6aee69e 57-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "7813a29aaf3fa499fd25d1dc115c58c27ea3326f",
+  "prompts": {},
+  "sessions": {
+    "s_d7c3116de9f18d": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "2c203b11-2668-4218-b6e4-4eadbb7f638c",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
