@@ -19,6 +19,37 @@ char lineBuffer[lineMax];
 size_t lineLength = 0;
 unsigned long bootMillis = 0;
 
+enum DeviceState {
+  STATE_DISARMED = 0,
+  STATE_ARMED = 1,
+  STATE_TRIPPED = 2
+};
+
+enum SafeLevel {
+  SAFE_LEVEL_LOW = 0,
+  SAFE_LEVEL_HIGH = 1,
+  SAFE_LEVEL_HIGH_Z = 2,
+  SAFE_LEVEL_HOLD = 3
+};
+
+enum Polarity {
+  POLARITY_ACTIVE_HIGH = 0,
+  POLARITY_ACTIVE_LOW = 1
+};
+
+struct PinSafeConfig {
+  SafeLevel safeLevel = SAFE_LEVEL_LOW;
+  Polarity polarity = POLARITY_ACTIVE_HIGH;
+  bool configured = false;
+};
+
+DeviceState deviceState = STATE_DISARMED;
+const char* tripReason = nullptr;
+unsigned long watchdogTimeoutMs = 1000;
+unsigned long watchdogDeadline = 0;
+bool watchdogEnabled = true;
+PinSafeConfig pinSafeConfigs[40];
+
 struct WatchState {
   int pin = -1;
   bool lastValue = false;
@@ -168,7 +199,12 @@ void fillIdentity(JsonObject payload) {
   capabilities.add("sys.hello");
   capabilities.add("sys.ping");
   capabilities.add("sys.info");
+  capabilities.add("sys.arm");
+  capabilities.add("sys.disarm");
+  capabilities.add("watchdog.configure");
+  capabilities.add("watchdog.kick");
   capabilities.add("gpio.mode");
+  capabilities.add("gpio.configSafeState");
   capabilities.add("gpio.write");
   capabilities.add("gpio.batchWrite");
   capabilities.add("gpio.stopAll");
@@ -187,6 +223,12 @@ void fillIdentity(JsonObject payload) {
   capabilities.add("spi.transfer");
   capabilities.add("gpio.servo");
   capabilities.add("gpio.motor");
+
+  JsonArray features = payload["features"].to<JsonArray>();
+  features.add("watchdog");
+  features.add("arming");
+  features.add("safe-state");
+  features.add("command-validity");
 }
 
 void sendReady() {
@@ -195,6 +237,68 @@ void sendReady() {
   document["event"] = "ready";
   fillIdentity(document["payload"].to<JsonObject>());
   sendLine(document);
+}
+
+void touchWatchdog() {
+  if (deviceState == STATE_ARMED && watchdogEnabled && watchdogTimeoutMs > 0) {
+    watchdogDeadline = millis() + watchdogTimeoutMs;
+  }
+}
+
+void applySafeState(JsonArray* stoppedPins = nullptr) {
+  for (int pin = 0; pin <= maxGpioPin(); pin++) {
+    if (activeOutputs[pin] || pinSafeConfigs[pin].configured) {
+      const SafeLevel level = pinSafeConfigs[pin].safeLevel;
+      if (level == SAFE_LEVEL_HIGH) {
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, HIGH);
+        activeOutputs[pin] = true;
+      } else if (level == SAFE_LEVEL_HIGH_Z) {
+        pinMode(pin, INPUT);
+        activeOutputs[pin] = false;
+      } else if (level == SAFE_LEVEL_HOLD) {
+        // Keep current output level
+      } else {
+        // SAFE_LEVEL_LOW (default)
+        pinMode(pin, OUTPUT);
+        digitalWrite(pin, LOW);
+        activeOutputs[pin] = false;
+      }
+      if (stoppedPins) {
+        stoppedPins->add(pin);
+      }
+    }
+  }
+  for (int channel = 0; channel < 16; channel++) {
+    ledcWrite(channel, 0);
+    if (activePwmPins[channel] >= 0) {
+      ledcDetachPin(activePwmPins[channel]);
+      activePwmPins[channel] = -1;
+    }
+  }
+  for (size_t i = 0; i < 8; i++) {
+    pulses[i].active = false;
+  }
+}
+
+void tripWatchdog(const char* reason = "WATCHDOG_EXPIRED") {
+  deviceState = STATE_TRIPPED;
+  tripReason = reason;
+  JsonDocument eventDoc;
+  JsonObject eventPayload = eventDoc.to<JsonObject>();
+  eventPayload["reason"] = reason;
+  eventPayload["message"] = "Watchdog timeout elapsed without heartbeat.";
+  JsonArray stopped = eventPayload["stoppedPins"].to<JsonArray>();
+  applySafeState(&stopped);
+  sendEvent("device.tripped", eventDoc);
+}
+
+void checkWatchdog() {
+  if (deviceState == STATE_ARMED && watchdogEnabled && watchdogTimeoutMs > 0) {
+    if (static_cast<long>(millis() - watchdogDeadline) >= 0) {
+      tripWatchdog("WATCHDOG_EXPIRED");
+    }
+  }
 }
 
 void handleHello(const char* id) {
@@ -214,6 +318,135 @@ void handleInfo(const char* id) {
   result["uptimeMs"] = millis() - bootMillis;
   result["freeHeap"] = ESP.getFreeHeap();
   sendSuccess(id, result);
+}
+
+void handleArm(const char* id, const JsonVariantConst& payload) {
+  if (payload.is<JsonObjectConst>() && payload["timeoutMs"].is<int>()) {
+    const int timeout = payload["timeoutMs"].as<int>();
+    if (timeout < 0) {
+      sendError(id, "INVALID_PAYLOAD", "timeoutMs must be non-negative.");
+      return;
+    }
+    watchdogTimeoutMs = static_cast<unsigned long>(timeout);
+    watchdogEnabled = timeout > 0;
+  }
+  deviceState = STATE_ARMED;
+  tripReason = nullptr;
+  touchWatchdog();
+  JsonDocument result;
+  result["armed"] = true;
+  result["state"] = "armed";
+  result["timeoutMs"] = watchdogTimeoutMs;
+  sendSuccess(id, result);
+}
+
+void handleDisarm(const char* id) {
+  deviceState = STATE_DISARMED;
+  tripReason = nullptr;
+  applySafeState();
+  JsonDocument result;
+  result["armed"] = false;
+  result["state"] = "disarmed";
+  sendSuccess(id, result);
+}
+
+void handleWatchdogConfigure(const char* id, const JsonVariantConst& payload) {
+  if (!payload.is<JsonObjectConst>() || !payload["timeoutMs"].is<int>()) {
+    sendError(id, "INVALID_PAYLOAD", "watchdog.configure requires integer timeoutMs.");
+    return;
+  }
+  const int timeout = payload["timeoutMs"].as<int>();
+  if (timeout < 0) {
+    sendError(id, "INVALID_PAYLOAD", "timeoutMs must be non-negative.");
+    return;
+  }
+  watchdogTimeoutMs = static_cast<unsigned long>(timeout);
+  watchdogEnabled = timeout > 0;
+  if (deviceState == STATE_ARMED) {
+    touchWatchdog();
+  }
+  JsonDocument result;
+  result["timeoutMs"] = watchdogTimeoutMs;
+  result["enabled"] = watchdogEnabled;
+  sendSuccess(id, result);
+}
+
+void handleWatchdogKick(const char* id, const JsonVariantConst& payload) {
+  if (payload.is<JsonObjectConst>() && payload["validityMs"].is<int>()) {
+    if (payload["validityMs"].as<int>() <= 0) {
+      sendError(id, "COMMAND_EXPIRED", "Command validity window expired.");
+      return;
+    }
+  }
+  if (deviceState == STATE_ARMED) {
+    touchWatchdog();
+  }
+  JsonDocument result;
+  result["kicked"] = true;
+  result["timeoutMs"] = watchdogTimeoutMs;
+  sendSuccess(id, result);
+}
+
+void handleConfigSafeState(const char* id, const JsonVariantConst& payload) {
+  if (!payload.is<JsonObjectConst>() || !payload["pin"].is<int>()) {
+    sendError(id, "INVALID_PAYLOAD", "gpio.configSafeState requires integer pin.");
+    return;
+  }
+  const int pin = payload["pin"].as<int>();
+  if (!isWritablePin(pin)) {
+    sendError(id, "INVALID_PIN", "Pin is not a valid ESP32 output GPIO.");
+    return;
+  }
+  SafeLevel safeLevel = SAFE_LEVEL_LOW;
+  Polarity polarity = POLARITY_ACTIVE_HIGH;
+  if (payload["safeLevel"].is<const char*>()) {
+    const char* lvl = payload["safeLevel"].as<const char*>();
+    if (strcmp(lvl, "low") == 0) safeLevel = SAFE_LEVEL_LOW;
+    else if (strcmp(lvl, "high") == 0) safeLevel = SAFE_LEVEL_HIGH;
+    else if (strcmp(lvl, "high-z") == 0) safeLevel = SAFE_LEVEL_HIGH_Z;
+    else if (strcmp(lvl, "hold") == 0) safeLevel = SAFE_LEVEL_HOLD;
+    else {
+      sendError(id, "INVALID_PAYLOAD", "safeLevel must be low, high, high-z, or hold.");
+      return;
+    }
+  }
+  if (payload["polarity"].is<const char*>()) {
+    const char* pol = payload["polarity"].as<const char*>();
+    if (strcmp(pol, "active-high") == 0) polarity = POLARITY_ACTIVE_HIGH;
+    else if (strcmp(pol, "active-low") == 0) polarity = POLARITY_ACTIVE_LOW;
+    else {
+      sendError(id, "INVALID_PAYLOAD", "polarity must be active-high or active-low.");
+      return;
+    }
+  }
+  pinSafeConfigs[pin].safeLevel = safeLevel;
+  pinSafeConfigs[pin].polarity = polarity;
+  pinSafeConfigs[pin].configured = true;
+
+  JsonDocument result;
+  result["pin"] = pin;
+  result["safeLevel"] = safeLevel == SAFE_LEVEL_HIGH ? "high" : safeLevel == SAFE_LEVEL_HIGH_Z ? "high-z" : safeLevel == SAFE_LEVEL_HOLD ? "hold" : "low";
+  result["polarity"] = polarity == POLARITY_ACTIVE_LOW ? "active-low" : "active-high";
+  sendSuccess(id, result);
+}
+
+bool checkActuationPrerequisites(const char* id, const JsonVariantConst& payload) {
+  if (payload.is<JsonObjectConst>() && payload["validityMs"].is<int>()) {
+    if (payload["validityMs"].as<int>() <= 0) {
+      sendError(id, "COMMAND_EXPIRED", "Command validity window expired.");
+      return false;
+    }
+  }
+  if (deviceState == STATE_DISARMED) {
+    sendError(id, "NOT_ARMED", "Device is disarmed. Explicit arming (sys.arm) is required before actuation.");
+    return false;
+  }
+  if (deviceState == STATE_TRIPPED) {
+    sendError(id, "WATCHDOG_TRIPPED", "Watchdog tripped (WATCHDOG_EXPIRED). Explicit re-arming (sys.arm) is required.");
+    return false;
+  }
+  touchWatchdog();
+  return true;
 }
 
 void applyPinMode(int pin, const char* mode) {
@@ -242,6 +475,30 @@ void handleGpioMode(const char* id, const JsonVariantConst& payload) {
   cancelPulseForPin(pin);
   applyPinMode(pin, mode);
   activeOutputs[pin] = strcmp(mode, "output") == 0;
+
+  if (payload["safeLevel"].is<const char*>()) {
+    const char* lvl = payload["safeLevel"].as<const char*>();
+    if (strcmp(lvl, "low") == 0) pinSafeConfigs[pin].safeLevel = SAFE_LEVEL_LOW;
+    else if (strcmp(lvl, "high") == 0) pinSafeConfigs[pin].safeLevel = SAFE_LEVEL_HIGH;
+    else if (strcmp(lvl, "high-z") == 0) pinSafeConfigs[pin].safeLevel = SAFE_LEVEL_HIGH_Z;
+    else if (strcmp(lvl, "hold") == 0) pinSafeConfigs[pin].safeLevel = SAFE_LEVEL_HOLD;
+    else {
+      sendError(id, "INVALID_PAYLOAD", "safeLevel must be low, high, high-z, or hold.");
+      return;
+    }
+    pinSafeConfigs[pin].configured = true;
+  }
+  if (payload["polarity"].is<const char*>()) {
+    const char* pol = payload["polarity"].as<const char*>();
+    if (strcmp(pol, "active-high") == 0) pinSafeConfigs[pin].polarity = POLARITY_ACTIVE_HIGH;
+    else if (strcmp(pol, "active-low") == 0) pinSafeConfigs[pin].polarity = POLARITY_ACTIVE_LOW;
+    else {
+      sendError(id, "INVALID_PAYLOAD", "polarity must be active-high or active-low.");
+      return;
+    }
+    pinSafeConfigs[pin].configured = true;
+  }
+
   JsonDocument result;
   result["pin"] = pin;
   result["mode"] = mode;
@@ -309,24 +566,7 @@ void handleGpioBatchWrite(const char* id, const JsonVariantConst& payload) {
 void handleGpioStopAll(const char* id) {
   JsonDocument result;
   JsonArray stopped = result["stoppedPins"].to<JsonArray>();
-  for (int pin = 0; pin <= 39; pin++) {
-    if (activeOutputs[pin]) {
-      digitalWrite(pin, LOW);
-      activeOutputs[pin] = false;
-      stopped.add(pin);
-    }
-  }
-  // Detach PWM channels so motors/servos cannot remain driven after the stop.
-  for (int channel = 0; channel < 16; channel++) {
-    ledcWrite(channel, 0);
-    if (activePwmPins[channel] >= 0) {
-      ledcDetachPin(activePwmPins[channel]);
-      activePwmPins[channel] = -1;
-    }
-  }
-  for (size_t i = 0; i < 8; i++) {
-    pulses[i].active = false;
-  }
+  applySafeState(&stopped);
   sendSuccess(id, result);
 }
 
@@ -857,16 +1097,28 @@ void handleRequest(JsonDocument& document) {
     handleInfo(id);
     return;
   }
+  if (strcmp(action, "sys.arm") == 0) {
+    handleArm(id, payload);
+    return;
+  }
+  if (strcmp(action, "sys.disarm") == 0) {
+    handleDisarm(id);
+    return;
+  }
+  if (strcmp(action, "watchdog.configure") == 0) {
+    handleWatchdogConfigure(id, payload);
+    return;
+  }
+  if (strcmp(action, "watchdog.kick") == 0) {
+    handleWatchdogKick(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.configSafeState") == 0) {
+    handleConfigSafeState(id, payload);
+    return;
+  }
   if (strcmp(action, "gpio.mode") == 0) {
     handleGpioMode(id, payload);
-    return;
-  }
-  if (strcmp(action, "gpio.write") == 0) {
-    handleGpioWrite(id, payload);
-    return;
-  }
-  if (strcmp(action, "gpio.batchWrite") == 0) {
-    handleGpioBatchWrite(id, payload);
     return;
   }
   if (strcmp(action, "gpio.stopAll") == 0) {
@@ -875,18 +1127,6 @@ void handleRequest(JsonDocument& document) {
   }
   if (strcmp(action, "gpio.read") == 0) {
     handleGpioRead(id, payload);
-    return;
-  }
-  if (strcmp(action, "gpio.toggle") == 0) {
-    handleGpioToggle(id, payload);
-    return;
-  }
-  if (strcmp(action, "gpio.pulse") == 0) {
-    handleGpioPulse(id, payload);
-    return;
-  }
-  if (strcmp(action, "gpio.pwm") == 0) {
-    handleGpioPwm(id, payload);
     return;
   }
   if (strcmp(action, "gpio.analogRead") == 0) {
@@ -905,10 +1145,6 @@ void handleRequest(JsonDocument& document) {
     handleI2cBegin(id, payload);
     return;
   }
-  if (strcmp(action, "i2c.write") == 0) {
-    handleI2cWrite(id, payload);
-    return;
-  }
   if (strcmp(action, "i2c.read") == 0) {
     handleI2cRead(id, payload);
     return;
@@ -921,15 +1157,50 @@ void handleRequest(JsonDocument& document) {
     handleSpiBegin(id, payload);
     return;
   }
+
+  // Actuation actions require arming and validity check
+  if (strcmp(action, "gpio.write") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
+    handleGpioWrite(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.batchWrite") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
+    handleGpioBatchWrite(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.toggle") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
+    handleGpioToggle(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.pulse") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
+    handleGpioPulse(id, payload);
+    return;
+  }
+  if (strcmp(action, "gpio.pwm") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
+    handleGpioPwm(id, payload);
+    return;
+  }
+  if (strcmp(action, "i2c.write") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
+    handleI2cWrite(id, payload);
+    return;
+  }
   if (strcmp(action, "spi.transfer") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
     handleSpiTransfer(id, payload);
     return;
   }
   if (strcmp(action, "gpio.servo") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
     handleGpioServo(id, payload);
     return;
   }
   if (strcmp(action, "gpio.motor") == 0) {
+    if (!checkActuationPrerequisites(id, payload)) return;
     handleGpioMotor(id, payload);
     return;
   }
@@ -979,6 +1250,7 @@ void setup() {
 }
 
 void loop() {
+  checkWatchdog();
   pollWatches();
   pollPulses();
   while (Serial.available() > 0) {
@@ -987,6 +1259,7 @@ void loop() {
       lineBuffer[lineLength] = '\0';
       lineLength = 0;
       handleLine(lineBuffer);
+      checkWatchdog();
       continue;
     }
     if (lineLength >= lineMax - 1) {
