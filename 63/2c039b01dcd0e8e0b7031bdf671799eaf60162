@@ -1,0 +1,25 @@
+hardware/records/2026-09-05-esp32-classic-reference-circuit-pending.md
+  s_369368440b2937::t_7723d52a6979cc 1-52
+hardware/records/README.md
+  s_369368440b2937::t_c5bc6c869c6905 7-13
+scripts/hil/esp32-classic.md
+  s_369368440b2937::t_3d48434a9c74f5 1-152
+hardware/catalog.json
+  s_369368440b2937::t_4ca3af441c8c3c 21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "632c039b01dcd0e8e0b7031bdf671799eaf60162",
+  "prompts": {},
+  "sessions": {
+    "s_369368440b2937": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "0558ee6d-238e-466b-9ada-d7ecd3e06a82",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
