@@ -32,6 +32,7 @@ export interface DeviceInfo {
   version: string;
   protocol: number;
   capabilities: string[];
+  features?: string[];
 }
 
 export interface AgentTool {

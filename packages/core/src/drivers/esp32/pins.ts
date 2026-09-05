@@ -29,6 +29,33 @@ export const maxEsp32BusPayloadBytes = 32;
 
 export type GpioModeName = 'input' | 'output' | 'pullup' | 'pulldown';
 export type GpioPinMode = GpioModeName;
+export type GpioSafeLevel = 'low' | 'high' | 'high-z' | 'hold';
+export type GpioPolarity = 'active-high' | 'active-low';
+
+export function assertSafeLevel(level: unknown): GpioSafeLevel {
+  if (level !== 'low' && level !== 'high' && level !== 'high-z' && level !== 'hold') {
+    throw new ValidationError(
+      `Safe level must be low, high, high-z, or hold, received ${String(level)}.`,
+    );
+  }
+  return level;
+}
+
+export function assertPolarity(polarity: unknown): GpioPolarity {
+  if (polarity !== 'active-high' && polarity !== 'active-low') {
+    throw new ValidationError(
+      `Polarity must be active-high or active-low, received ${String(polarity)}.`,
+    );
+  }
+  return polarity;
+}
+
+export function assertNonNegativeInt(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    throw new ValidationError(`${field} must be a non-negative integer, received ${String(value)}.`);
+  }
+  return value;
+}
 
 export function assertGpioPin(pin: unknown): number {
   if (typeof pin !== 'number' || !Number.isInteger(pin) || pin < 0) {

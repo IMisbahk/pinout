@@ -92,6 +92,7 @@ export {
   encodeRequest,
   encodeResponse,
   maxProtocolLineBytes,
+  parseDeviceInfo,
   parseLine,
   protocolVersion,
 } from './protocol.js';
@@ -298,7 +299,7 @@ export type {
   ConstraintConflict,
   ApprovalRecord,
 } from './policy/safety.js';
-export { OperationManager, isTerminalOperationStatus } from './operation/operationManager.js';
+export { OperationManager, isTerminalOperationStatus, StopUnconfirmedError } from './operation/operationManager.js';
 export { BoundedIdempotencyStore } from './operation/idempotencyStore.js';
 export type {
   IdempotencyStoreOptions,
@@ -310,6 +311,10 @@ export type {
   OperationRunContext,
   BeginOperationOptions,
   OperationBeginResult,
+  ReconciliationResolution,
+  ReconciliationRecord,
+  ReconcileOptions,
+  ExtendedOperationStatus,
 } from './operation/operationManager.js';
 export { LeaseManager } from './lease/leaseManager.js';
 export type {

@@ -195,6 +195,10 @@ export function parseDeviceInfo(payload: Record<string, unknown>): DeviceInfo {
   const version = payload.version;
   const protocol = payload.protocol;
   const capabilities = payload.capabilities;
+  const features =
+    Array.isArray(payload.features) && payload.features.every((item) => typeof item === 'string')
+      ? (payload.features as string[])
+      : [];
 
   if (typeof firmware !== 'string' || firmware.length === 0) {
     throw new ProtocolError('Device identity is missing firmware.');
@@ -211,7 +215,7 @@ export function parseDeviceInfo(payload: Record<string, unknown>): DeviceInfo {
     throw new ProtocolError('Device identity is missing a capabilities string array.');
   }
 
-  return { firmware, version, protocol, capabilities };
+  return { firmware, version, protocol, capabilities, features };
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

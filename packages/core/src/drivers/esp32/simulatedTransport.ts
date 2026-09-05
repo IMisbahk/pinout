@@ -9,20 +9,29 @@ import {
 } from '../../protocol.js';
 import type { Transport } from '../../types.js';
 import { DeviceError } from '../../errors.js';
-import { createGpioState, esp32BridgeInfo, handleBridgeAction } from './bridge.js';
+import { createGpioState, esp32BridgeInfo, handleBridgeAction, tripWatchdog, type GpioState } from './bridge.js';
 
-export function simulatedEsp32(): Transport {
-  return new SimulatedEsp32Transport();
+export function simulatedEsp32(options: { autoArm?: boolean } = {}): SimulatedEsp32Transport {
+  return new SimulatedEsp32Transport(options);
 }
 
-class SimulatedEsp32Transport implements Transport {
+export class SimulatedEsp32Transport implements Transport {
   readonly kind = 'simulated-esp32';
   private readonly inbound = new ByteQueue();
   private readonly decoder = new TextDecoder();
   private writeBuffer = '';
-  private readonly state = createGpioState();
+  readonly state: GpioState;
   private readonly pulseTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  private watchdogTimer: ReturnType<typeof setTimeout> | undefined;
   private started = false;
+
+  constructor(options: { autoArm?: boolean } = {}) {
+    this.state = createGpioState();
+    if (options.autoArm) {
+      this.state.deviceState = 'armed';
+      this.state.watchdog.deadlineMs = Date.now() + this.state.watchdog.timeoutMs;
+    }
+  }
 
   get readable(): AsyncIterable<Uint8Array> {
     return this.inbound;
@@ -34,13 +43,51 @@ class SimulatedEsp32Transport implements Transport {
     }
     this.started = true;
     this.emitEvent('ready', { ...esp32BridgeInfo });
+    this.resetWatchdogTimer();
   }
 
   async close(): Promise<void> {
+    if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
+    this.watchdogTimer = undefined;
     for (const timer of this.pulseTimers.values()) clearTimeout(timer);
     this.pulseTimers.clear();
     this.state.watched.clear();
     this.inbound.close();
+  }
+
+  expireWatchdog(): void {
+    if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
+    this.watchdogTimer = undefined;
+    this.triggerWatchdogExpiry();
+  }
+
+  private resetWatchdogTimer(): void {
+    if (this.watchdogTimer) {
+      clearTimeout(this.watchdogTimer);
+      this.watchdogTimer = undefined;
+    }
+    if (
+      this.state.deviceState === 'armed' &&
+      this.state.watchdog.enabled &&
+      this.state.watchdog.timeoutMs > 0
+    ) {
+      this.watchdogTimer = setTimeout(() => {
+        this.triggerWatchdogExpiry();
+      }, this.state.watchdog.timeoutMs);
+    }
+  }
+
+  private triggerWatchdogExpiry(): void {
+    if (this.state.deviceState !== 'armed') return;
+    for (const timer of this.pulseTimers.values()) clearTimeout(timer);
+    this.pulseTimers.clear();
+    tripWatchdog(
+      this.state,
+      {
+        emitEvent: (event, payload) => this.emitEvent(event, payload),
+      },
+      'WATCHDOG_EXPIRED',
+    );
   }
 
   async write(data: Uint8Array): Promise<void> {
@@ -90,10 +137,11 @@ class SimulatedEsp32Transport implements Transport {
       this.emitSuccess(message.id, result);
       if (message.action === 'gpio.pulse') {
         this.schedulePulseRevert(result);
-      } else if (message.action === 'gpio.stopAll') {
+      } else if (message.action === 'gpio.stopAll' || message.action === 'sys.disarm') {
         for (const timer of this.pulseTimers.values()) clearTimeout(timer);
         this.pulseTimers.clear();
       }
+      this.resetWatchdogTimer();
     } catch (error) {
       if (error instanceof DeviceError) {
         this.emitError(message.id, error.code, error.message);

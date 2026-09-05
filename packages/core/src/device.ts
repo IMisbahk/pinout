@@ -15,8 +15,13 @@ import {
   assertGpioValue,
   assertI2cAddress,
   assertMotorSpeed,
+  assertNonNegativeInt,
+  assertPolarity,
+  assertSafeLevel,
   assertServoAngle,
   resolveEsp32BoardPin,
+  type GpioPolarity,
+  type GpioSafeLevel,
 } from './drivers/esp32/pins.js';
 import type { Session } from './session.js';
 import type { AgentTool, CapabilityDescriptor, DeviceEventHandler, DeviceInfo } from './types.js';
@@ -44,6 +49,34 @@ export class Device {
 
   supports(action: string): boolean {
     return this.info.capabilities.includes(action);
+  }
+
+  hasFeature(feature: string): boolean {
+    return this.info.features?.includes(feature) ?? false;
+  }
+
+  async arm(options: { timeoutMs?: number } = {}): Promise<Record<string, unknown>> {
+    return this.invoke('sys.arm', options);
+  }
+
+  async disarm(): Promise<Record<string, unknown>> {
+    return this.invoke('sys.disarm', {});
+  }
+
+  async configureWatchdog(timeoutMs: number): Promise<Record<string, unknown>> {
+    return this.invoke('watchdog.configure', { timeoutMs });
+  }
+
+  async kickWatchdog(validityMs?: number): Promise<Record<string, unknown>> {
+    return this.invoke('watchdog.kick', validityMs !== undefined ? { validityMs } : {});
+  }
+
+  async configSafeState(
+    pin: number,
+    safeLevel: GpioSafeLevel = 'low',
+    polarity: GpioPolarity = 'active-high',
+  ): Promise<Record<string, unknown>> {
+    return this.invoke('gpio.configSafeState', { pin, safeLevel, polarity });
   }
 
   on(event: string, handler: DeviceEventHandler): void {
@@ -187,6 +220,14 @@ class Gpio {
     await this.device.invoke('gpio.unwatch', { pin });
   }
 
+  async configSafeState(
+    pin: number,
+    safeLevel: GpioSafeLevel = 'low',
+    polarity: GpioPolarity = 'active-high',
+  ): Promise<void> {
+    await this.device.invoke('gpio.configSafeState', { pin, safeLevel, polarity });
+  }
+
   resolveBoardPin(name: string): number {
     if (this.device.info.firmware === 'esp32-bridge') {
       return resolveEsp32BoardPin(name);
@@ -207,20 +248,66 @@ function validateAction(
     return {};
   }
 
+  if (action === 'sys.arm') {
+    if (payload.timeoutMs !== undefined) {
+      return { timeoutMs: assertNonNegativeInt(payload.timeoutMs, 'timeoutMs') };
+    }
+    return {};
+  }
+
+  if (action === 'sys.disarm') {
+    assertEmptyPayload(payload, action);
+    return {};
+  }
+
+  if (action === 'watchdog.configure') {
+    return { timeoutMs: assertNonNegativeInt(payload.timeoutMs, 'timeoutMs') };
+  }
+
+  if (action === 'watchdog.kick') {
+    if (payload.validityMs !== undefined) {
+      return { validityMs: assertPositiveInt(payload.validityMs, 'validityMs') };
+    }
+    return {};
+  }
+
   if (firmware !== 'esp32-bridge') {
     return payload;
   }
 
   switch (action) {
+    case 'gpio.configSafeState': {
+      const pin = assertGpioPin(payload.pin);
+      assertEsp32ModePin(pin);
+      const safeLevel =
+        payload.safeLevel === undefined ? 'low' : assertSafeLevel(payload.safeLevel);
+      const polarity =
+        payload.polarity === undefined ? 'active-high' : assertPolarity(payload.polarity);
+      return { pin, safeLevel, polarity };
+    }
     case 'gpio.mode': {
       const pin = assertGpioPin(payload.pin);
       assertEsp32ModePin(pin);
-      return { pin, mode: assertGpioMode(payload.mode) };
+      const result: Record<string, unknown> = {
+        pin,
+        mode: assertGpioMode(payload.mode),
+      };
+      if (payload.safeLevel !== undefined) {
+        result.safeLevel = assertSafeLevel(payload.safeLevel);
+      }
+      if (payload.polarity !== undefined) {
+        result.polarity = assertPolarity(payload.polarity);
+      }
+      return result;
     }
     case 'gpio.write': {
       const pin = assertGpioPin(payload.pin);
       assertEsp32WritePin(pin);
-      return { pin, value: assertGpioValue(payload.value) };
+      const result: Record<string, unknown> = { pin, value: assertGpioValue(payload.value) };
+      if (payload.validityMs !== undefined) {
+        result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
+      return result;
     }
     case 'gpio.batchWrite': {
       if (
@@ -230,7 +317,7 @@ function validateAction(
       ) {
         throw new ValidationError('writes must contain 1–16 entries.');
       }
-      return {
+      const result: Record<string, unknown> = {
         writes: payload.writes.map((entry, index) => {
           if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
             throw new ValidationError(`writes[${index}] must be an object.`);
@@ -241,6 +328,10 @@ function validateAction(
           return { pin, value: assertGpioValue(item.value) };
         }),
       };
+      if (payload.validityMs !== undefined) {
+        result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
+      return result;
     }
     case 'gpio.stopAll':
       assertEmptyPayload(payload, action);
@@ -257,18 +348,26 @@ function validateAction(
       const pin = assertGpioPin(payload.pin);
       assertEsp32WritePin(pin);
       if (action === 'gpio.toggle') {
-        return { pin };
+        const result: Record<string, unknown> = { pin };
+        if (payload.validityMs !== undefined) {
+          result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+        }
+        return result;
       }
-      return {
+      const result: Record<string, unknown> = {
         pin,
         durationMs: assertPositiveInt(payload.durationMs, 'durationMs'),
         value: payload.value === undefined ? true : assertGpioValue(payload.value),
       };
+      if (payload.validityMs !== undefined) {
+        result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
+      return result;
     }
     case 'gpio.pwm': {
       const pin = assertGpioPin(payload.pin);
       assertEsp32PwmPin(pin);
-      return {
+      const result: Record<string, unknown> = {
         channel: payload.channel === undefined ? pin % 8 : assertChannel(payload.channel),
         pin,
         duty: assertDuty(payload.duty),
@@ -277,6 +376,10 @@ function validateAction(
             ? 5000
             : assertPositiveInt(payload.frequency, 'frequency'),
       };
+      if (payload.validityMs !== undefined) {
+        result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
+      return result;
     }
     case 'gpio.analogRead': {
       const pin = assertGpioPin(payload.pin);
@@ -300,11 +403,16 @@ function validateAction(
       }
       return next;
     }
-    case 'i2c.write':
-      return {
+    case 'i2c.write': {
+      const result: Record<string, unknown> = {
         address: assertI2cAddress(payload.address),
         data: assertBusBytes(payload.data, 'data'),
       };
+      if (payload.validityMs !== undefined) {
+        result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
+      return result;
+    }
     case 'i2c.read':
       return {
         address: assertI2cAddress(payload.address),
@@ -347,12 +455,19 @@ function validateAction(
         assertEsp32BusPin(chipSelect, 'SPI chip-select');
         next.chipSelect = chipSelect;
       }
+      if (payload.validityMs !== undefined) {
+        next.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
       return next;
     }
     case 'gpio.servo': {
       const pin = assertGpioPin(payload.pin);
       assertEsp32PwmPin(pin);
-      return { pin, angle: assertServoAngle(payload.angle) };
+      const result: Record<string, unknown> = { pin, angle: assertServoAngle(payload.angle) };
+      if (payload.validityMs !== undefined) {
+        result.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
+      return result;
     }
     case 'gpio.motor': {
       const pwmPin = assertGpioPin(payload.pwmPin);
@@ -364,6 +479,9 @@ function validateAction(
         next.dirPin = dirPin;
       }
       next.speed = assertMotorSpeed(payload.speed, payload.dirPin !== undefined);
+      if (payload.validityMs !== undefined) {
+        next.validityMs = assertPositiveInt(payload.validityMs, 'validityMs');
+      }
       return next;
     }
     default:

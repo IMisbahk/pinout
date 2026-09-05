@@ -18,6 +18,12 @@ const gpioPinSchema = {
   minimum: 0,
 } as const;
 
+const validitySchema = {
+  type: 'integer',
+  minimum: 1,
+  description: 'Command validity TTL in milliseconds.',
+} as const;
+
 export const gpioWriteCapability: CapabilityDescriptor = {
   name: 'gpio.write',
   description: 'Drive a GPIO pin high or low.',
@@ -28,6 +34,7 @@ export const gpioWriteCapability: CapabilityDescriptor = {
     properties: {
       pin: gpioPinSchema,
       value: { type: 'boolean', description: 'true for high, false for low.' },
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -62,6 +69,7 @@ export const gpioBatchWriteCapability: CapabilityDescriptor = {
           properties: { pin: gpioPinSchema, value: { type: 'boolean' } },
         },
       },
+      validityMs: validitySchema,
     },
   },
   outputSchema: { type: 'object', required: ['writes'], properties: { writes: { type: 'array' } } },
@@ -120,6 +128,8 @@ export const gpioModeCapability: CapabilityDescriptor = {
     properties: {
       pin: gpioPinSchema,
       mode: { type: 'string', enum: ['input', 'output', 'pullup', 'pulldown'] },
+      safeLevel: { type: 'string', enum: ['low', 'high', 'high-z', 'hold'] },
+      polarity: { type: 'string', enum: ['active-high', 'active-low'] },
     },
   },
   outputSchema: {
@@ -137,6 +147,43 @@ export const gpioModeCapability: CapabilityDescriptor = {
   },
 };
 
+export const gpioConfigSafeStateCapability: CapabilityDescriptor = {
+  name: 'gpio.configSafeState',
+  description: 'Declare per-pin electrical safe level and circuit polarity.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['pin'],
+    properties: {
+      pin: gpioPinSchema,
+      safeLevel: {
+        type: 'string',
+        enum: ['low', 'high', 'high-z', 'hold'],
+        description: 'Electrical safe level applied on watchdog trip or stopAll.',
+      },
+      polarity: {
+        type: 'string',
+        enum: ['active-high', 'active-low'],
+        description: 'Circuit polarity.',
+      },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['pin', 'safeLevel', 'polarity'],
+    properties: {
+      pin: gpioPinSchema,
+      safeLevel: { type: 'string', enum: ['low', 'high', 'high-z', 'hold'] },
+      polarity: { type: 'string', enum: ['active-high', 'active-low'] },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Configures local fail-safe electrical behavior for the pin.',
+  },
+};
+
 export const gpioToggleCapability: CapabilityDescriptor = {
   name: 'gpio.toggle',
   description: 'Flip the driven level of an output GPIO pin.',
@@ -144,7 +191,10 @@ export const gpioToggleCapability: CapabilityDescriptor = {
     type: 'object',
     additionalProperties: false,
     required: ['pin'],
-    properties: { pin: gpioPinSchema },
+    properties: {
+      pin: gpioPinSchema,
+      validityMs: validitySchema,
+    },
   },
   outputSchema: {
     type: 'object',
@@ -165,6 +215,7 @@ export const gpioPulseCapability: CapabilityDescriptor = {
       pin: gpioPinSchema,
       value: { type: 'boolean', description: 'Level to drive during the pulse.' },
       durationMs: { type: 'integer', minimum: 1, description: 'Duration in milliseconds.' },
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -197,6 +248,7 @@ export const gpioPwmCapability: CapabilityDescriptor = {
       pin: gpioPinSchema,
       duty: { type: 'number', minimum: 0, maximum: 1 },
       frequency: { type: 'integer', minimum: 1 },
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -323,6 +375,7 @@ export const i2cWriteCapability: CapabilityDescriptor = {
     properties: {
       address: { type: 'integer', minimum: 0, maximum: 127 },
       data: busDataSchema,
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -419,6 +472,7 @@ export const spiTransferCapability: CapabilityDescriptor = {
     properties: {
       chipSelect: gpioPinSchema,
       data: busDataSchema,
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -443,6 +497,7 @@ export const gpioServoCapability: CapabilityDescriptor = {
     properties: {
       pin: gpioPinSchema,
       angle: { type: 'number', description: 'Target angle in degrees (0–180).' },
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -471,6 +526,7 @@ export const gpioMotorCapability: CapabilityDescriptor = {
         type: 'number',
         description: 'Normalized speed. Without dirPin, 0–1; with dirPin, −1 to 1.',
       },
+      validityMs: validitySchema,
     },
   },
   outputSchema: {
@@ -533,11 +589,120 @@ export const sysInfoCapability: CapabilityDescriptor = {
   safety: { physicalOutput: false, reversible: true },
 };
 
+export const sysArmCapability: CapabilityDescriptor = {
+  name: 'sys.arm',
+  description: 'Explicitly arm the device for physical actuation and configure the watchdog timer.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      timeoutMs: {
+        type: 'integer',
+        minimum: 0,
+        description: 'Watchdog timeout in milliseconds. 0 disables the watchdog.',
+      },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['armed', 'state'],
+    properties: {
+      armed: { type: 'boolean' },
+      state: { type: 'string' },
+      timeoutMs: { type: 'integer', minimum: 0 },
+    },
+  },
+  safety: {
+    physicalOutput: false,
+    reversible: true,
+    notes: 'Transitions device into armed state allowing physical actuation.',
+  },
+};
+
+export const sysDisarmCapability: CapabilityDescriptor = {
+  name: 'sys.disarm',
+  description: 'Disarm the device, stop the watchdog timer, and apply safe state immediately.',
+  inputSchema: { type: 'object', additionalProperties: false, properties: {} },
+  outputSchema: {
+    type: 'object',
+    required: ['armed', 'state'],
+    properties: {
+      armed: { type: 'boolean' },
+      state: { type: 'string' },
+    },
+  },
+  safety: {
+    physicalOutput: true,
+    reversible: true,
+    notes: 'Disarms device and enforces local safe state.',
+  },
+};
+
+export const watchdogConfigureCapability: CapabilityDescriptor = {
+  name: 'watchdog.configure',
+  description: 'Configure the hardware/firmware watchdog timeout interval.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['timeoutMs'],
+    properties: {
+      timeoutMs: {
+        type: 'integer',
+        minimum: 0,
+        description: 'Watchdog timeout in milliseconds. 0 disables timeout.',
+      },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['timeoutMs', 'enabled'],
+    properties: {
+      timeoutMs: { type: 'integer', minimum: 0 },
+      enabled: { type: 'boolean' },
+    },
+  },
+  safety: {
+    physicalOutput: false,
+    reversible: true,
+    notes: 'Configures deadman timer for host-loss protection.',
+  },
+};
+
+export const watchdogKickCapability: CapabilityDescriptor = {
+  name: 'watchdog.kick',
+  description: 'Reset the deadman watchdog countdown deadline.',
+  inputSchema: {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      validityMs: { type: 'integer', minimum: 1, description: 'Command validity TTL in ms.' },
+    },
+  },
+  outputSchema: {
+    type: 'object',
+    required: ['kicked', 'timeoutMs'],
+    properties: {
+      kicked: { type: 'boolean' },
+      timeoutMs: { type: 'integer', minimum: 0 },
+    },
+  },
+  safety: {
+    physicalOutput: false,
+    reversible: true,
+    notes: 'Heartbeat signal to keep the device armed.',
+  },
+};
+
 const catalog: Record<string, CapabilityDescriptor> = {
   [sysHelloCapability.name]: sysHelloCapability,
   [sysPingCapability.name]: sysPingCapability,
   [sysInfoCapability.name]: sysInfoCapability,
+  [sysArmCapability.name]: sysArmCapability,
+  [sysDisarmCapability.name]: sysDisarmCapability,
+  [watchdogConfigureCapability.name]: watchdogConfigureCapability,
+  [watchdogKickCapability.name]: watchdogKickCapability,
   [gpioModeCapability.name]: gpioModeCapability,
+  [gpioConfigSafeStateCapability.name]: gpioConfigSafeStateCapability,
   [gpioWriteCapability.name]: gpioWriteCapability,
   [gpioBatchWriteCapability.name]: gpioBatchWriteCapability,
   [gpioStopAllCapability.name]: gpioStopAllCapability,

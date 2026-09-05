@@ -15,16 +15,26 @@ import {
   assertEsp32BusPin,
   assertServoAngle,
   assertMotorSpeed,
+  assertNonNegativeInt,
+  assertPolarity,
+  assertSafeLevel,
   esp32DefaultI2c,
   esp32DefaultSpi,
   type GpioPinMode,
+  type GpioPolarity,
+  type GpioSafeLevel,
 } from './pins.js';
 
 export const esp32BridgeCapabilities = [
   'sys.hello',
   'sys.ping',
   'sys.info',
+  'sys.arm',
+  'sys.disarm',
+  'watchdog.configure',
+  'watchdog.kick',
   'gpio.mode',
+  'gpio.configSafeState',
   'gpio.write',
   'gpio.batchWrite',
   'gpio.stopAll',
@@ -45,6 +55,13 @@ export const esp32BridgeCapabilities = [
   'gpio.motor',
 ] as const;
 
+export const esp32BridgeFeatures = [
+  'watchdog',
+  'arming',
+  'safe-state',
+  'command-validity',
+] as const;
+
 export const esp32BridgeActions = esp32BridgeCapabilities;
 
 export const esp32BridgeInfo: DeviceInfo = {
@@ -52,12 +69,27 @@ export const esp32BridgeInfo: DeviceInfo = {
   version: '0.3.0',
   protocol: protocolVersion,
   capabilities: [...esp32BridgeCapabilities],
+  features: [...esp32BridgeFeatures],
 };
 
 export interface PwmChannelState {
   pin: number;
   duty: number;
   frequency: number;
+}
+
+export type DeviceLifecycleState = 'disarmed' | 'armed' | 'tripped';
+
+export interface PinSafeConfig {
+  safeLevel: GpioSafeLevel;
+  polarity: GpioPolarity;
+  configured: boolean;
+}
+
+export interface WatchdogConfig {
+  enabled: boolean;
+  timeoutMs: number;
+  deadlineMs: number;
 }
 
 export interface GpioState {
@@ -70,6 +102,10 @@ export interface GpioState {
   spi: SpiBusState;
   servos: Map<number, number>;
   motors: Map<number, { speed: number; dirPin?: number }>;
+  safePinConfigs: Map<number, PinSafeConfig>;
+  deviceState: DeviceLifecycleState;
+  tripReason?: string | undefined;
+  watchdog: WatchdogConfig;
 }
 
 export interface I2cBusState {
@@ -120,6 +156,13 @@ export function createGpioState(): GpioState {
     },
     servos: new Map(),
     motors: new Map(),
+    safePinConfigs: new Map(),
+    deviceState: 'disarmed',
+    watchdog: {
+      enabled: true,
+      timeoutMs: 1000,
+      deadlineMs: 0,
+    },
   };
 }
 
@@ -136,9 +179,25 @@ export function handleBridgeAction(
       return { pong: true };
     case 'sys.info':
       return { uptimeMs: 0, freeHeap: 200_000 };
+    case 'sys.arm':
+      return sysArm(payload, state);
+    case 'sys.disarm':
+      return sysDisarm(state, context);
+    case 'watchdog.configure':
+      return watchdogConfigure(payload, state);
+    case 'watchdog.kick':
+      return watchdogKick(payload, state);
+    case 'gpio.configSafeState':
+      return gpioConfigSafeState(payload, state);
     case 'gpio.write':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioWrite(payload, state, context);
     case 'gpio.batchWrite':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioBatchWrite(payload, state, context);
     case 'gpio.stopAll':
       return gpioStopAll(state, context);
@@ -147,10 +206,19 @@ export function handleBridgeAction(
     case 'gpio.mode':
       return gpioMode(payload, state);
     case 'gpio.toggle':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioToggle(payload, state, context);
     case 'gpio.pulse':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioPulse(payload, state, context);
     case 'gpio.pwm':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioPwm(payload, state);
     case 'gpio.analogRead':
       return gpioAnalogRead(payload, state);
@@ -161,6 +229,9 @@ export function handleBridgeAction(
     case 'i2c.begin':
       return i2cBegin(payload, state);
     case 'i2c.write':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return i2cWrite(payload, state);
     case 'i2c.read':
       return i2cRead(payload, state);
@@ -169,14 +240,151 @@ export function handleBridgeAction(
     case 'spi.begin':
       return spiBegin(payload, state);
     case 'spi.transfer':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return spiTransfer(payload, state);
     case 'gpio.servo':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioServo(payload, state);
     case 'gpio.motor':
+      assertValidity(payload);
+      assertArmed(state);
+      touchWatchdog(state);
       return gpioMotor(payload, state);
     default:
       throw new DeviceError('UNKNOWN_ACTION', `Unknown action '${action}'.`);
   }
+}
+
+function touchWatchdog(state: GpioState): void {
+  if (state.deviceState === 'armed' && state.watchdog.enabled && state.watchdog.timeoutMs > 0) {
+    state.watchdog.deadlineMs = Date.now() + state.watchdog.timeoutMs;
+  }
+}
+
+function assertArmed(state: GpioState): void {
+  if (state.deviceState === 'disarmed') {
+    throw new DeviceError(
+      'NOT_ARMED',
+      'Device is disarmed. Explicit arming (sys.arm) is required before actuation.',
+    );
+  }
+  if (state.deviceState === 'tripped') {
+    throw new DeviceError(
+      'WATCHDOG_TRIPPED',
+      `Watchdog tripped (${state.tripReason ?? 'WATCHDOG_EXPIRED'}). Explicit re-arming (sys.arm) is required.`,
+    );
+  }
+}
+
+function assertValidity(payload: Record<string, unknown>): void {
+  if (payload.validityMs !== undefined) {
+    const validityMs = payload.validityMs;
+    if (typeof validityMs !== 'number' || validityMs <= 0 || payload.expired === true) {
+      throw new DeviceError('COMMAND_EXPIRED', 'Command validity window expired.');
+    }
+  }
+}
+
+function sysArm(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
+  if (payload.timeoutMs !== undefined) {
+    try {
+      const timeoutMs = assertNonNegativeInt(payload.timeoutMs, 'timeoutMs');
+      state.watchdog.timeoutMs = timeoutMs;
+      state.watchdog.enabled = timeoutMs > 0;
+    } catch (error) {
+      throw asPayloadError(error);
+    }
+  }
+  state.deviceState = 'armed';
+  state.tripReason = undefined;
+  touchWatchdog(state);
+  return {
+    armed: true,
+    state: 'armed',
+    timeoutMs: state.watchdog.timeoutMs,
+  };
+}
+
+function sysDisarm(state: GpioState, context: BridgeContext): Record<string, unknown> {
+  state.deviceState = 'disarmed';
+  state.tripReason = undefined;
+  gpioStopAll(state, context);
+  return { armed: false, state: 'disarmed' };
+}
+
+function watchdogConfigure(
+  payload: Record<string, unknown>,
+  state: GpioState,
+): Record<string, unknown> {
+  let timeoutMs: number;
+  try {
+    timeoutMs = assertNonNegativeInt(payload.timeoutMs, 'timeoutMs');
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  state.watchdog.timeoutMs = timeoutMs;
+  state.watchdog.enabled = timeoutMs > 0;
+  if (state.deviceState === 'armed') {
+    touchWatchdog(state);
+  }
+  return { timeoutMs, enabled: state.watchdog.enabled };
+}
+
+function watchdogKick(
+  payload: Record<string, unknown>,
+  state: GpioState,
+): Record<string, unknown> {
+  assertValidity(payload);
+  if (state.deviceState === 'armed' && state.watchdog.enabled) {
+    touchWatchdog(state);
+  }
+  return { kicked: true, timeoutMs: state.watchdog.timeoutMs };
+}
+
+function gpioConfigSafeState(
+  payload: Record<string, unknown>,
+  state: GpioState,
+): Record<string, unknown> {
+  const pin = requirePin(payload);
+  try {
+    assertEsp32WritePin(pin);
+  } catch (error) {
+    throw asDeviceError(error);
+  }
+  let safeLevel: GpioSafeLevel = 'low';
+  let polarity: GpioPolarity = 'active-high';
+  try {
+    if (payload.safeLevel !== undefined) {
+      safeLevel = assertSafeLevel(payload.safeLevel);
+    }
+    if (payload.polarity !== undefined) {
+      polarity = assertPolarity(payload.polarity);
+    }
+  } catch (error) {
+    throw asPayloadError(error);
+  }
+  state.safePinConfigs.set(pin, { safeLevel, polarity, configured: true });
+  return { pin, safeLevel, polarity };
+}
+
+export function tripWatchdog(
+  state: GpioState,
+  context: BridgeContext,
+  reason = 'WATCHDOG_EXPIRED',
+): Record<string, unknown> {
+  state.deviceState = 'tripped';
+  state.tripReason = reason;
+  const result = gpioStopAll(state, context);
+  context.emitEvent?.('device.tripped', {
+    reason,
+    message: 'Watchdog timeout elapsed without heartbeat.',
+    stoppedPins: result.stoppedPins,
+  });
+  return result;
 }
 
 function gpioWrite(
@@ -242,16 +450,28 @@ function gpioStopAll(state: GpioState, context: BridgeContext): Record<string, u
     ...[...state.pwmChannels.values()].map((channel) => channel.pin),
     ...state.servos.keys(),
     ...state.motors.keys(),
+    ...state.safePinConfigs.keys(),
   ]);
   const stoppedPins = new Set(candidates);
   for (const motor of state.motors.values()) {
     if (motor.dirPin !== undefined) {
       stoppedPins.add(motor.dirPin);
-      setPinLevel(state, motor.dirPin, false, context);
     }
   }
-  for (const pin of candidates) {
-    setPinLevel(state, pin, false, context);
+  for (const pin of stoppedPins) {
+    const safeConfig = state.safePinConfigs.get(pin);
+    const safeLevel = safeConfig?.safeLevel ?? 'low';
+    if (safeLevel === 'high') {
+      setPinLevel(state, pin, true, context);
+      state.modes.set(pin, 'output');
+    } else if (safeLevel === 'high-z') {
+      state.modes.set(pin, 'input');
+    } else if (safeLevel === 'hold') {
+      // Maintain current level
+    } else {
+      setPinLevel(state, pin, false, context);
+      state.modes.set(pin, 'output');
+    }
   }
   state.pwmChannels.clear();
   state.servos.clear();
@@ -293,6 +513,22 @@ function gpioMode(payload: Record<string, unknown>, state: GpioState): Record<st
     } catch (error) {
       throw asDeviceError(error);
     }
+  }
+
+  if (payload.safeLevel !== undefined || payload.polarity !== undefined) {
+    let safeLevel: GpioSafeLevel = 'low';
+    let polarity: GpioPolarity = 'active-high';
+    try {
+      if (payload.safeLevel !== undefined) {
+        safeLevel = assertSafeLevel(payload.safeLevel);
+      }
+      if (payload.polarity !== undefined) {
+        polarity = assertPolarity(payload.polarity);
+      }
+    } catch (error) {
+      throw asPayloadError(error);
+    }
+    state.safePinConfigs.set(pin, { safeLevel, polarity, configured: true });
   }
 
   state.modes.set(pin, mode);

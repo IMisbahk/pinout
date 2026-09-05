@@ -1,6 +1,6 @@
 export async function* readLines(
   readable: AsyncIterable<Uint8Array>,
-  maxLineBytes = 512,
+  maxLineBytes = 1024,
 ): AsyncGenerator<string, void, void> {
   const decoder = new TextDecoder();
   let buffer = '';
