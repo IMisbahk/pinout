@@ -1,0 +1,35 @@
+packages/core/src/modules/coffeeMachine/esp32Backend.ts
+  s_67ccf019af85c7::t_df14ba162a4b8f 144-160
+  s_67ccf019af85c7::t_b1d4f3ea7cccc4 1
+packages/mcp/src/runStdio.ts
+  s_67ccf019af85c7::t_1fc9408703dbb8 41
+packages/core/src/runtime/protocolBackend.ts
+  s_67ccf019af85c7::t_6be54b8b5b31ed 25-27
+packages/core/src/modules/esp32Module.ts
+  s_67ccf019af85c7::t_c8bd3019fbc690 67-68,70-72,84
+  s_67ccf019af85c7::t_ad0278a3a08ad5 69
+  s_67ccf019af85c7::t_c933d34209777a 4
+packages/core/tests/runtime.test.ts
+  s_67ccf019af85c7::t_b7e3a81d9124c5 51
+  s_67ccf019af85c7::t_16b5ba12e1ed8b 87,131
+packages/mcp/tests/mcp.test.ts
+  s_67ccf019af85c7::t_818868cb76cc47 147
+packages/core/tests/watchdogArmingSafeState.test.ts
+  s_67ccf019af85c7::t_8233517b756cdd 362,377-386,389-401,403,406-408
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "db363ada41d3f165ae79662798ac3000d0811a55",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
