@@ -31,9 +31,9 @@ describe('ESP32 I2C simulator', () => {
   it('rejects invalid I2C addresses', () => {
     const state = createGpioState();
     state.deviceState = 'armed';
-    expect(() =>
-      handleBridgeAction('i2c.write', { address: 200, data: [1] }, state),
-    ).toThrow(DeviceError);
+    expect(() => handleBridgeAction('i2c.write', { address: 200, data: [1] }, state)).toThrow(
+      DeviceError,
+    );
   });
 
   it('refuses flash pins for I2C begin', () => {

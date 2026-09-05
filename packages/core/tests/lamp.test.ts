@@ -17,6 +17,7 @@ import {
   SimulatedLampBackend,
   validateLampConfig,
   type DeviceInfo,
+  type LampStatus,
   type Transport,
 } from '@pinout/core';
 import { ByteQueue } from '../src/transports/byteQueue.js';
@@ -200,7 +201,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       const onResult = await runtime.invoke('lamp-01', 'lamp.on', {});
       expect(onResult).toEqual({ on: true });
 
-      const statusAfterOn = await runtime.invoke('lamp-01', 'lamp.status', {});
+      const statusAfterOn = (await runtime.invoke(
+        'lamp-01',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(statusAfterOn.commanded.on).toBe(true);
       expect(typeof statusAfterOn.commanded.at).toBe('string');
       expect(statusAfterOn.acknowledged.on).toBe(true);
@@ -219,7 +224,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       const offResult = await runtime.invoke('lamp-01', 'lamp.off', {});
       expect(offResult).toEqual({ on: false });
 
-      const statusAfterOff = await runtime.invoke('lamp-01', 'lamp.status', {});
+      const statusAfterOff = (await runtime.invoke(
+        'lamp-01',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(statusAfterOff.commanded.on).toBe(false);
       expect(statusAfterOff.acknowledged.on).toBe(false);
       expect(statusAfterOff.observed.source).toBe('none');
@@ -293,7 +302,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
 
       // Simulator readback pin 13 is currently false (LOW)
       transport.state.levels.set(13, false);
-      const status1 = await runtime.invoke('lamp-with-readback', 'lamp.status', {});
+      const status1 = (await runtime.invoke(
+        'lamp-with-readback',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(status1.observed.on).toBe(false);
       expect(status1.observed.source).toBe('gpio-readback');
       expect(typeof status1.observed.at).toBe('string');
@@ -302,7 +315,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
 
       // Now independent photodiode/sensor detects light (pin 13 HIGH)
       transport.state.levels.set(13, true);
-      const status2 = await runtime.invoke('lamp-with-readback', 'lamp.status', {});
+      const status2 = (await runtime.invoke(
+        'lamp-with-readback',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(status2.observed.on).toBe(true);
       expect(status2.observed.source).toBe('gpio-readback');
       expect(status2.stale).toBe(false);
@@ -325,7 +342,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
         },
       });
 
-      const status = await runtime.invoke('lamp-evidence-test', 'lamp.status', {});
+      const status = (await runtime.invoke(
+        'lamp-evidence-test',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(status.evidence).toBeDefined();
       expect(status.evidence.on).toBeDefined();
       expect(status.evidence.armed).toBeDefined();
@@ -425,7 +446,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       // Give device.tripped event a tick to process
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      const statusAfterTrip = await runtime.invoke('lamp-wd-test', 'lamp.status', {});
+      const statusAfterTrip = (await runtime.invoke(
+        'lamp-wd-test',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(statusAfterTrip.armed).toBe('tripped');
       // Crucial: commanded and acknowledged are NOT falsely claimed as "off"
       expect(statusAfterTrip.commanded.on).toBe(true);
@@ -474,7 +499,11 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(transport.state.levels.get(2)).toBe(false);
-      const status = await runtime.invoke('lamp-timed', 'lamp.status', {});
+      const status = (await runtime.invoke(
+        'lamp-timed',
+        'lamp.status',
+        {},
+      )) as unknown as LampStatus;
       expect(status.commanded.on).toBe(false);
       expect(status.acknowledged.on).toBe(false);
     } finally {
@@ -503,7 +532,7 @@ describe('Lamp Module - In-Process Simulated Backend', () => {
       const onRes = await backend.invoke('lamp.on', {});
       expect(onRes).toEqual({ on: true });
 
-      const status = await backend.invoke('lamp.status', {});
+      const status = (await backend.invoke('lamp.status', {})) as unknown as LampStatus;
       expect(status.commanded.on).toBe(true);
       expect(status.acknowledged.on).toBe(true);
       expect(status.observed.on).toBeNull();
@@ -512,7 +541,7 @@ describe('Lamp Module - In-Process Simulated Backend', () => {
       expect(status.evidence.on).toBeDefined();
 
       backend.injectTrip();
-      const trippedStatus = await backend.invoke('lamp.status', {});
+      const trippedStatus = (await backend.invoke('lamp.status', {})) as unknown as LampStatus;
       expect(trippedStatus.armed).toBe('tripped');
       await expect(backend.invoke('lamp.on', {})).rejects.toMatchObject({
         code: 'WATCHDOG_TRIPPED',
@@ -521,7 +550,7 @@ describe('Lamp Module - In-Process Simulated Backend', () => {
       // Disarm from tripped state
       const disarmRes = await backend.invoke('lamp.disarm', {});
       expect(disarmRes).toEqual({ armed: 'disarmed' });
-      const disarmedStatus = await backend.invoke('lamp.status', {});
+      const disarmedStatus = (await backend.invoke('lamp.status', {})) as unknown as LampStatus;
       expect(disarmedStatus.armed).toBe('disarmed');
     } finally {
       await backend.close();
@@ -668,7 +697,11 @@ describe('Lamp Module - Agent MCP Tooling & Config File Integration', () => {
 
         await runtime.invoke('room-lamp', 'lamp.arm', {});
         await runtime.invoke('room-lamp', 'lamp.on', {});
-        const statusOn = await runtime.invoke('room-lamp', 'lamp.status', {});
+        const statusOn = (await runtime.invoke(
+          'room-lamp',
+          'lamp.status',
+          {},
+        )) as unknown as LampStatus;
         expect(statusOn.commanded.on).toBe(true);
         expect(statusOn.armed).toBe('armed');
       } finally {

@@ -119,7 +119,11 @@ describe('@pinout/mcp daemon client', () => {
             stateEvidence: {
               on: {
                 commanded: { value: true, source: 'commanded', at: '2026-09-05T00:00:00.000Z' },
-                acknowledged: { value: true, source: 'acknowledged', at: '2026-09-05T00:00:00.000Z' },
+                acknowledged: {
+                  value: true,
+                  source: 'acknowledged',
+                  at: '2026-09-05T00:00:00.000Z',
+                },
                 observed: { value: null, source: 'none', at: null },
                 freshnessMs: null,
                 stale: false,
@@ -138,7 +142,11 @@ describe('@pinout/mcp daemon client', () => {
             stateEvidence: {
               on: {
                 commanded: { value: true, source: 'commanded', at: '2026-09-05T00:00:00.000Z' },
-                acknowledged: { value: true, source: 'acknowledged', at: '2026-09-05T00:00:00.000Z' },
+                acknowledged: {
+                  value: true,
+                  source: 'acknowledged',
+                  at: '2026-09-05T00:00:00.000Z',
+                },
                 observed: { value: null, source: 'none', at: null },
                 freshnessMs: null,
                 stale: false,
@@ -409,15 +417,20 @@ describe('@pinout/mcp heterogeneous runtime', () => {
         arguments: { deviceId: 'esp32-01' },
       });
       expect(stateAfterWrite.isError).not.toBe(true);
-      const evidenceAfterWrite = (stateAfterWrite.structuredContent as {
-        stateEvidence: Record<string, {
-          commanded: { value: unknown; source: string; at: string | null };
-          acknowledged: { value: unknown; source: string; at: string | null };
-          observed: { value: unknown; source: string; at: string | null };
-          freshnessMs: number | null;
-          stale: boolean;
-        }>;
-      }).stateEvidence;
+      const evidenceAfterWrite = (
+        stateAfterWrite.structuredContent as {
+          stateEvidence: Record<
+            string,
+            {
+              commanded: { value: unknown; source: string; at: string | null };
+              acknowledged: { value: unknown; source: string; at: string | null };
+              observed: { value: unknown; source: string; at: string | null };
+              freshnessMs: number | null;
+              stale: boolean;
+            }
+          >;
+        }
+      ).stateEvidence;
 
       expect(evidenceAfterWrite['gpio.2']).toBeDefined();
       expect(evidenceAfterWrite['gpio.2']?.commanded.value).toBe(true);
@@ -442,15 +455,20 @@ describe('@pinout/mcp heterogeneous runtime', () => {
         arguments: { deviceId: 'esp32-01' },
       });
       expect(stateAfterRead.isError).not.toBe(true);
-      const evidenceAfterRead = (stateAfterRead.structuredContent as {
-        stateEvidence: Record<string, {
-          commanded: { value: unknown };
-          acknowledged: { value: unknown };
-          observed: { value: unknown; source: string; at: string | null };
-          freshnessMs: number | null;
-          stale: boolean;
-        }>;
-      }).stateEvidence;
+      const evidenceAfterRead = (
+        stateAfterRead.structuredContent as {
+          stateEvidence: Record<
+            string,
+            {
+              commanded: { value: unknown };
+              acknowledged: { value: unknown };
+              observed: { value: unknown; source: string; at: string | null };
+              freshnessMs: number | null;
+              stale: boolean;
+            }
+          >;
+        }
+      ).stateEvidence;
 
       expect(evidenceAfterRead['gpio.2']?.observed.value).toBe(true);
       expect(evidenceAfterRead['gpio.2']?.observed.source).toBe('simulated');

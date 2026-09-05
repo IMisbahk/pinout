@@ -149,7 +149,9 @@ describe('CLI daemon commands', () => {
       '--json',
     ]);
     expect(disarmCode).toBe(0);
-    const disarmData = JSON.parse(harness.lines[0]!) as { result: { state: string; armed: boolean } };
+    const disarmData = JSON.parse(harness.lines[0]!) as {
+      result: { state: string; armed: boolean };
+    };
     expect(disarmData.result).toMatchObject({ state: 'disarmed', armed: false });
 
     await harness.run(['lease', 'release', leaseData.lease.id, '--owner', 'operator-1', '--json']);

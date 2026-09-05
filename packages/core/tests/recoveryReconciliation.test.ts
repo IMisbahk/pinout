@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import {
-  Journal,
-  OperationManager,
-} from '../src/index.js';
+import { Journal, OperationManager } from '../src/index.js';
 
 const tick = (ms = 5) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('Recovery: Reconciliation', () => {
   it('reconciles an uncertain operation with observedComplete', async () => {
     const journal = new Journal();
-    const emittedEvents: Array<{ kind: string; data?: Record<string, unknown> }> = [];
+    const emittedEvents: Array<{ kind: string; data?: Record<string, unknown> | undefined }> = [];
     const manager = new OperationManager(
       {
         onOperationEvent: (event) => emittedEvents.push({ kind: event.kind, data: event.data }),

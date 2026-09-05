@@ -80,7 +80,10 @@ describe('ProtocolDeviceBackend evidence hooks', () => {
       expect(initialEvidence['gpio.2']?.observed.source ?? 'none').toBe('none');
 
       // Emit watch event from device
-      device.emit('gpio.changed', { pin: 2, value: true });
+      (device as unknown as { emit(event: string, payload?: Record<string, unknown>): void }).emit(
+        'gpio.changed',
+        { pin: 2, value: true },
+      );
 
       const updatedEvidence = backend.getOperationalStateEvidence();
       expect(updatedEvidence['gpio.2']?.observed.value).toBe(true);
@@ -115,7 +118,10 @@ describe('ProtocolDeviceBackend evidence hooks', () => {
 
       // Re-arm then trip
       await backend.arm();
-      device.emit('device.tripped', { reason: 'WATCHDOG_EXPIRED' });
+      (device as unknown as { emit(event: string, payload?: Record<string, unknown>): void }).emit(
+        'device.tripped',
+        { reason: 'WATCHDOG_EXPIRED' },
+      );
       const trippedEvidence = backend.getOperationalStateEvidence();
       expect(trippedEvidence.armed?.acknowledged.value).toBe('tripped');
     } finally {

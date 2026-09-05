@@ -49,7 +49,11 @@ describe('coffee-machine ESP32 contract', () => {
     });
     const daemon = await startDaemon(runtime, { port: 0, requireLeases: false });
     const coffeeDevice = runtime.getDevice('coffee-esp32');
-    const backend = (coffeeDevice as unknown as { backend?: { device?: { invoke(action: string): Promise<unknown> } } }).backend;
+    const backend = (
+      coffeeDevice as unknown as {
+        backend?: { device?: { invoke(action: string): Promise<unknown> } };
+      }
+    ).backend;
     if (backend?.device) {
       await backend.device.invoke('sys.arm');
     }

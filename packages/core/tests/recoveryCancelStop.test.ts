@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AbortedError,
-  OperationManager,
-  StopUnconfirmedError,
-} from '../src/index.js';
+import { AbortedError, OperationManager, StopUnconfirmedError } from '../src/index.js';
 
 const tick = (ms = 5) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -79,7 +75,9 @@ describe('Recovery: Cancellation vs Confirmed Stop', () => {
           await tick(5);
         }
         // Backend attempted stop but brake/encoder feedback failed
-        throw new StopUnconfirmedError('Brake engagement timeout; physical axis position uncertain');
+        throw new StopUnconfirmedError(
+          'Brake engagement timeout; physical axis position uncertain',
+        );
       },
     });
 

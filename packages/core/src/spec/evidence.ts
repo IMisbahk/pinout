@@ -6,12 +6,7 @@
  */
 
 export type EvidenceSource =
-  | 'commanded'
-  | 'acknowledged'
-  | 'gpio-readback'
-  | 'sensor'
-  | 'simulated'
-  | 'none';
+  'commanded' | 'acknowledged' | 'gpio-readback' | 'sensor' | 'simulated' | 'none';
 
 export type EvidenceProvenance = 'simulated' | 'hardware' | 'unknown';
 
@@ -85,7 +80,8 @@ export function createEvidenceState<T = unknown>(
     commanded: initial?.commanded ?? defaultState.commanded,
     acknowledged: initial?.acknowledged ?? defaultState.acknowledged,
     observed: initial?.observed ?? defaultState.observed,
-    freshnessMs: initial?.freshnessMs !== undefined ? initial.freshnessMs : defaultState.freshnessMs,
+    freshnessMs:
+      initial?.freshnessMs !== undefined ? initial.freshnessMs : defaultState.freshnessMs,
     stale: initial?.stale !== undefined ? initial.stale : defaultState.stale,
     provenance: initial?.provenance ?? defaultState.provenance,
   };
@@ -198,5 +194,7 @@ export function isStale<T = unknown>(
 }
 
 export function hasObservedValue<T = unknown>(state: EvidenceState<T>): boolean {
-  return state.observed.value !== null && state.observed.at !== null && state.observed.source !== 'none';
+  return (
+    state.observed.value !== null && state.observed.at !== null && state.observed.source !== 'none'
+  );
 }

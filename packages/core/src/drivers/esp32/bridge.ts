@@ -334,10 +334,7 @@ function watchdogConfigure(
   return { timeoutMs, enabled: state.watchdog.enabled };
 }
 
-function watchdogKick(
-  payload: Record<string, unknown>,
-  state: GpioState,
-): Record<string, unknown> {
+function watchdogKick(payload: Record<string, unknown>, state: GpioState): Record<string, unknown> {
   assertValidity(payload);
   if (state.deviceState === 'armed' && state.watchdog.enabled) {
     touchWatchdog(state);

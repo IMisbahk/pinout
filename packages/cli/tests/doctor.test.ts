@@ -26,11 +26,7 @@ function createTempHome(devicesFile?: DevicesFile): string {
   const dir = mkdtempSync(join(tmpdir(), 'pinout-doctor-home-'));
   tempHomes.push(dir);
   if (devicesFile) {
-    writeFileSync(
-      join(dir, 'devices.json'),
-      `${JSON.stringify(devicesFile, null, 2)}\n`,
-      'utf8',
-    );
+    writeFileSync(join(dir, 'devices.json'), `${JSON.stringify(devicesFile, null, 2)}\n`, 'utf8');
   }
   return dir;
 }
@@ -193,8 +189,7 @@ describe('doctor unit and integration tests', () => {
 
   it('reports warning and next step when no serial ports are found', async () => {
     const home = createTempHome();
-    const mockFetch = async () =>
-      new Response(JSON.stringify({ ok: true }), { status: 200 });
+    const mockFetch = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
 
     const deps: DoctorDependencies = {
       home,
@@ -211,8 +206,7 @@ describe('doctor unit and integration tests', () => {
 
   it('identifies known boards and warns on unidentified USB VID/PID without auto-flashing', async () => {
     const home = createTempHome();
-    const mockFetch = async () =>
-      new Response(JSON.stringify({ ok: true }), { status: 200 });
+    const mockFetch = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
 
     const deps: DoctorDependencies = {
       home,
@@ -234,16 +228,12 @@ describe('doctor unit and integration tests', () => {
     };
 
     const report = await evaluateDoctor({ daemon: false }, deps);
-    const matchedCheck = report.checks.find(
-      (c) => c.name === 'board-match:/dev/cu.usbserial-0001',
-    );
+    const matchedCheck = report.checks.find((c) => c.name === 'board-match:/dev/cu.usbserial-0001');
     expect(matchedCheck?.status).toBe('pass');
     expect(matchedCheck?.detail).toContain('matched board');
     expect(matchedCheck?.detail).toContain('esp32-devkit-v1');
 
-    const unknownCheck = report.checks.find(
-      (c) => c.name === 'board-match:/dev/cu.unknown-9999',
-    );
+    const unknownCheck = report.checks.find((c) => c.name === 'board-match:/dev/cu.unknown-9999');
     expect(unknownCheck?.status).toBe('warn');
     expect(unknownCheck?.detail).toContain('unidentified board');
     expect(unknownCheck?.detail).toContain('Pinout will never auto-flash unidentified boards');
@@ -292,9 +282,7 @@ describe('doctor unit and integration tests', () => {
     };
 
     const report = await evaluateDoctor({ port: '/dev/cu.usbserial-old' }, deps);
-    const fwCheck = report.checks.find(
-      (c) => c.name === 'firmware-identity:/dev/cu.usbserial-old',
-    );
+    const fwCheck = report.checks.find((c) => c.name === 'firmware-identity:/dev/cu.usbserial-old');
     expect(fwCheck?.status).toBe('fail');
     expect(fwCheck?.detail).toContain('Protocol version mismatch');
     expect(fwCheck?.detail).toContain(`host expects v${protocolVersion}`);
@@ -372,8 +360,12 @@ describe('doctor unit and integration tests', () => {
     const report = await evaluateDoctor({ mock: true }, deps);
     const devCheck = report.checks.find((c) => c.name === 'device:sensor-temp');
     expect(devCheck?.status).toBe('warn');
-    expect(devCheck?.detail).toContain("expects port '/dev/cu.missing-usb' which is not currently detected");
-    expect(devCheck?.nextStep).toContain("Connect device 'sensor-temp' to USB port '/dev/cu.missing-usb'");
+    expect(devCheck?.detail).toContain(
+      "expects port '/dev/cu.missing-usb' which is not currently detected",
+    );
+    expect(devCheck?.nextStep).toContain(
+      "Connect device 'sensor-temp' to USB port '/dev/cu.missing-usb'",
+    );
   });
 
   it('fails when Node version is below 20', async () => {
@@ -431,7 +423,13 @@ describe('doctor unit and integration tests', () => {
       ok: boolean;
       status: string;
       summary: { total: number; passed: number; warned: number; failed: number; skipped: number };
-      checks: Array<{ stage: string; name: string; status: string; detail: string; nextStep?: string }>;
+      checks: Array<{
+        stage: string;
+        name: string;
+        status: string;
+        detail: string;
+        nextStep?: string;
+      }>;
       nextSteps: string[];
     };
 
@@ -447,9 +445,14 @@ describe('doctor unit and integration tests', () => {
     expect(Array.isArray(json.nextSteps)).toBe(true);
 
     for (const check of json.checks) {
-      expect(['environment', 'daemon', 'discovery', 'firmware', 'configuration', 'simulator']).toContain(
-        check.stage,
-      );
+      expect([
+        'environment',
+        'daemon',
+        'discovery',
+        'firmware',
+        'configuration',
+        'simulator',
+      ]).toContain(check.stage);
       expect(typeof check.name).toBe('string');
       expect(['pass', 'warn', 'fail', 'skip']).toContain(check.status);
       expect(typeof check.detail).toBe('string');

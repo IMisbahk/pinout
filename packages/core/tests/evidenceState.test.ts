@@ -78,15 +78,23 @@ const laserFireCapability: CapabilityDescriptor = {
   safety: { physicalOutput: true, reversible: false },
 };
 
-function createTestDevice(options: {
-  id?: string;
-  simulated?: boolean;
-  capabilities?: CapabilityDescriptor[];
-  backendInvoke?: (action: string, payload: Record<string, unknown>) => Promise<Record<string, unknown>>;
-  getOperationalState?: () => Record<string, unknown>;
-  prerequisites?: Record<string, Array<{ key: string; expectedValue?: unknown; maxAgeMs?: number }>>;
-  maxStateAgeMs?: number | Record<string, number>;
-} = {}): DeviceInstance {
+function createTestDevice(
+  options: {
+    id?: string;
+    simulated?: boolean;
+    capabilities?: CapabilityDescriptor[];
+    backendInvoke?: (
+      action: string,
+      payload: Record<string, unknown>,
+    ) => Promise<Record<string, unknown>>;
+    getOperationalState?: () => Record<string, unknown>;
+    prerequisites?: Record<
+      string,
+      Array<{ key: string; expectedValue?: unknown; maxAgeMs?: number }>
+    >;
+    maxStateAgeMs?: number | Record<string, number>;
+  } = {},
+): DeviceInstance {
   const identity: DeviceIdentity = {
     id: options.id ?? 'test-device-01',
     moduleId: 'test/evidence-module',
@@ -97,19 +105,21 @@ function createTestDevice(options: {
 
   const backend: DeviceBackend = {
     kind: options.simulated !== false ? 'simulated' : 'protocol',
-    invoke: options.backendInvoke ?? (async (action, payload) => {
-      if (action === 'gpio.write') {
-        pinLevel = Boolean(payload.value);
-        return { pin: payload.pin, value: payload.value };
-      }
-      if (action === 'gpio.read') {
-        return { pin: payload.pin, value: pinLevel };
-      }
-      if (action === 'laser.fire') {
-        return { fired: true };
-      }
-      return { ok: true };
-    }),
+    invoke:
+      options.backendInvoke ??
+      (async (action, payload) => {
+        if (action === 'gpio.write') {
+          pinLevel = Boolean(payload.value);
+          return { pin: payload.pin, value: payload.value };
+        }
+        if (action === 'gpio.read') {
+          return { pin: payload.pin, value: pinLevel };
+        }
+        if (action === 'laser.fire') {
+          return { fired: true };
+        }
+        return { ok: true };
+      }),
     close: async () => undefined,
     subscribe: () => () => undefined,
     getOperationalState: options.getOperationalState ?? (() => ({ pinLevel })),
@@ -118,7 +128,11 @@ function createTestDevice(options: {
   return new DeviceInstance({
     identity,
     backend,
-    capabilities: options.capabilities ?? [gpioWriteCapability, gpioReadCapability, laserFireCapability],
+    capabilities: options.capabilities ?? [
+      gpioWriteCapability,
+      gpioReadCapability,
+      laserFireCapability,
+    ],
     policies: [],
     simulated: options.simulated !== false,
     transportKinds: ['simulated'],
@@ -215,17 +229,17 @@ describe('DeviceInstance & PinoutRuntime Physical Evidence Integration', () => {
 
     expect(pinEvidence).toBeDefined();
     // Commanded and Acknowledged are set
-    expect(pinEvidence.commanded.value).toBe(true);
-    expect(pinEvidence.commanded.source).toBe('commanded');
-    expect(pinEvidence.acknowledged.value).toBe(true);
-    expect(pinEvidence.acknowledged.source).toBe('acknowledged');
+    expect(pinEvidence!.commanded.value).toBe(true);
+    expect(pinEvidence!.commanded.source).toBe('commanded');
+    expect(pinEvidence!.acknowledged.value).toBe(true);
+    expect(pinEvidence!.acknowledged.source).toBe('acknowledged');
 
     // Observed MUST remain null and unobserved! Physical success is NEVER inferred from a write!
-    expect(pinEvidence.observed.value).toBeNull();
-    expect(pinEvidence.observed.at).toBeNull();
-    expect(pinEvidence.observed.source).toBe('none');
-    expect(pinEvidence.freshnessMs).toBeNull();
-    expect(pinEvidence.provenance).toBe('simulated');
+    expect(pinEvidence!.observed.value).toBeNull();
+    expect(pinEvidence!.observed.at).toBeNull();
+    expect(pinEvidence!.observed.source).toBe('none');
+    expect(pinEvidence!.freshnessMs).toBeNull();
+    expect(pinEvidence!.provenance).toBe('simulated');
 
     await runtime.close();
   });
@@ -243,11 +257,11 @@ describe('DeviceInstance & PinoutRuntime Physical Evidence Integration', () => {
     const pinEvidence = evidence['gpio.2'];
 
     expect(pinEvidence).toBeDefined();
-    expect(pinEvidence.observed.value).toBe(false);
-    expect(pinEvidence.observed.at).toBeTruthy();
-    expect(pinEvidence.observed.source).toBe('simulated');
-    expect(typeof pinEvidence.freshnessMs).toBe('number');
-    expect(pinEvidence.stale).toBe(false);
+    expect(pinEvidence!.observed.value).toBe(false);
+    expect(pinEvidence!.observed.at).toBeTruthy();
+    expect(pinEvidence!.observed.source).toBe('simulated');
+    expect(typeof pinEvidence!.freshnessMs).toBe('number');
+    expect(pinEvidence!.stale).toBe(false);
 
     await runtime.close();
   });
@@ -348,9 +362,9 @@ describe('DeviceInstance & PinoutRuntime Physical Evidence Integration', () => {
       vi.advanceTimersByTime(2000);
 
       // Now execution is rejected with PREREQUISITE_STALE
-      await expect(runtime.invoke('laser-cutter-stale', 'laser.fire', { power: 50 })).rejects.toThrowError(
-        PinoutStructuredError,
-      );
+      await expect(
+        runtime.invoke('laser-cutter-stale', 'laser.fire', { power: 50 }),
+      ).rejects.toThrowError(PinoutStructuredError);
 
       try {
         await runtime.invoke('laser-cutter-stale', 'laser.fire', { power: 50 });

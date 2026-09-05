@@ -291,11 +291,7 @@ export class ProtocolDeviceBackend implements DeviceBackend {
       for (const w of payload.writes) {
         if (w && typeof w === 'object' && typeof (w as { pin?: unknown }).pin === 'number') {
           const writeEntry = w as { pin: number; value?: unknown };
-          this.recordAcknowledgedState(
-            `gpio.${writeEntry.pin}`,
-            writeEntry.value ?? null,
-            ackIso,
-          );
+          this.recordAcknowledgedState(`gpio.${writeEntry.pin}`, writeEntry.value ?? null, ackIso);
         }
       }
     } else if (action === 'gpio.toggle' && typeof payload.pin === 'number') {

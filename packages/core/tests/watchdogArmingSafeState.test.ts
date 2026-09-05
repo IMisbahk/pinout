@@ -101,9 +101,9 @@ describe('Phase 2 Item A: Explicit Arming State Machine', () => {
       await expect(device.gpio.write(2, true)).rejects.toThrowError(
         /Device is disarmed\. Explicit arming/i,
       );
-      await expect(device.invoke('gpio.batchWrite', { writes: [{ pin: 2, value: true }] })).rejects.toThrowError(
-        /NOT_ARMED|Device is disarmed/i,
-      );
+      await expect(
+        device.invoke('gpio.batchWrite', { writes: [{ pin: 2, value: true }] }),
+      ).rejects.toThrowError(/NOT_ARMED|Device is disarmed/i);
       await expect(device.invoke('gpio.toggle', { pin: 2 })).rejects.toThrowError(
         /NOT_ARMED|Device is disarmed/i,
       );
@@ -116,15 +116,15 @@ describe('Phase 2 Item A: Explicit Arming State Machine', () => {
       await expect(device.invoke('gpio.servo', { pin: 13, angle: 90 })).rejects.toThrowError(
         /NOT_ARMED|Device is disarmed/i,
       );
-      await expect(
-        device.invoke('gpio.motor', { pwmPin: 25, speed: 0.5 }),
-      ).rejects.toThrowError(/NOT_ARMED|Device is disarmed/i);
+      await expect(device.invoke('gpio.motor', { pwmPin: 25, speed: 0.5 })).rejects.toThrowError(
+        /NOT_ARMED|Device is disarmed/i,
+      );
       await expect(
         device.invoke('i2c.write', { address: 0x3c, data: [1, 2] }),
       ).rejects.toThrowError(/NOT_ARMED|Device is disarmed/i);
-      await expect(
-        device.invoke('spi.transfer', { data: [1, 2] }),
-      ).rejects.toThrowError(/NOT_ARMED|Device is disarmed/i);
+      await expect(device.invoke('spi.transfer', { data: [1, 2] })).rejects.toThrowError(
+        /NOT_ARMED|Device is disarmed/i,
+      );
     } finally {
       await device.close();
     }
@@ -144,7 +144,9 @@ describe('Phase 2 Item A: Explicit Arming State Machine', () => {
 
       // Outputs are put into safe state and new actuations are rejected
       expect(await device.gpio.read(2)).toBe(false);
-      await expect(device.gpio.write(2, true)).rejects.toThrowError(/NOT_ARMED|Device is disarmed/i);
+      await expect(device.gpio.write(2, true)).rejects.toThrowError(
+        /NOT_ARMED|Device is disarmed/i,
+      );
     } finally {
       await device.close();
     }
@@ -221,7 +223,11 @@ describe('Phase 2 Item A: Watchdog expiry and per-output safe state', () => {
       ).rejects.toThrow();
 
       await expect(
-        device.invoke('gpio.configSafeState', { pin: 2, safeLevel: 'low', polarity: 'invalid-pol' }),
+        device.invoke('gpio.configSafeState', {
+          pin: 2,
+          safeLevel: 'low',
+          polarity: 'invalid-pol',
+        }),
       ).rejects.toThrow();
     } finally {
       await device.close();
@@ -279,7 +285,9 @@ describe('Phase 2 Item A: ProtocolDeviceBackend & Legacy Firmware Guarantee', ()
           capabilities: ['sys.hello', 'gpio.write', 'gpio.read', 'gpio.stopAll'],
         };
         this.inbound.push(
-          new TextEncoder().encode(`${JSON.stringify({ v: 1, event: 'ready', payload: legacyIdentity })}\n`),
+          new TextEncoder().encode(
+            `${JSON.stringify({ v: 1, event: 'ready', payload: legacyIdentity })}\n`,
+          ),
         );
       }
 
@@ -367,10 +375,12 @@ describe('Phase 2 Item A: ProtocolDeviceBackend & Legacy Firmware Guarantee', ()
         label: 'ESP32 Safe State Test',
         simulated: true,
         transport: simulatedEsp32(),
-        outputs: [
-          { pin: 2, safeLevel: 'high', polarity: 'active-low' },
-          { pin: 4, safeLevel: 'low', polarity: 'active-high' },
-        ],
+        backendOptions: {
+          outputs: [
+            { pin: 2, safeLevel: 'high', polarity: 'active-low' },
+            { pin: 4, safeLevel: 'low', polarity: 'active-high' },
+          ],
+        },
       });
 
       expect(instance).toBeDefined();
@@ -404,7 +414,10 @@ describe('Phase 2 Item A: ProtocolDeviceBackend & Legacy Firmware Guarantee', ()
       });
 
       // Actuation after arming succeeds
-      const writeResult = await runtime.invoke('esp-safety-test', 'gpio.write', { pin: 2, value: false });
+      const writeResult = await runtime.invoke('esp-safety-test', 'gpio.write', {
+        pin: 2,
+        value: false,
+      });
       expect(writeResult).toEqual({ pin: 2, value: false });
 
       // Halt the runtime

@@ -121,12 +121,7 @@ export class BoundedIdempotencyStore {
     return this.tombstones.delete(scopedKey);
   }
 
-  remove(
-    deviceId: string,
-    capability: string,
-    owner: string | undefined,
-    key: string,
-  ): boolean {
+  remove(deviceId: string, capability: string, owner: string | undefined, key: string): boolean {
     const id = BoundedIdempotencyStore.keyFor(deviceId, capability, owner, key);
     return this.tombstones.delete(id);
   }

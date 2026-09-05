@@ -9,7 +9,13 @@ import {
 } from '../../protocol.js';
 import type { Transport } from '../../types.js';
 import { DeviceError } from '../../errors.js';
-import { createGpioState, esp32BridgeInfo, handleBridgeAction, tripWatchdog, type GpioState } from './bridge.js';
+import {
+  createGpioState,
+  esp32BridgeInfo,
+  handleBridgeAction,
+  tripWatchdog,
+  type GpioState,
+} from './bridge.js';
 
 export function simulatedEsp32(options: { autoArm?: boolean } = {}): SimulatedEsp32Transport {
   return new SimulatedEsp32Transport(options);

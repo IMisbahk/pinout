@@ -72,7 +72,8 @@ export const esp32Module: PinoutModuleDefinition = {
     }
     const backend = new ProtocolDeviceBackend(device, {
       outputs: validatedOutputs.length > 0 ? validatedOutputs : undefined,
-      requireWatchdog: typeof options.requireWatchdog === 'boolean' ? options.requireWatchdog : undefined,
+      requireWatchdog:
+        typeof options.requireWatchdog === 'boolean' ? options.requireWatchdog : undefined,
       autoHeartbeat: typeof options.autoHeartbeat === 'boolean' ? options.autoHeartbeat : undefined,
       heartbeatIntervalMs:
         typeof options.heartbeatIntervalMs === 'number' ? options.heartbeatIntervalMs : undefined,

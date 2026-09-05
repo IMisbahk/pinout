@@ -135,9 +135,7 @@ async function runStdioSession(server: Server, runtime?: PinoutRuntime): Promise
     }
 
     server.connect(transport).catch((connectError) => {
-      void cleanup(
-        connectError instanceof Error ? connectError : new Error(String(connectError)),
-      );
+      void cleanup(connectError instanceof Error ? connectError : new Error(String(connectError)));
     });
   });
 }

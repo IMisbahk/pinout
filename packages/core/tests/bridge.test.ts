@@ -119,12 +119,12 @@ describe('esp32 bridge handler', () => {
     expect(() => handleBridgeAction('motor.setSpeed', {}, createGpioState())).toThrow(DeviceError);
     const state = createGpioState();
     state.deviceState = 'armed';
-    expect(() =>
-      handleBridgeAction('gpio.write', { pin: 34, value: true }, state),
-    ).toThrow(/input-only/);
-    expect(() =>
-      handleBridgeAction('gpio.write', { pin: 2, value: 'high' }, state),
-    ).toThrow(DeviceError);
+    expect(() => handleBridgeAction('gpio.write', { pin: 34, value: true }, state)).toThrow(
+      /input-only/,
+    );
+    expect(() => handleBridgeAction('gpio.write', { pin: 2, value: 'high' }, state)).toThrow(
+      DeviceError,
+    );
   });
 
   it('sets gpio.mode and read respects pull defaults', () => {

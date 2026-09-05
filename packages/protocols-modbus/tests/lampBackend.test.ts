@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DeviceError, runLampConformance, type LampStatus } from '@pinout/core';
+import { DeviceError, runLampConformance, type LampPolarity, type LampStatus } from '@pinout/core';
 import {
   createModbusLampBackend,
   ModbusLampBackend,
@@ -217,9 +217,10 @@ describe('ModbusLampBackend Lifecycle and Evidence', () => {
 
       // Generic evidence state also preserves the discrepancy
       const evidence = backend.getOperationalStateEvidence();
-      expect(evidence.on.commanded.value).toBe(true);
-      expect(evidence.on.acknowledged.value).toBe(true);
-      expect(evidence.on.observed.value).toBe(false);
+      expect(evidence.on).toBeDefined();
+      expect(evidence.on!.commanded.value).toBe(true);
+      expect(evidence.on!.acknowledged.value).toBe(true);
+      expect(evidence.on!.observed.value).toBe(false);
     } finally {
       await backend.close();
     }

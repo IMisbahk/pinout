@@ -1,6 +1,11 @@
 import { join } from 'node:path';
 import { listSerialPorts, loadBoardDescriptors, type BoardDescriptor } from '@pinout/core';
-import type { DoctorCheckResult, DoctorDependencies, DoctorOptions, SerialPortEntry } from './types.js';
+import type {
+  DoctorCheckResult,
+  DoctorDependencies,
+  DoctorOptions,
+  SerialPortEntry,
+} from './types.js';
 
 const BUILTIN_BOARD_FALLBACKS: Array<{
   boardId: string;

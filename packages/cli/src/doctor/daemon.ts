@@ -16,10 +16,7 @@ export async function checkDaemon(
   const env = deps.env ?? process.env;
   const isExplicitUrl = options.url !== undefined || env.PINOUT_DAEMON_URL !== undefined;
   const targetUrl =
-    options.url ??
-    env.PINOUT_DAEMON_URL ??
-    env.PINOUT_URL ??
-    'http://127.0.0.1:8787';
+    options.url ?? env.PINOUT_DAEMON_URL ?? env.PINOUT_URL ?? 'http://127.0.0.1:8787';
 
   const token = env.PINOUT_TOKEN;
   const fetchFn = deps.fetch ?? globalThis.fetch;

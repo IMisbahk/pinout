@@ -1,9 +1,5 @@
 import { readDevicesFile, resolvePinoutHome } from '@pinout/core';
-import type {
-  DoctorCheckResult,
-  DoctorDependencies,
-  SerialPortEntry,
-} from './types.js';
+import type { DoctorCheckResult, DoctorDependencies, SerialPortEntry } from './types.js';
 
 export function checkConfiguration(
   deps: DoctorDependencies,
@@ -60,7 +56,12 @@ export function checkConfiguration(
             name: `device:${device.id}`,
             status: 'pass',
             detail: `Device '${device.id}' (${device.module}) port '${transportPath}' is present.`,
-            meta: { deviceId: device.id, module: device.module, port: transportPath, present: true },
+            meta: {
+              deviceId: device.id,
+              module: device.module,
+              port: transportPath,
+              present: true,
+            },
           });
         } else {
           checks.push({
@@ -69,7 +70,12 @@ export function checkConfiguration(
             status: 'warn',
             detail: `Device '${device.id}' (${device.module}) expects port '${transportPath}' which is not currently detected on host.`,
             nextStep: `Connect device '${device.id}' to USB port '${transportPath}' or update ~/.pinout/devices.json.`,
-            meta: { deviceId: device.id, module: device.module, port: transportPath, present: false },
+            meta: {
+              deviceId: device.id,
+              module: device.module,
+              port: transportPath,
+              present: false,
+            },
           });
         }
       } else {

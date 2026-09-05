@@ -83,7 +83,9 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
     });
 
     await session.client.connect(session.transport);
-    session.childProcess = (session.transport as unknown as { _process?: ChildProcess | undefined })._process;
+    session.childProcess = (
+      session.transport as unknown as { _process?: ChildProcess | undefined }
+    )._process;
     expect(session.childProcess).toBeDefined();
 
     // 1. List tools
@@ -159,7 +161,9 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
     });
 
     await session.client.connect(session.transport);
-    session.childProcess = (session.transport as unknown as { _process?: ChildProcess | undefined })._process;
+    session.childProcess = (
+      session.transport as unknown as { _process?: ChildProcess | undefined }
+    )._process;
     expect(session.childProcess).toBeDefined();
 
     const toolsResult = await session.client.listTools();
@@ -191,7 +195,9 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
     });
 
     await session.client.connect(session.transport);
-    session.childProcess = (session.transport as unknown as { _process?: ChildProcess | undefined })._process;
+    session.childProcess = (
+      session.transport as unknown as { _process?: ChildProcess | undefined }
+    )._process;
     expect(session.childProcess).toBeDefined();
 
     const toolsResult = await session.client.listTools();
@@ -218,7 +224,9 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
     });
 
     await session.client.connect(session.transport);
-    session.childProcess = (session.transport as unknown as { _process?: ChildProcess | undefined })._process;
+    session.childProcess = (
+      session.transport as unknown as { _process?: ChildProcess | undefined }
+    )._process;
     expect(session.childProcess).toBeDefined();
 
     // Tools list succeeds (returns control-plane tools)
@@ -241,7 +249,8 @@ describe('@pinout/mcp stdio subprocess lifecycle', () => {
       arguments: {},
     });
     expect(secondCallResult.isError).toBe(true);
-    const secondContent = (secondCallResult as { content: Array<{ type: string; text?: string }> }).content;
+    const secondContent = (secondCallResult as { content: Array<{ type: string; text?: string }> })
+      .content;
     expect(secondContent[0]?.text).toContain('DAEMON_UNAVAILABLE');
 
     // Clean exit

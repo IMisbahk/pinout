@@ -4,12 +4,7 @@ import type { BoardDescriptor } from '@pinout/core';
 export type DoctorStatus = 'pass' | 'warn' | 'fail' | 'skip';
 
 export type DoctorStage =
-  | 'environment'
-  | 'daemon'
-  | 'discovery'
-  | 'firmware'
-  | 'configuration'
-  | 'simulator';
+  'environment' | 'daemon' | 'discovery' | 'firmware' | 'configuration' | 'simulator';
 
 export interface DoctorCheckResult {
   stage: DoctorStage;
@@ -69,10 +64,7 @@ export interface DoctorDependencies {
     | undefined;
   readDevicesFile?: ((path?: string, home?: string) => DevicesFile) | undefined;
   connect?:
-    | ((options: { transport: Transport; timeoutMs?: number }) => Promise<Device>)
-    | undefined;
-  createSerialTransport?:
-    | ((options: { path: string; baudRate?: number }) => Transport)
-    | undefined;
+    ((options: { transport: Transport; timeoutMs?: number }) => Promise<Device>) | undefined;
+  createSerialTransport?: ((options: { path: string; baudRate?: number }) => Transport) | undefined;
   isHomeWritable?: ((dir: string) => boolean) | undefined;
 }

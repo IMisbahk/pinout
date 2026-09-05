@@ -27,11 +27,7 @@ import type { IdempotencyTombstone } from './idempotencyStore.js';
 import type { Journal } from '../journal/journal.js';
 
 export type ExtendedOperationStatus =
-  | SpecOperationStatus
-  | 'requires_reconciliation'
-  | 'uncertain'
-  | 'aborted'
-  | 'stop_unconfirmed';
+  SpecOperationStatus | 'requires_reconciliation' | 'uncertain' | 'aborted' | 'stop_unconfirmed';
 
 export type OperationStatus = ExtendedOperationStatus;
 
@@ -897,17 +893,10 @@ export class OperationManager {
                 details: { stopConfirmed: false },
               },
             });
-            this.emit(
-              'operation.stop_unconfirmed',
-              op.id,
-              op.deviceId,
-              op.capability,
-              Date.now(),
-              {
-                reason: String(error instanceof Error ? error.message : error),
-                error: op.error,
-              },
-            );
+            this.emit('operation.stop_unconfirmed', op.id, op.deviceId, op.capability, Date.now(), {
+              reason: String(error instanceof Error ? error.message : error),
+              error: op.error,
+            });
           } else if (error instanceof AbortedError || isAbortError(error)) {
             this.transition(op, 'cancelled', {
               error: {
@@ -935,17 +924,10 @@ export class OperationManager {
                 details: { stopConfirmed: false, cause: structured },
               },
             });
-            this.emit(
-              'operation.stop_unconfirmed',
-              op.id,
-              op.deviceId,
-              op.capability,
-              Date.now(),
-              {
-                code: 'OPERATION_STOP_UNCONFIRMED',
-                error: op.error,
-              },
-            );
+            this.emit('operation.stop_unconfirmed', op.id, op.deviceId, op.capability, Date.now(), {
+              code: 'OPERATION_STOP_UNCONFIRMED',
+              error: op.error,
+            });
           }
         } else {
           const structured = toStructuredError(error, {

@@ -173,31 +173,34 @@ describe('Daemon HTTP Evidence-Qualified State API', () => {
 
     const stateRes = await fetch(`${base}/v1/devices/gpio-ev-01/state`);
     const body = (await stateRes.json()) as {
-      stateEvidence: Record<string, {
-        commanded: { value: unknown; source: string; at: string | null };
-        acknowledged: { value: unknown; source: string; at: string | null };
-        observed: { value: unknown; source: string; at: string | null };
-        freshnessMs: number | null;
-        stale: boolean;
-        provenance: string;
-      }>;
+      stateEvidence: Record<
+        string,
+        {
+          commanded: { value: unknown; source: string; at: string | null };
+          acknowledged: { value: unknown; source: string; at: string | null };
+          observed: { value: unknown; source: string; at: string | null };
+          freshnessMs: number | null;
+          stale: boolean;
+          provenance: string;
+        }
+      >;
     };
 
     const pinEvidence = body.stateEvidence['gpio.2'];
     expect(pinEvidence).toBeDefined();
-    expect(pinEvidence.commanded.value).toBe(true);
-    expect(pinEvidence.commanded.source).toBe('commanded');
-    expect(pinEvidence.commanded.at).toBeTruthy();
+    expect(pinEvidence!.commanded.value).toBe(true);
+    expect(pinEvidence!.commanded.source).toBe('commanded');
+    expect(pinEvidence!.commanded.at).toBeTruthy();
 
-    expect(pinEvidence.acknowledged.value).toBe(true);
-    expect(pinEvidence.acknowledged.source).toBe('acknowledged');
-    expect(pinEvidence.acknowledged.at).toBeTruthy();
+    expect(pinEvidence!.acknowledged.value).toBe(true);
+    expect(pinEvidence!.acknowledged.source).toBe('acknowledged');
+    expect(pinEvidence!.acknowledged.at).toBeTruthy();
 
     // Physical evidence is NOT inferred from a write
-    expect(pinEvidence.observed.value).toBeNull();
-    expect(pinEvidence.observed.source).toBe('none');
-    expect(pinEvidence.observed.at).toBeNull();
-    expect(pinEvidence.freshnessMs).toBeNull();
+    expect(pinEvidence!.observed.value).toBeNull();
+    expect(pinEvidence!.observed.source).toBe('none');
+    expect(pinEvidence!.observed.at).toBeNull();
+    expect(pinEvidence!.freshnessMs).toBeNull();
   });
 
   it('populates observed with timestamp and freshness on independent read', async () => {
@@ -216,23 +219,26 @@ describe('Daemon HTTP Evidence-Qualified State API', () => {
 
     const stateRes = await fetch(`${base}/v1/devices/gpio-ev-01/state`);
     const body = (await stateRes.json()) as {
-      stateEvidence: Record<string, {
-        commanded: { value: unknown };
-        acknowledged: { value: unknown };
-        observed: { value: unknown; source: string; at: string | null };
-        freshnessMs: number | null;
-        stale: boolean;
-        provenance: string;
-      }>;
+      stateEvidence: Record<
+        string,
+        {
+          commanded: { value: unknown };
+          acknowledged: { value: unknown };
+          observed: { value: unknown; source: string; at: string | null };
+          freshnessMs: number | null;
+          stale: boolean;
+          provenance: string;
+        }
+      >;
     };
 
     const pinEvidence = body.stateEvidence['gpio.2'];
     expect(pinEvidence).toBeDefined();
-    expect(pinEvidence.observed.value).toBe(true);
-    expect(pinEvidence.observed.source).toBe('simulated');
-    expect(pinEvidence.observed.at).toBeTruthy();
-    expect(typeof pinEvidence.freshnessMs).toBe('number');
-    expect(pinEvidence.stale).toBe(false);
+    expect(pinEvidence!.observed.value).toBe(true);
+    expect(pinEvidence!.observed.source).toBe('simulated');
+    expect(pinEvidence!.observed.at).toBeTruthy();
+    expect(typeof pinEvidence!.freshnessMs).toBe('number');
+    expect(pinEvidence!.stale).toBe(false);
   });
 
   it('forwards stateEvidence in SSE event stream envelopes', async () => {

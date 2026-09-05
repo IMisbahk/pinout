@@ -95,8 +95,7 @@ export function checkEnvironmentVariables(deps: DoctorDependencies): DoctorCheck
 
   const port = env.PINOUT_PORT !== undefined ? env.PINOUT_PORT : 'not set';
 
-  const baud =
-    env.PINOUT_BAUD !== undefined ? `${env.PINOUT_BAUD} (from env)` : '115200 (default)';
+  const baud = env.PINOUT_BAUD !== undefined ? `${env.PINOUT_BAUD} (from env)` : '115200 (default)';
 
   const timeout =
     env.PINOUT_TIMEOUT !== undefined ? `${env.PINOUT_TIMEOUT}ms (from env)` : '5000ms (default)';

@@ -52,7 +52,9 @@ export function assertPolarity(polarity: unknown): GpioPolarity {
 
 export function assertNonNegativeInt(value: unknown, field: string): number {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
-    throw new ValidationError(`${field} must be a non-negative integer, received ${String(value)}.`);
+    throw new ValidationError(
+      `${field} must be a non-negative integer, received ${String(value)}.`,
+    );
   }
   return value;
 }

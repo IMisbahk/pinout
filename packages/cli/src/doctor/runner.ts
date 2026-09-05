@@ -6,11 +6,7 @@ import type {
   DoctorSummary,
 } from './types.js';
 import type { CliOutput } from '../output.js';
-import {
-  checkEnvironmentVariables,
-  checkNodeVersion,
-  checkPinoutHome,
-} from './environment.js';
+import { checkEnvironmentVariables, checkNodeVersion, checkPinoutHome } from './environment.js';
 import { checkDaemon } from './daemon.js';
 import { checkDiscovery } from './discovery.js';
 import { checkFirmware } from './firmware.js';
@@ -59,8 +55,7 @@ export async function evaluateDoctor(
     skipped,
   };
 
-  const status: 'pass' | 'warn' | 'fail' =
-    failed > 0 ? 'fail' : warned > 0 ? 'warn' : 'pass';
+  const status: 'pass' | 'warn' | 'fail' = failed > 0 ? 'fail' : warned > 0 ? 'warn' : 'pass';
   const ok = failed === 0;
 
   // Compile ordered next steps

@@ -1,4 +1,9 @@
-import { DisconnectedError, UnsupportedCapabilityError, PinoutError, PinoutStructuredError } from '../errors.js';
+import {
+  DisconnectedError,
+  UnsupportedCapabilityError,
+  PinoutError,
+  PinoutStructuredError,
+} from '../errors.js';
 import { evaluatePolicies } from '../policy/engine.js';
 import type { SafetyEngine, SafetyReservation } from '../policy/safety.js';
 import type { PolicyRule } from '../policy/types.js';
@@ -78,7 +83,8 @@ export class DeviceInstance {
   private halt: HaltCoordinator | undefined;
   private safetyEngine: SafetyEngine | undefined;
   private readonly getOperationalState: () => Record<string, unknown>;
-  private readonly getOperationalStateEvidenceFn: (() => Record<string, EvidenceState<unknown>>) | undefined;
+  private readonly getOperationalStateEvidenceFn:
+    (() => Record<string, EvidenceState<unknown>>) | undefined;
   private readonly evidenceMap = new Map<string, EvidenceState<unknown>>();
   private readonly prerequisitesMap = new Map<string, StatePrerequisite[]>();
   private readonly maxStateAgeMap = new Map<string, number>();
@@ -210,9 +216,21 @@ export class DeviceInstance {
       'observed' in opState
     ) {
       const lampEvidence: EvidenceState<unknown> = {
-        commanded: (opState.commanded as EvidenceValue<unknown>) ?? { value: null, at: null, source: 'none' },
-        acknowledged: (opState.acknowledged as EvidenceValue<unknown>) ?? { value: null, at: null, source: 'none' },
-        observed: (opState.observed as EvidenceValue<unknown>) ?? { value: null, at: null, source: 'none' },
+        commanded: (opState.commanded as EvidenceValue<unknown>) ?? {
+          value: null,
+          at: null,
+          source: 'none',
+        },
+        acknowledged: (opState.acknowledged as EvidenceValue<unknown>) ?? {
+          value: null,
+          at: null,
+          source: 'none',
+        },
+        observed: (opState.observed as EvidenceValue<unknown>) ?? {
+          value: null,
+          at: null,
+          source: 'none',
+        },
         freshnessMs: typeof opState.freshnessMs === 'number' ? opState.freshnessMs : null,
         stale: false,
         provenance: (opState.provenance as EvidenceProvenance) ?? this.provenance,
@@ -267,7 +285,14 @@ export class DeviceInstance {
     const existing =
       (this.evidenceMap.get(key) as EvidenceState<T> | undefined) ??
       unknownEvidence<T>(this.provenance);
-    const updated = recordObserved(existing, value, source, at, this.provenance, this.getMaxAgeMs(key));
+    const updated = recordObserved(
+      existing,
+      value,
+      source,
+      at,
+      this.provenance,
+      this.getMaxAgeMs(key),
+    );
     this.evidenceMap.set(key, updated as EvidenceState<unknown>);
     return updated;
   }
@@ -536,11 +561,19 @@ export class DeviceInstance {
 
   private handleIncomingEvent(event: string, payload: Record<string, unknown>): void {
     const nowIso = formatIsoTimestamp();
-    if (event === 'gpio.changed' && typeof payload.pin === 'number' && payload.value !== undefined) {
+    if (
+      event === 'gpio.changed' &&
+      typeof payload.pin === 'number' &&
+      payload.value !== undefined
+    ) {
       const source: EvidenceSource = this.simulated ? 'simulated' : 'gpio-readback';
       this.recordObservedState(`gpio.${payload.pin}`, payload.value, source, nowIso);
       this.recordObservedState('value', payload.value, source, nowIso);
-    } else if (event.endsWith('.changed') || event.endsWith('.reading') || event.endsWith('.sample')) {
+    } else if (
+      event.endsWith('.changed') ||
+      event.endsWith('.reading') ||
+      event.endsWith('.sample')
+    ) {
       const source: EvidenceSource = this.simulated ? 'simulated' : 'sensor';
       for (const [k, v] of Object.entries(payload)) {
         if (k !== 'driver' && k !== 'event') {

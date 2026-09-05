@@ -212,7 +212,6 @@ function resolveTarget(
   return {
     kind: 'skip',
     reason: 'No serial ports detected to probe firmware identity.',
-    nextStep:
-      'Connect an ESP32 board via USB data cable, or pass --mock / test with simulator.',
+    nextStep: 'Connect an ESP32 board via USB data cable, or pass --mock / test with simulator.',
   };
 }
