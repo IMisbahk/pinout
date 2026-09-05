@@ -23,9 +23,11 @@ the duration expires. A stop cancels pending pulse expirations and leaves those 
 
 See [docs/protocol.md](../../docs/protocol.md) for the message format.
 
-## Hardware
+## Hardware & Reference Circuit
 
-Tested against classic ESP32 DevKit boards (WROOM / 30-pin). The onboard LED is usually **GPIO 2**.
+Tested against classic ESP32 DevKit boards (WROOM / 30-pin, `firmware/boards/esp32-devkit-v1.json`). The onboard LED is usually **GPIO 2**.
+
+For the documented low-voltage reference circuit fixture and wiring specifications, see [`hardware/reference/esp32-classic-led-sensor.md`](../../hardware/reference/esp32-classic-led-sensor.md). For the hardware-in-the-loop (HIL) physical verification procedure, see [`scripts/hil/esp32-classic.md`](../../scripts/hil/esp32-classic.md).
 
 Do not use:
 
@@ -34,17 +36,21 @@ Do not use:
 - GPIO 12 (boot strap; held high at reset can prevent boot)
 - GPIO 34–39 as outputs (input-only)
 
-## Flash with PlatformIO
+## Flashing Policy
+
+Pinout tools **never automatically flash** attached hardware. Firmware must be built and flashed explicitly by an operator following manual visual and USB identity confirmation.
+
+### Flash with PlatformIO
 
 ```bash
 cd firmware/esp32-bridge
-pio run -t upload
+pio run -e esp32dev -t upload
 pio device monitor
 ```
 
 You should see a JSON `ready` event after reset, possibly mixed with ROM boot log lines. The host SDK ignores non-JSON lines.
 
-## Flash with Arduino IDE
+### Flash with Arduino IDE
 
 1. Install the ESP32 board package.
 2. Install **ArduinoJson** 7 from Library Manager.
