@@ -1,0 +1,21 @@
+docs/PINOUT_REVIEW_AND_PLAN.md
+  s_c149cfa220e73b::t_74ce75cbb110e0 1-93
+docs/acceptance-ledger.md
+  s_c149cfa220e73b::t_88249f0e5e4219 1-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "bfb5ca8047495806bceb2125dbdfad7b6da5dc11",
+  "prompts": {},
+  "sessions": {
+    "s_c149cfa220e73b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "981503d1-7d1c-46ec-b9e6-339cfe3c451a",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
