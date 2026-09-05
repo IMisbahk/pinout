@@ -1,0 +1,19 @@
+hardware/reference/esp32-classic-led-sensor.md
+  s_369368440b2937::t_c09989da84cc56 1-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "5d5f86b0ef4af902f76823fdb1891725ab50cea5",
+  "prompts": {},
+  "sessions": {
+    "s_369368440b2937": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "0558ee6d-238e-466b-9ada-d7ecd3e06a82",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
