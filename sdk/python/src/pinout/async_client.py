@@ -85,6 +85,9 @@ class AsyncPinout:
     async def device_state(self, device_id: str) -> dict:
         return (await self._request("GET", f"/v1/devices/{device_id}/state"))["state"]
 
+    async def device_state_evidence(self, device_id: str) -> dict:
+        return (await self._request("GET", f"/v1/devices/{device_id}/state")).get("stateEvidence", {})
+
     async def device_info(self, device_id: str) -> dict:
         return await self._request("GET", f"/v1/devices/{device_id}")
 

@@ -104,9 +104,9 @@ POST /v1/operations/op_1_abc123/reconcile
 
 ### Evidence-qualified state
 
-Device state responses and stream events distinguish **commanded**, **acknowledged**, and **independently observed** physical state.
+Device state responses and stream events distinguish **commanded**, **acknowledged**, and **independently observed** physical state as defined in the [Physical Evidence State Contract](state-evidence.md).
 
-In `GET /v1/devices`, summaries include `stateEvidence` alongside legacy properties:
+- In `GET /v1/devices`, summaries include `stateEvidence` alongside legacy properties:
 
 ```jsonc
 GET /v1/devices
@@ -131,7 +131,9 @@ GET /v1/devices
 ]
 ```
 
-In `GET /v1/devices/:id/state`, legacy callers continue reading `state` without breaking changes while evidence-aware clients inspect structured timestamps, sources, and staleness.
+- In `GET /v1/devices/:id`, device detail responses include `stateEvidence` alongside `operationalState`.
+- In `GET /v1/devices/:id/state`, legacy callers continue reading `state` without breaking changes while evidence-aware clients inspect structured `stateEvidence` (timestamps, sources, staleness, provenance).
+- In `GET /v1/events` (SSE), `runtime.event` payloads contain the device `stateEvidence` mapping in their event envelopes.
 
 ### Stream frames
 

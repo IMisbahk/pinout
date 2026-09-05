@@ -144,6 +144,10 @@ class Device:
         payload = self._http.request("GET", f"/v1/devices/{self.id}/state")
         return payload["state"]
 
+    def state_evidence(self) -> dict:
+        payload = self._http.request("GET", f"/v1/devices/{self.id}/state")
+        return payload.get("stateEvidence", {})
+
     def capabilities(self) -> list[str]:
         return self.info()["capabilities"]
 

@@ -24,6 +24,28 @@ reversibility, and lease requirements. `_pinout.idempotencyKey` is the retry
 boundary; never retry a physical action under a new key unless a fresh action
 is intended.
 
+## Evidence-qualified state and the honesty rule
+
+Tools returning device state (`pinout__describe_device` and `pinout__read_state`) expose structured `stateEvidence` alongside legacy `operationalState`/`state` dictionaries. State evidence breaks down state into:
+
+- **`commanded`**: Host intent sent to the device.
+- **`acknowledged`**: Firmware receipt acknowledgement.
+- **`observed`**: Independent sensor reading, readback pin, or telemetry.
+- **`freshnessMs`**: Dynamic age of the physical observation in milliseconds.
+- **`stale`**: Whether the observation exceeds the configured maximum age threshold.
+- **`provenance`**: `'hardware'` or `'simulated'`.
+
+### The Honesty Rule
+
+> **`observed` is the only field that reflects independent physical evidence; `commanded`/`acknowledged` do not prove physical effect.**
+
+Agents acting over MCP must report available verification honestly:
+1. Actuation writes (`relay.set`, `gpio.write`, etc.) set `commanded` and `acknowledged`. They do **not** update `observed` (`observed.source` remains `'none'`).
+2. Only independent read capabilities or physical readback establish `observed` state with valid timestamps and freshness metrics.
+3. Agents should inspect `observed` and its `freshnessMs`/`stale` attributes rather than asserting physical reality based merely on successful command dispatches.
+
+See [Physical Evidence State Contract](state-evidence.md) for full contract definitions.
+
 ## Lifecycle
 
 - **Session duration**: The stdio server stays connected across multiple sequential requests on the same session.

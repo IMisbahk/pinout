@@ -44,15 +44,57 @@ class MockDaemonHandler(BaseHTTPRequestHandler):
         if self.path == "/v1/health":
             return self._send(200, {"ok": True, "devices": 1, "safety": "NORMAL"})
         if self.path == "/v1/devices":
-            return self._send(200, {"devices": [{"id": "relay-01", "deviceClass": "actuator.relay"}]})
+            return self._send(200, {
+                "devices": [{
+                    "id": "relay-01",
+                    "deviceClass": "actuator.relay",
+                    "stateEvidence": {
+                        "on": {
+                            "commanded": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "commanded"},
+                            "acknowledged": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "acknowledged"},
+                            "observed": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "simulated"},
+                            "freshnessMs": 0,
+                            "stale": False,
+                            "provenance": "simulated",
+                        }
+                    },
+                }]
+            })
         if self.path.startswith("/v1/devices/"):
             parts = self.path.split("/")
             device_id = parts[3]
             if device_id != "relay-01":
                 return self._send(404, {"error": {"code": "DEVICE_NOT_FOUND", "message": "unknown", "category": "DEVICE", "retryable": False}})
             if self.path.endswith("/state"):
-                return self._send(200, {"deviceId": device_id, "state": dict(self.state), "health": {"lifecycle": "ready"}})
-            return self._send(200, {"id": device_id, "capabilities": ["relay.set", "status.read"]})
+                return self._send(200, {
+                    "deviceId": device_id,
+                    "state": dict(self.state),
+                    "stateEvidence": {
+                        "on": {
+                            "commanded": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "commanded"},
+                            "acknowledged": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "acknowledged"},
+                            "observed": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "simulated"},
+                            "freshnessMs": 0,
+                            "stale": False,
+                            "provenance": "simulated",
+                        }
+                    },
+                    "health": {"lifecycle": "ready"},
+                })
+            return self._send(200, {
+                "id": device_id,
+                "capabilities": ["relay.set", "status.read"],
+                "stateEvidence": {
+                    "on": {
+                        "commanded": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "commanded"},
+                        "acknowledged": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "acknowledged"},
+                        "observed": {"value": False, "at": "2026-09-05T00:00:00Z", "source": "simulated"},
+                        "freshnessMs": 0,
+                        "stale": False,
+                        "provenance": "simulated",
+                    }
+                },
+            })
         if self.path == "/v1/operations" or self.path.startswith("/v1/operations?"):
             return self._send(200, {"operations": list(self.ops.values())})
         if self.path.startswith("/v1/operations/"):
@@ -159,6 +201,14 @@ class TestSyncPinoutClient(unittest.TestCase):
         device = pinout.device("relay-01")
         self.assertEqual(device.state(), {"on": False})
         self.assertIn("relay.set", device.capabilities())
+        evidence = device.state_evidence()
+        self.assertIn("on", evidence)
+        self.assertEqual(evidence["on"]["commanded"]["value"], False)
+        self.assertEqual(evidence["on"]["observed"]["source"], "simulated")
+
+        info = device.info()
+        self.assertIn("stateEvidence", info)
+        self.assertIn("on", info["stateEvidence"])
 
     def test_invoke_wait_returns_result(self):
         pinout = Pinout(base_url=self.daemon_url)
