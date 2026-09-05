@@ -12,6 +12,7 @@ import { servoModule } from '../modules/servoModule.js';
 import { stepperModule } from '../modules/stepperModule.js';
 import { powerSupplyModule, pumpModule, relayModule, valveModule } from './semanticModules.js';
 import { coffeeMachineModule } from '../modules/coffeeMachineModule.js';
+import { lampModule } from '../modules/lampModule.js';
 import type { PinoutModuleDefinition } from '../runtime/types.js';
 import { ModuleNotFoundError } from '../module/errors.js';
 import { loadInstalledModule, readModulesIndex } from '../home/moduleStore.js';
@@ -35,6 +36,7 @@ const builtinModules = new Map<string, PinoutModuleDefinition>([
   [pumpModule.id, pumpModule],
   [powerSupplyModule.id, powerSupplyModule],
   [coffeeMachineModule.id, coffeeMachineModule],
+  [lampModule.id, lampModule],
 ]);
 
 const runtimeModules = new Map<string, PinoutModuleDefinition>();

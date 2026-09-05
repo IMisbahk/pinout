@@ -77,6 +77,24 @@ export {
   convert as convertUnit,
   toCanonical as toCanonicalUnit,
   requiresLease,
+  formatIsoTimestamp,
+  getTimestampMs,
+  unknownEvidence,
+  createEvidenceState,
+  recordCommanded,
+  recordAcknowledged,
+  recordObserved,
+  computeFreshness,
+  isStale,
+  hasObservedValue,
+} from './spec/index.js';
+export type {
+  EvidenceSource,
+  EvidenceProvenance,
+  EvidenceValue,
+  EvidenceState,
+  StatePrerequisite,
+  DeviceStateEvidence,
 } from './spec/index.js';
 export {
   PolicyError,
@@ -261,6 +279,28 @@ export { valveModuleId } from './modules/valveModule.js';
 export { pumpModuleId } from './modules/pumpModule.js';
 export { powerSupplyModuleId } from './modules/powerSupplyModule.js';
 export {
+  lampModule,
+  lampModuleId,
+  createSimulatedLampBackend,
+  createEsp32LampBackend,
+  SimulatedLampBackend,
+  Esp32LampBackend,
+  validateLampConfig,
+  lampCapabilities,
+} from './modules/lampModule.js';
+export type {
+  LampConfig,
+  ValidatedLampConfig,
+  LampStatus,
+  LampPolarity,
+  LampSafeLevel,
+  LampArmedState,
+  LampObservedSource,
+  LampCommandedState,
+  LampAcknowledgedState,
+  LampObservedState,
+} from './modules/lampModule.js';
+export {
   coffeeMachineModule,
   coffeeMachineModuleId,
   coffeeMachineSafetyRules,
@@ -299,7 +339,11 @@ export type {
   ConstraintConflict,
   ApprovalRecord,
 } from './policy/safety.js';
-export { OperationManager, isTerminalOperationStatus, StopUnconfirmedError } from './operation/operationManager.js';
+export {
+  OperationManager,
+  isTerminalOperationStatus,
+  StopUnconfirmedError,
+} from './operation/operationManager.js';
 export { BoundedIdempotencyStore } from './operation/idempotencyStore.js';
 export type {
   IdempotencyStoreOptions,

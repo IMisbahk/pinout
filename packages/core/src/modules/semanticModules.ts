@@ -361,3 +361,9 @@ export const createSimulatedPumpBackend = (o?: Record<string, unknown>) =>
   new SemanticBackend('pump', o);
 export const createSimulatedPowerSupplyBackend = (o?: Record<string, unknown>) =>
   new SemanticBackend('power', o);
+export {
+  lampModule,
+  lampModuleId,
+  createSimulatedLampBackend,
+  createEsp32LampBackend,
+} from './lampModule.js';

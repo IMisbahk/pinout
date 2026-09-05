@@ -1,0 +1,271 @@
+import { connect } from '../../connect.js';
+import { DeviceError } from '../../errors.js';
+import { simulatedEsp32 } from '../../drivers/esp32/simulatedTransport.js';
+import { ProtocolDeviceBackend } from '../../runtime/protocolBackend.js';
+import type { BackendInvocationContext, DeviceBackend } from '../../runtime/types.js';
+import type { Device } from '../../device.js';
+import type { Transport } from '../../types.js';
+import {
+  validateLampConfig,
+  type LampArmedState,
+  type LampCommandedState,
+  type LampAcknowledgedState,
+  type LampObservedState,
+  type LampStatus,
+  type ValidatedLampConfig,
+} from './types.js';
+
+export class Esp32LampBackend implements DeviceBackend {
+  readonly kind = 'protocol' as const;
+  private readonly device: Device;
+  private readonly protocolBackend: ProtocolDeviceBackend;
+  private readonly config: ValidatedLampConfig;
+  private commanded: LampCommandedState = { on: null, at: null };
+  private acknowledged: LampAcknowledgedState = { on: null, at: null };
+  private lastObserved: LampObservedState = { on: null, at: null, source: 'none' };
+  private lastObservedTimestamp: number | null = null;
+  private maxOnTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly listeners = new Set<(event: string, payload: Record<string, unknown>) => void>();
+  private closed = false;
+
+  private constructor(
+    device: Device,
+    protocolBackend: ProtocolDeviceBackend,
+    config: ValidatedLampConfig,
+  ) {
+    this.device = device;
+    this.protocolBackend = protocolBackend;
+    this.config = config;
+
+    this.device.on('device.tripped', (payload) => {
+      this.clearMaxOnTimer();
+      this.emit('device.tripped', payload);
+    });
+  }
+
+  static async create(options: Record<string, unknown> = {}): Promise<Esp32LampBackend> {
+    const config = validateLampConfig(options);
+    const transport =
+      (config.transport as Transport | undefined) ??
+      (options.transport as Transport | undefined) ??
+      simulatedEsp32();
+    const device = (config.device as Device | undefined) ?? (await connect({ transport }));
+
+    const protocolBackend = new ProtocolDeviceBackend(device, {
+      outputs: [{ pin: config.pin, safeLevel: config.safeLevel, polarity: config.polarity }],
+      requireWatchdog: config.requireWatchdog,
+      autoHeartbeat: config.autoHeartbeat,
+      heartbeatIntervalMs: config.heartbeatIntervalMs,
+      watchdogTimeoutMs: config.watchdogTimeoutMs,
+      autoArm: config.autoArm,
+    });
+
+    if (config.readbackPin !== undefined && device.supports('gpio.mode')) {
+      await device.gpio.mode(config.readbackPin, 'input').catch(() => undefined);
+    }
+
+    if (config.autoArm) {
+      await protocolBackend.arm({
+        timeoutMs: config.watchdogTimeoutMs,
+        heartbeatIntervalMs: config.heartbeatIntervalMs,
+        requireWatchdog: config.requireWatchdog,
+      });
+    } else {
+      await protocolBackend.initializeOutputs();
+    }
+
+    return new Esp32LampBackend(device, protocolBackend, config);
+  }
+
+  subscribe(handler: (event: string, payload: Record<string, unknown>) => void): () => void {
+    this.listeners.add(handler);
+    return () => this.listeners.delete(handler);
+  }
+
+  async close(): Promise<void> {
+    this.closed = true;
+    this.clearMaxOnTimer();
+    this.listeners.clear();
+    await this.protocolBackend.close();
+  }
+
+  getOperationalState(): Record<string, unknown> {
+    const opState = this.protocolBackend.getOperationalState();
+    const armedState = (opState.state as LampArmedState) ?? 'unknown';
+    const freshnessMs =
+      this.lastObservedTimestamp !== null
+        ? Math.max(0, Date.now() - this.lastObservedTimestamp)
+        : null;
+
+    return {
+      status: armedState === 'armed' ? 'ready' : armedState,
+      commanded: { ...this.commanded },
+      acknowledged: { ...this.acknowledged },
+      observed: { ...this.lastObserved },
+      freshnessMs,
+      provenance: this.determineProvenance(),
+      armed: armedState,
+    };
+  }
+
+  async arm(options?: {
+    timeoutMs?: number;
+    heartbeatIntervalMs?: number;
+    requireWatchdog?: boolean;
+  }): Promise<Record<string, unknown>> {
+    return this.protocolBackend.arm(options);
+  }
+
+  async disarm(): Promise<Record<string, unknown>> {
+    this.clearMaxOnTimer();
+    return this.protocolBackend.disarm();
+  }
+
+  async safeState(): Promise<Record<string, unknown>> {
+    this.clearMaxOnTimer();
+    return this.protocolBackend.safeState();
+  }
+
+  async invoke(
+    action: string,
+    payload: Record<string, unknown> = {},
+    context: BackendInvocationContext = {},
+  ): Promise<Record<string, unknown>> {
+    if (this.closed) {
+      throw new DeviceError('DISCONNECTED', 'Lamp backend is closed.');
+    }
+
+    if (action === 'lamp.status' || action === 'status.read') {
+      return this.readStatus(context);
+    }
+
+    if (action === 'lamp.on' || action === 'lamp.off' || action === 'lamp.set') {
+      let targetOn: boolean;
+      if (action === 'lamp.on') {
+        targetOn = true;
+      } else if (action === 'lamp.off') {
+        targetOn = false;
+      } else {
+        targetOn = Boolean(payload.on);
+      }
+
+      const opState = this.protocolBackend.getOperationalState();
+      if (opState.state === 'disarmed') {
+        throw new DeviceError('NOT_ARMED', 'Device is disarmed. Explicit arming is required.');
+      }
+      if (opState.state === 'tripped') {
+        throw new DeviceError(
+          'WATCHDOG_TRIPPED',
+          'Device watchdog tripped. Re-arming is required.',
+        );
+      }
+
+      const nowIso = new Date().toISOString();
+      this.commanded = { on: targetOn, at: nowIso };
+
+      const electricalLevel = this.config.polarity === 'active-low' ? !targetOn : targetOn;
+      const writePayload: Record<string, unknown> = {
+        pin: this.config.pin,
+        value: electricalLevel,
+      };
+      if (typeof payload.validityMs === 'number') {
+        writePayload.validityMs = payload.validityMs;
+      }
+
+      await this.device.invoke(
+        'gpio.write',
+        writePayload,
+        context.signal ? { signal: context.signal } : {},
+      );
+
+      this.acknowledged = { on: targetOn, at: new Date().toISOString() };
+
+      if (targetOn && this.config.maxOnMs) {
+        this.startMaxOnTimer(this.config.maxOnMs);
+      } else {
+        this.clearMaxOnTimer();
+      }
+
+      this.emit('lamp.changed', { on: targetOn });
+      return { on: targetOn };
+    }
+
+    throw new DeviceError('UNKNOWN_ACTION', `Unknown action '${action}'.`);
+  }
+
+  private async readStatus(context: BackendInvocationContext): Promise<LampStatus> {
+    const opState = this.protocolBackend.getOperationalState();
+    const armedState = (opState.state as LampArmedState) ?? 'unknown';
+
+    if (this.config.readbackPin !== undefined) {
+      const readResult = await this.device.invoke(
+        'gpio.read',
+        { pin: this.config.readbackPin },
+        context.signal ? { signal: context.signal } : {},
+      );
+      const rawValue = Boolean(readResult.value);
+      const observedOn = this.config.readbackPolarity === 'active-low' ? !rawValue : rawValue;
+      const atIso = new Date().toISOString();
+      this.lastObserved = { on: observedOn, at: atIso, source: 'gpio-readback' };
+      this.lastObservedTimestamp = Date.now();
+    } else {
+      this.lastObserved = { on: null, at: null, source: 'none' };
+      this.lastObservedTimestamp = null;
+    }
+
+    const freshnessMs =
+      this.lastObservedTimestamp !== null
+        ? Math.max(0, Date.now() - this.lastObservedTimestamp)
+        : null;
+
+    return {
+      commanded: { ...this.commanded },
+      acknowledged: { ...this.acknowledged },
+      observed: { ...this.lastObserved },
+      freshnessMs,
+      provenance: this.determineProvenance(),
+      armed: armedState,
+    };
+  }
+
+  private determineProvenance(): 'simulated' | 'hardware' {
+    if (this.config.provenance === 'hardware') {
+      return 'hardware';
+    }
+    return 'simulated';
+  }
+
+  private startMaxOnTimer(maxOnMs: number): void {
+    this.clearMaxOnTimer();
+    this.maxOnTimer = setTimeout(async () => {
+      try {
+        const offLevel = this.config.polarity === 'active-low' ? true : false;
+        await this.device
+          .invoke('gpio.write', { pin: this.config.pin, value: offLevel })
+          .catch(() => undefined);
+        const nowIso = new Date().toISOString();
+        this.commanded = { on: false, at: nowIso };
+        this.acknowledged = { on: false, at: nowIso };
+        this.emit('lamp.changed', { on: false, reason: 'max_on_exceeded' });
+      } catch {
+        // silent safe handling
+      }
+    }, maxOnMs);
+  }
+
+  private clearMaxOnTimer(): void {
+    if (this.maxOnTimer) {
+      clearTimeout(this.maxOnTimer);
+      this.maxOnTimer = undefined;
+    }
+  }
+
+  private emit(event: string, payload: Record<string, unknown>): void {
+    for (const listener of this.listeners) {
+      listener(event, payload);
+    }
+  }
+}
+
+export const createEsp32LampBackend = (options: Record<string, unknown> = {}) =>
+  Esp32LampBackend.create(options);
