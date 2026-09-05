@@ -1,0 +1,20 @@
+packages/mcp/tests/stdioSubprocess.test.ts
+  s_f13a1cb68d167b::t_1cc72e5a4b441c 21-26
+  s_f13a1cb68d167b::t_782c74ff3e257f 86,145,154,171,179,197,206,236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "d3396a0ad499360926e844bd967fb4d957176b80",
+  "prompts": {},
+  "sessions": {
+    "s_f13a1cb68d167b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "68b2773c-0c28-4129-b3ea-06b6f457129a",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
