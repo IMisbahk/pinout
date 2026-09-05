@@ -1,0 +1,33 @@
+examples/physical-intelligence.ts
+  s_67ccf019af85c7::t_19ecc133a1ed16 75
+examples/watch.ts
+  s_67ccf019af85c7::t_2c6ec9c4bc037f 12
+examples/blink.ts
+  s_67ccf019af85c7::t_6a721f32ecba41 15
+docs/protocol.md
+  s_67ccf019af85c7::t_bc866f3f8986cb 163-164
+examples/script.ts
+  s_67ccf019af85c7::t_6eab73dc2cb892 29
+examples/heterogeneous.ts
+  s_67ccf019af85c7::t_69dafde7f5abec 35
+examples/pwm.ts
+  s_67ccf019af85c7::t_0ee20656a32cbc 12
+docs/safety-model.md
+  s_67ccf019af85c7::t_eac259fa7fa6af 24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "f0017afc06b2691cc6c783d0594b5a6d2c0b72fb",
+  "prompts": {},
+  "sessions": {
+    "s_67ccf019af85c7": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "a303069a-39fe-4ec7-bf6f-0bf6f698ebc4",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
