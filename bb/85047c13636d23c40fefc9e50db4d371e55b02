@@ -1,0 +1,25 @@
+docs/setup.md
+  s_f23abdea472b8b::t_ae938ff34718ef 1-213
+docs/troubleshooting.md
+  s_f23abdea472b8b::t_141816c5cca515 3-25
+docs/cli.md
+  s_f23abdea472b8b::t_6148fcff405d91 61
+  s_f23abdea472b8b::t_b87e41b00343d5 95-100,103-123
+  s_f23abdea472b8b::t_a718a18b611751 124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "bb85047c13636d23c40fefc9e50db4d371e55b02",
+  "prompts": {},
+  "sessions": {
+    "s_f23abdea472b8b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "b93da3fa-e831-4a56-98eb-ad6c3949062d",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
