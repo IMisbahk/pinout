@@ -43,6 +43,7 @@ Device instance (esp32-01)
 | `pinout/valve` | `actuator.valve` | In-process simulator |
 | `pinout/pump` | `actuator.pump` | In-process simulator |
 | `pinout/power-supply` | `supply.power` | In-process simulator |
+| `pinout/lamp` | `actuator.lamp` | Commissioned GPIO over ESP32 / in-process simulator |
 
 ## Multi-driver devices
 
@@ -135,6 +136,7 @@ Capabilities use dotted names grouped by physical semantics:
 - `force.*` — load cells / force sensors
 - `drive.*` — mobile bases / differential drive
 - `relay.*` — electrical contacts
+- `lamp.*` — illumination and indicator actuation (`lamp.on`, `lamp.off`, `lamp.set`, `lamp.status`)
 - `valve.*` — proportional flow control
 - `pump.*` — pump speed and stop
 - `power.*` — programmable supply configuration and output enable
