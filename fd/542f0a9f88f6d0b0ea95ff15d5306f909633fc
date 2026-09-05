@@ -1,0 +1,22 @@
+docs/ros2-sidecar.md
+  s_ccaf8b21abb3ac::t_a476785af33f52 1-233
+examples/ros2-sidecar.ts
+  s_ccaf8b21abb3ac::t_9997b4e616565d 1-17,19-53,58-60,65-93,97-155,159-202,206-214,218-226,230-234,238-254
+  s_ccaf8b21abb3ac::t_1f28a062c32f5f 18,54-57,61-64,94-96,156-158,203-205,215-217,227-229,235-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "fd542f0a9f88f6d0b0ea95ff15d5306f909633fc",
+  "prompts": {},
+  "sessions": {
+    "s_ccaf8b21abb3ac": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a4ee9ae-0a0d-42dd-abdc-c6cf92c73921",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
