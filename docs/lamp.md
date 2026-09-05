@@ -1,6 +1,6 @@
 # Lamp Module (`pinout/lamp`)
 
-The **Lamp** module (`pinout/lamp`, device class `actuator.lamp`) provides commissioned, semantic control and status observation for illumination and indicator hardware (such as reference LEDs, signal lamps, or solid-state relays) over the verified ESP32 path or in-process simulation.
+The **Lamp** module (`pinout/lamp`, device class `actuator.lamp`) provides commissioned, semantic control and status observation for illumination and indicator hardware (such as reference LEDs, signal lamps, or solid-state relays) over the verified ESP32 path, Modbus/MQTT adapters, or in-process simulation.
 
 ## Product Promise: Semantic Abstraction
 
@@ -42,7 +42,9 @@ Pinout operates on a strict **fail-closed, explicit-arming model**:
 
 ---
 
-## Multi-Stage Evidence Model
+## Generic Evidence Contract & Multi-Stage State
+
+The lamp module implements Pinout's canonical physical evidence contract defined in [docs/state-evidence.md](state-evidence.md).
 
 A fundamental safety principle in Pinout is: **"Do not infer physical success from a successful write."**
 
@@ -53,21 +55,45 @@ To make this distinction explicit and machine-verifiable, `lamp.status` returns:
 ```json
 {
   "commanded": {
+    "value": true,
     "on": true,
-    "at": "2026-09-05T17:18:19.515Z"
+    "at": "2026-09-05T17:18:19.515Z",
+    "source": "commanded"
   },
   "acknowledged": {
+    "value": true,
     "on": true,
-    "at": "2026-09-05T17:18:19.516Z"
+    "at": "2026-09-05T17:18:19.516Z",
+    "source": "acknowledged"
   },
   "observed": {
+    "value": null,
     "on": null,
     "at": null,
     "source": "none"
   },
   "freshnessMs": null,
+  "stale": false,
   "provenance": "simulated",
-  "armed": "armed"
+  "armed": "armed",
+  "evidence": {
+    "on": {
+      "commanded": { "value": true, "at": "2026-09-05T17:18:19.515Z", "source": "commanded" },
+      "acknowledged": { "value": true, "at": "2026-09-05T17:18:19.516Z", "source": "acknowledged" },
+      "observed": { "value": null, "at": null, "source": "none" },
+      "freshnessMs": null,
+      "stale": false,
+      "provenance": "simulated"
+    },
+    "armed": {
+      "commanded": { "value": null, "at": null, "source": "none" },
+      "acknowledged": { "value": "armed", "at": "2026-09-05T17:18:19.000Z", "source": "acknowledged" },
+      "observed": { "value": null, "at": null, "source": "none" },
+      "freshnessMs": null,
+      "stale": false,
+      "provenance": "simulated"
+    }
+  }
 }
 ```
 
@@ -79,8 +105,17 @@ To make this distinction explicit and machine-verifiable, `lamp.status` returns:
 | `acknowledged` | The command was received and acknowledged by the firmware (`gpio.write` ACK). | Host-device link communication and firmware pin driver write. | Does **not** prove the physical lamp produced photons or that the circuit is intact. |
 | `observed` | Independent physical observation (e.g. from a photodiode, current sensor, or optical readback pin on `readbackPin`). | Independent electrical or optical sensor feedback. | `observed.on` remains `null` with `source: 'none'` unless an independent readback sensor is configured. |
 | `freshnessMs` | Elapsed milliseconds since the last `observed` sample. | Temporal validity of observation. | |
-| `provenance` | `'simulated'` or `'hardware'`. | Explicit simulation origin vs real hardware. | Prevents agents from confusing simulated environments with physical hardware. |
+| `stale` | True when `freshnessMs > observationMaxAgeMs`. | Indicates observed reading is too old for safe reliance. | |
+| `provenance` | `'simulated'`, `'hardware'`, or `'unknown'`. | Explicit simulation origin vs real hardware. | Prevents agents from confusing simulated environments with physical hardware. |
 | `armed` | `'armed'`, `'disarmed'`, `'tripped'`, or `'unknown'`. | Deadman watchdog and arming gate status. | |
+
+### State Prerequisites
+
+When `requireFreshObservation: true` is configured alongside `readbackPin`, `DeviceInstance` enforces a strict physical precondition on actuation commands (`lamp.on`, `lamp.set`):
+- If `observed.value` is missing or `source === 'none'`, the invocation is rejected with `PREREQUISITE_MISSING`.
+- If `observed.at` is older than `observationMaxAgeMs`, the invocation is rejected with `PREREQUISITE_STALE`.
+
+See [docs/state-evidence.md](state-evidence.md) for full details on prerequisite enforcement and freshness decay.
 
 ---
 
@@ -110,7 +145,9 @@ Wiring is specified in deployment configuration (`devices.json`), not in code.
         "safeLevel": "low",
         "maxOnMs": 30000,
         "readbackPin": 13,
-        "readbackPolarity": "active-high"
+        "readbackPolarity": "active-high",
+        "observationMaxAgeMs": 5000,
+        "requireFreshObservation": false
       }
     }
   ]
@@ -127,6 +164,8 @@ Wiring is specified in deployment configuration (`devices.json`), not in code.
 | `readbackPin` | integer | Optional | GPIO pin connected to an independent physical feedback sensor (e.g., photo-transistor or current monitor). |
 | `readbackPolarity` | `'active-high' \| 'active-low'` | Optional | Polarity for the readback sensor. Defaults to `'active-high'`. |
 | `maxOnMs` | number | Optional | Maximum continuous on-time in milliseconds. If exceeded, the lamp automatically turns off. |
+| `observationMaxAgeMs` | number | Optional | Maximum acceptable observation age before state is deemed stale (defaults to 5000 ms). |
+| `requireFreshObservation` | boolean | Optional | When true, enforces fresh observation prerequisites before allowing `lamp.on`/`lamp.set`. |
 | `requireWatchdog`| boolean | Optional | Enforces that firmware must support host-loss deadman watchdog. Defaults to `true`. |
 | `watchdogTimeoutMs` | number | Optional | Negotiated watchdog timeout interval. |
 | `autoArm` | boolean | Optional | Whether to automatically arm upon initialization (defaults to `false`; demo/test opt-in only). |
@@ -149,17 +188,49 @@ Before any actuation write occurs, the lamp backend commissions the pin safe sta
 
 ---
 
-## Limits & Fault Behaviors
+## Building Another Lamp Backend
 
-1. **Explicit Arming Gate**:
-   - Actuation (`lamp.on`, `lamp.set { on: true }`) while `disarmed` is rejected with `NOT_ARMED`.
-2. **Watchdog Expiry & Re-Arming**:
-   - If the host watchdog expires, the device firmware applies safe state and enters `tripped` state.
-   - Actuation is rejected with `WATCHDOG_TRIPPED`.
-   - `commanded` and `acknowledged` values are **not** falsely overwritten with a claimed "off"; they retain their audit history.
-   - Re-arming (`lamp.arm`) is required to resume physical actuation.
-3. **Continuous On-Time Limits (`maxOnMs`)**:
-   - If `maxOnMs` is configured, an automatic timer de-energizes the lamp if it remains on beyond the configured duration, protecting thermal and optical ratings.
+Pinout provides a shared, backend-agnostic conformance suite: `runLampConformance`. Any lamp backend (e.g., Modbus, MQTT, or direct driver) must implement the `LampBackendLike` contract:
+
+```typescript
+import type { DeviceBackend, EvidenceState } from '@pinout/core';
+
+export interface LampBackendLike extends DeviceBackend {
+  /** Optional hook to simulate a watchdog trip or circuit trip in testing */
+  injectTrip?(reason?: string): void;
+  /** Optional hook to simulate independent readback sensor feedback */
+  setSimulatedReadbackLevel?(level: boolean): void;
+}
+```
+
+### Running the Conformance Suite
+
+```typescript
+import { runLampConformance } from '@pinout/core';
+
+const result = await runLampConformance(async () => {
+  return createMyCustomLampBackend({ ... });
+});
+
+console.log(result.passed ? 'ALL CHECKS PASSED' : 'CONFORMANCE FAILED');
+for (const check of result.checks) {
+  console.log(`- [${check.status.toUpperCase()}] ${check.name}`);
+}
+```
+
+### Conformance Checks Performed
+
+1. `active-low safe level validation`: Configuration where safe level energizes the load is rejected with `UNSUPPORTED_CONFIGURATION`.
+2. `disarmed at start`: Backend initializes in `disarmed` state.
+3. `actuation rejected before arm`: `lamp.on` thrown with `NOT_ARMED` while disarmed.
+4. `explicit arm`: `lamp.arm` transitions state to `armed`.
+5. `turn lamp on`: `lamp.on` energizes output and returns `{ on: true }`.
+6. `status evidence model after write`: `commanded` and `acknowledged` reflect target on-state; `observed` remains `source: 'none'` unless independent readback is enabled.
+7. `turn lamp off`: `lamp.off` de-energizes output and updates status.
+8. `disarm and safe state enforcement`: `lamp.disarm` disarms and applies safe state; subsequent actuations are rejected.
+9. `trip recovery and re-arm`: Watchdog trip transitions to `tripped` and blocks actuation until `lamp.arm` is called.
+10. `honest provenance declaration`: Returns `'simulated'` or `'hardware'`.
+11. `generic evidence contract getOperationalStateEvidence`: Returns `{ on, armed }` containing valid `EvidenceState` structures.
 
 ---
 
@@ -168,5 +239,5 @@ Before any actuation write occurs, the lamp backend commissions the pin safe sta
 | Tier | Status | Details |
 | :--- | :--- | :--- |
 | **Protocol / SDK Contracts** | **VERIFIED** | Verified against the `@pinout/core` protocol test suites and simulated ESP32 bridge. |
-| **Module Conformance** | **VERIFIED** | Passes `runModuleConformance` suite. |
+| **Module Conformance** | **VERIFIED** | Passes `runModuleConformance` and `runLampConformance` suites. |
 | **Physical Hardware Bench Tests** | **PENDING** | Physical hardware acceptance tests on reference classic fixture (`hardware/reference/esp32-classic-led-sensor.md`) are pending dated bench records under `hardware/records/`. |

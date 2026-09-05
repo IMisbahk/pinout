@@ -3,15 +3,21 @@ import { DeviceError } from '../../errors.js';
 import { createLogger } from '../../logger.js';
 import { simulatedEsp32 } from '../../drivers/esp32/simulatedTransport.js';
 import { ProtocolDeviceBackend } from '../../runtime/protocolBackend.js';
+import {
+  computeFreshness,
+  recordAcknowledged,
+  recordCommanded,
+  recordObserved,
+  unknownEvidence,
+  type EvidenceProvenance,
+  type EvidenceState,
+} from '../../spec/evidence.js';
 import type { BackendInvocationContext, DeviceBackend } from '../../runtime/types.js';
 import type { Device } from '../../device.js';
 import type { Transport } from '../../types.js';
 import {
   validateLampConfig,
   type LampArmedState,
-  type LampCommandedState,
-  type LampAcknowledgedState,
-  type LampObservedState,
   type LampStatus,
   type ValidatedLampConfig,
 } from './types.js';
@@ -21,10 +27,8 @@ export class Esp32LampBackend implements DeviceBackend {
   private readonly device: Device;
   private readonly protocolBackend: ProtocolDeviceBackend;
   private readonly config: ValidatedLampConfig;
-  private commanded: LampCommandedState = { on: null, at: null };
-  private acknowledged: LampAcknowledgedState = { on: null, at: null };
-  private lastObserved: LampObservedState = { on: null, at: null, source: 'none' };
-  private lastObservedTimestamp: number | null = null;
+  private onEvidence: EvidenceState<boolean>;
+  private armedEvidence: EvidenceState<LampArmedState>;
   private maxOnTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly listeners = new Set<(event: string, payload: Record<string, unknown>) => void>();
   private closed = false;
@@ -37,9 +41,23 @@ export class Esp32LampBackend implements DeviceBackend {
     this.device = device;
     this.protocolBackend = protocolBackend;
     this.config = config;
+    this.onEvidence = unknownEvidence<boolean>(this.config.provenance);
+    this.armedEvidence = unknownEvidence<LampArmedState>(this.config.provenance);
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      this.config.autoArm ? 'armed' : 'disarmed',
+      null,
+      this.config.provenance,
+    );
 
     this.device.on('device.tripped', (payload) => {
       this.clearMaxOnTimer();
+      this.armedEvidence = recordAcknowledged(
+        this.armedEvidence,
+        'tripped',
+        null,
+        this.config.provenance,
+      );
       this.emit('device.tripped', payload);
     });
   }
@@ -98,19 +116,56 @@ export class Esp32LampBackend implements DeviceBackend {
   getOperationalState(): Record<string, unknown> {
     const opState = this.protocolBackend.getOperationalState();
     const armedState = (opState.state as LampArmedState) ?? 'unknown';
-    const freshnessMs =
-      this.lastObservedTimestamp !== null
-        ? Math.max(0, Date.now() - this.lastObservedTimestamp)
-        : null;
+    const now = Date.now();
+    const freshOn = computeFreshness(this.onEvidence, now, this.config.observationMaxAgeMs);
+    const freshArmed = computeFreshness(
+      recordAcknowledged(this.armedEvidence, armedState, null, this.config.provenance),
+      now,
+    );
 
     return {
       status: armedState === 'armed' ? 'ready' : armedState,
-      commanded: { ...this.commanded },
-      acknowledged: { ...this.acknowledged },
-      observed: { ...this.lastObserved },
-      freshnessMs,
+      commanded: {
+        value: freshOn.commanded.value,
+        on: freshOn.commanded.value,
+        at: freshOn.commanded.at,
+        source: freshOn.commanded.source,
+      },
+      acknowledged: {
+        value: freshOn.acknowledged.value,
+        on: freshOn.acknowledged.value,
+        at: freshOn.acknowledged.at,
+        source: freshOn.acknowledged.source,
+      },
+      observed: {
+        value: freshOn.observed.value,
+        on: freshOn.observed.value,
+        at: freshOn.observed.at,
+        source: freshOn.observed.source,
+      },
+      freshnessMs: freshOn.freshnessMs,
+      stale: freshOn.stale,
       provenance: this.determineProvenance(),
       armed: armedState,
+      evidence: {
+        on: freshOn,
+        armed: freshArmed,
+      },
+    };
+  }
+
+  getOperationalStateEvidence(): Record<string, EvidenceState<unknown>> {
+    const now = Date.now();
+    const freshOn = computeFreshness(this.onEvidence, now, this.config.observationMaxAgeMs);
+    const opState = this.protocolBackend.getOperationalState();
+    const armedState = (opState.state as LampArmedState) ?? 'unknown';
+    const freshArmed = computeFreshness(
+      recordAcknowledged(this.armedEvidence, armedState, null, this.config.provenance),
+      now,
+    );
+    return {
+      on: freshOn as EvidenceState<unknown>,
+      armed: freshArmed as EvidenceState<unknown>,
     };
   }
 
@@ -119,17 +174,38 @@ export class Esp32LampBackend implements DeviceBackend {
     heartbeatIntervalMs?: number;
     requireWatchdog?: boolean;
   }): Promise<Record<string, unknown>> {
-    return this.protocolBackend.arm(options);
+    const res = await this.protocolBackend.arm(options);
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'armed',
+      null,
+      this.config.provenance,
+    );
+    return res;
   }
 
   async disarm(): Promise<Record<string, unknown>> {
     this.clearMaxOnTimer();
-    return this.protocolBackend.disarm();
+    const res = await this.protocolBackend.disarm();
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'disarmed',
+      null,
+      this.config.provenance,
+    );
+    return res;
   }
 
   async safeState(): Promise<Record<string, unknown>> {
     this.clearMaxOnTimer();
-    return this.protocolBackend.safeState();
+    const res = await this.protocolBackend.safeState();
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'disarmed',
+      null,
+      this.config.provenance,
+    );
+    return res;
   }
 
   async invoke(
@@ -163,6 +239,12 @@ export class Esp32LampBackend implements DeviceBackend {
       }
 
       const armResult = await this.protocolBackend.arm(armOptions);
+      this.armedEvidence = recordAcknowledged(
+        this.armedEvidence,
+        'armed',
+        null,
+        this.config.provenance,
+      );
       return {
         armed: 'armed',
         timeoutMs:
@@ -175,6 +257,12 @@ export class Esp32LampBackend implements DeviceBackend {
     if (action === 'lamp.disarm') {
       this.clearMaxOnTimer();
       await this.protocolBackend.disarm();
+      this.armedEvidence = recordAcknowledged(
+        this.armedEvidence,
+        'disarmed',
+        null,
+        this.config.provenance,
+      );
       return { armed: 'disarmed' };
     }
 
@@ -202,8 +290,8 @@ export class Esp32LampBackend implements DeviceBackend {
         );
       }
 
-      const nowIso = new Date().toISOString();
-      this.commanded = { on: targetOn, at: nowIso };
+      const now = new Date();
+      this.onEvidence = recordCommanded(this.onEvidence, targetOn, now, this.config.provenance);
 
       const electricalLevel = this.config.polarity === 'active-low' ? !targetOn : targetOn;
       const writePayload: Record<string, unknown> = {
@@ -220,7 +308,7 @@ export class Esp32LampBackend implements DeviceBackend {
         context.signal ? { signal: context.signal } : {},
       );
 
-      this.acknowledged = { on: targetOn, at: new Date().toISOString() };
+      this.onEvidence = recordAcknowledged(this.onEvidence, targetOn, now, this.config.provenance);
 
       if (targetOn && this.config.maxOnMs) {
         this.startMaxOnTimer(this.config.maxOnMs);
@@ -238,6 +326,7 @@ export class Esp32LampBackend implements DeviceBackend {
   private async readStatus(context: BackendInvocationContext): Promise<LampStatus> {
     const opState = this.protocolBackend.getOperationalState();
     const armedState = (opState.state as LampArmedState) ?? 'unknown';
+    const now = new Date();
 
     if (this.config.readbackPin !== undefined) {
       const readResult = await this.device.invoke(
@@ -247,30 +336,53 @@ export class Esp32LampBackend implements DeviceBackend {
       );
       const rawValue = Boolean(readResult.value);
       const observedOn = this.config.readbackPolarity === 'active-low' ? !rawValue : rawValue;
-      const atIso = new Date().toISOString();
-      this.lastObserved = { on: observedOn, at: atIso, source: 'gpio-readback' };
-      this.lastObservedTimestamp = Date.now();
-    } else {
-      this.lastObserved = { on: null, at: null, source: 'none' };
-      this.lastObservedTimestamp = null;
+      this.onEvidence = recordObserved(
+        this.onEvidence,
+        observedOn,
+        'gpio-readback',
+        now,
+        this.config.provenance,
+        this.config.observationMaxAgeMs,
+      );
     }
 
-    const freshnessMs =
-      this.lastObservedTimestamp !== null
-        ? Math.max(0, Date.now() - this.lastObservedTimestamp)
-        : null;
+    const freshOn = computeFreshness(this.onEvidence, now, this.config.observationMaxAgeMs);
+    const freshArmed = computeFreshness(
+      recordAcknowledged(this.armedEvidence, armedState, now, this.config.provenance),
+      now,
+    );
 
     return {
-      commanded: { ...this.commanded },
-      acknowledged: { ...this.acknowledged },
-      observed: { ...this.lastObserved },
-      freshnessMs,
+      commanded: {
+        value: freshOn.commanded.value,
+        on: freshOn.commanded.value,
+        at: freshOn.commanded.at,
+        source: freshOn.commanded.source,
+      },
+      acknowledged: {
+        value: freshOn.acknowledged.value,
+        on: freshOn.acknowledged.value,
+        at: freshOn.acknowledged.at,
+        source: freshOn.acknowledged.source,
+      },
+      observed: {
+        value: freshOn.observed.value,
+        on: freshOn.observed.value,
+        at: freshOn.observed.at,
+        source: freshOn.observed.source,
+      },
+      freshnessMs: freshOn.freshnessMs,
+      stale: freshOn.stale,
       provenance: this.determineProvenance(),
       armed: armedState,
+      evidence: {
+        on: freshOn,
+        armed: freshArmed,
+      },
     };
   }
 
-  private determineProvenance(): 'simulated' | 'hardware' {
+  private determineProvenance(): EvidenceProvenance {
     if (this.config.provenance === 'hardware') {
       return 'hardware';
     }
@@ -285,9 +397,9 @@ export class Esp32LampBackend implements DeviceBackend {
         await this.device
           .invoke('gpio.write', { pin: this.config.pin, value: offLevel })
           .catch(() => undefined);
-        const nowIso = new Date().toISOString();
-        this.commanded = { on: false, at: nowIso };
-        this.acknowledged = { on: false, at: nowIso };
+        const now = new Date();
+        this.onEvidence = recordCommanded(this.onEvidence, false, now, this.config.provenance);
+        this.onEvidence = recordAcknowledged(this.onEvidence, false, now, this.config.provenance);
         this.emit('lamp.changed', { on: false, reason: 'max_on_exceeded' });
       } catch {
         // silent safe handling

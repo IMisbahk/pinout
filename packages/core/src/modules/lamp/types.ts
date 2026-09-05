@@ -8,28 +8,36 @@ import {
 } from '../../drivers/esp32/pins.js';
 import type { Transport } from '../../types.js';
 import type { Device } from '../../device.js';
+import type {
+  EvidenceProvenance,
+  EvidenceSource,
+  EvidenceState,
+  EvidenceValue,
+} from '../../spec/evidence.js';
 
 export type LampPolarity = 'active-high' | 'active-low';
 export type LampSafeLevel = 'low' | 'high' | 'high-z' | 'hold';
 export type LampArmedState = 'armed' | 'disarmed' | 'tripped' | 'unknown';
-export type LampObservedSource = 'gpio-readback' | 'none' | 'simulated';
+export type LampObservedSource = EvidenceSource;
 
-export interface LampCommandedState {
+export type LampCommandedState = EvidenceValue<boolean> & {
   on: boolean | null;
-  at: string | null;
   [key: string]: unknown;
-}
+};
 
-export interface LampAcknowledgedState {
+export type LampAcknowledgedState = EvidenceValue<boolean> & {
   on: boolean | null;
-  at: string | null;
   [key: string]: unknown;
-}
+};
 
-export interface LampObservedState {
+export type LampObservedState = EvidenceValue<boolean> & {
   on: boolean | null;
-  at: string | null;
-  source: LampObservedSource;
+  [key: string]: unknown;
+};
+
+export interface LampEvidenceBundle {
+  on: EvidenceState<boolean>;
+  armed: EvidenceState<LampArmedState>;
   [key: string]: unknown;
 }
 
@@ -38,8 +46,10 @@ export interface LampStatus {
   acknowledged: LampAcknowledgedState;
   observed: LampObservedState;
   freshnessMs: number | null;
-  provenance: 'simulated' | 'hardware';
+  stale: boolean;
+  provenance: EvidenceProvenance;
   armed: LampArmedState;
+  evidence: LampEvidenceBundle;
   [key: string]: unknown;
 }
 
@@ -50,12 +60,14 @@ export interface LampConfig {
   readbackPin?: number | undefined;
   readbackPolarity?: LampPolarity | undefined;
   maxOnMs?: number | undefined;
+  observationMaxAgeMs?: number | undefined;
+  requireFreshObservation?: boolean | undefined;
   requireWatchdog?: boolean | undefined;
   watchdogTimeoutMs?: number | undefined;
   autoArm?: boolean | undefined;
   autoHeartbeat?: boolean | undefined;
   heartbeatIntervalMs?: number | undefined;
-  provenance?: 'simulated' | 'hardware' | undefined;
+  provenance?: EvidenceProvenance | undefined;
   simulated?: boolean | undefined;
   transport?: Transport | undefined;
   device?: Device | undefined;
@@ -68,12 +80,14 @@ export interface ValidatedLampConfig {
   readbackPin?: number | undefined;
   readbackPolarity: LampPolarity;
   maxOnMs?: number | undefined;
+  observationMaxAgeMs: number;
+  requireFreshObservation: boolean;
   requireWatchdog: boolean;
   watchdogTimeoutMs?: number | undefined;
   autoArm: boolean;
   autoHeartbeat?: boolean | undefined;
   heartbeatIntervalMs?: number | undefined;
-  provenance: 'simulated' | 'hardware';
+  provenance: EvidenceProvenance;
   simulated: boolean;
   transport?: Transport | undefined;
   device?: Device | undefined;
@@ -93,6 +107,8 @@ export function validateLampConfig(
       polarity: 'active-high',
       safeLevel: 'low',
       readbackPolarity: 'active-high',
+      observationMaxAgeMs: 5000,
+      requireFreshObservation: false,
       requireWatchdog: true,
       autoArm: false,
       simulated: rawConfig.simulated !== false,
@@ -161,11 +177,25 @@ export function validateLampConfig(
     maxOnMs = rawConfig.maxOnMs;
   }
 
+  let observationMaxAgeMs = 5000;
+  if (rawConfig.observationMaxAgeMs !== undefined) {
+    if (
+      typeof rawConfig.observationMaxAgeMs !== 'number' ||
+      rawConfig.observationMaxAgeMs <= 0 ||
+      !Number.isFinite(rawConfig.observationMaxAgeMs)
+    ) {
+      throw new ValidationError('observationMaxAgeMs must be a positive finite number.');
+    }
+    observationMaxAgeMs = rawConfig.observationMaxAgeMs;
+  }
+
+  const requireFreshObservation = rawConfig.requireFreshObservation === true;
+
   const simulated = rawConfig.simulated !== false;
-  const provenance =
+  const provenance: EvidenceProvenance =
     rawConfig.provenance === 'hardware'
       ? 'hardware'
-      : ((rawConfig.provenance as 'simulated' | 'hardware' | undefined) ?? 'simulated');
+      : ((rawConfig.provenance as EvidenceProvenance | undefined) ?? 'simulated');
 
   return {
     pin,
@@ -174,6 +204,8 @@ export function validateLampConfig(
     readbackPin,
     readbackPolarity,
     maxOnMs,
+    observationMaxAgeMs,
+    requireFreshObservation,
     requireWatchdog: rawConfig.requireWatchdog !== false,
     watchdogTimeoutMs:
       typeof rawConfig.watchdogTimeoutMs === 'number' ? rawConfig.watchdogTimeoutMs : undefined,

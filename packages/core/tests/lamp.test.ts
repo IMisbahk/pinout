@@ -10,6 +10,7 @@ import {
   lampModule,
   lampModuleId,
   PinoutRuntime,
+  PinoutStructuredError,
   runModuleConformance,
   runtimeToAgentTools,
   simulatedEsp32,
@@ -153,9 +154,9 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
 
       const initialStatus = await runtime.invoke('lamp-01', 'lamp.status', {});
       expect(initialStatus.armed).toBe('disarmed');
-      expect(initialStatus.commanded).toEqual({ on: null, at: null });
-      expect(initialStatus.acknowledged).toEqual({ on: null, at: null });
-      expect(initialStatus.observed).toEqual({ on: null, at: null, source: 'none' });
+      expect(initialStatus.commanded).toMatchObject({ on: null, at: null });
+      expect(initialStatus.acknowledged).toMatchObject({ on: null, at: null });
+      expect(initialStatus.observed).toMatchObject({ on: null, at: null, source: 'none' });
 
       // Actuations fail while disarmed
       await expect(runtime.invoke('lamp-01', 'lamp.on', {})).rejects.toThrowError(
@@ -205,7 +206,8 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       expect(statusAfterOn.acknowledged.on).toBe(true);
       expect(typeof statusAfterOn.acknowledged.at).toBe('string');
       // Critical: A successful write does NOT claim observed status without readback
-      expect(statusAfterOn.observed).toEqual({ on: null, at: null, source: 'none' });
+      expect(statusAfterOn.observed.source).toBe('none');
+      expect(statusAfterOn.observed.on).toBeNull();
       expect(statusAfterOn.freshnessMs).toBeNull();
       expect(statusAfterOn.provenance).toBe('simulated');
       expect(statusAfterOn.armed).toBe('armed');
@@ -220,7 +222,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       const statusAfterOff = await runtime.invoke('lamp-01', 'lamp.status', {});
       expect(statusAfterOff.commanded.on).toBe(false);
       expect(statusAfterOff.acknowledged.on).toBe(false);
-      expect(statusAfterOff.observed).toEqual({ on: null, at: null, source: 'none' });
+      expect(statusAfterOff.observed.source).toBe('none');
       expect(transport.state.levels.get(2)).toBe(false);
 
       // 5. Test lamp.set capability
@@ -272,7 +274,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
     }
   });
 
-  it('reads independent observation via readbackPin and computes freshness', async () => {
+  it('reads independent observation via readbackPin and computes freshness and staleness', async () => {
     const transport = simulatedEsp32();
     const runtime = new PinoutRuntime();
     try {
@@ -285,6 +287,7 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
           safeLevel: 'low',
           readbackPin: 13,
           readbackPolarity: 'active-high',
+          observationMaxAgeMs: 50,
         },
       });
 
@@ -295,12 +298,101 @@ describe('Lamp Module - Arming, Actuation, and Evidence Model', () => {
       expect(status1.observed.source).toBe('gpio-readback');
       expect(typeof status1.observed.at).toBe('string');
       expect(typeof status1.freshnessMs).toBe('number');
+      expect(status1.stale).toBe(false);
 
       // Now independent photodiode/sensor detects light (pin 13 HIGH)
       transport.state.levels.set(13, true);
       const status2 = await runtime.invoke('lamp-with-readback', 'lamp.status', {});
       expect(status2.observed.on).toBe(true);
       expect(status2.observed.source).toBe('gpio-readback');
+      expect(status2.stale).toBe(false);
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('exposes generic EvidenceState under evidence key and implements getOperationalStateEvidence', async () => {
+    const transport = simulatedEsp32();
+    const runtime = new PinoutRuntime();
+    try {
+      const device = await runtime.registerFromModule(lampModuleId, {
+        id: 'lamp-evidence-test',
+        transport,
+        backendOptions: {
+          pin: 2,
+          polarity: 'active-high',
+          safeLevel: 'low',
+        },
+      });
+
+      const status = await runtime.invoke('lamp-evidence-test', 'lamp.status', {});
+      expect(status.evidence).toBeDefined();
+      expect(status.evidence.on).toBeDefined();
+      expect(status.evidence.armed).toBeDefined();
+      expect(status.evidence.on.commanded).toBeDefined();
+      expect(status.evidence.on.acknowledged).toBeDefined();
+      expect(status.evidence.on.observed).toBeDefined();
+
+      const evidenceMap = device.getStateEvidence();
+      expect(evidenceMap.on).toBeDefined();
+      expect(evidenceMap.armed).toBeDefined();
+    } finally {
+      await runtime.close();
+    }
+  });
+
+  it('enforces state prerequisites: rejects actuation when observation is missing or stale', async () => {
+    const transport = simulatedEsp32();
+    const runtime = new PinoutRuntime();
+    try {
+      await runtime.registerFromModule(lampModuleId, {
+        id: 'lamp-prereq-test',
+        transport,
+        backendOptions: {
+          pin: 2,
+          polarity: 'active-high',
+          safeLevel: 'low',
+          readbackPin: 13,
+          readbackPolarity: 'active-high',
+          observationMaxAgeMs: 50,
+        },
+        prerequisites: {
+          'lamp.on': [{ key: 'on', maxAgeMs: 50 }],
+        },
+      });
+
+      await runtime.invoke('lamp-prereq-test', 'lamp.arm', {});
+
+      // 1. Before reading readbackPin, observation is missing -> throws PREREQUISITE_MISSING
+      await expect(runtime.invoke('lamp-prereq-test', 'lamp.on', {})).rejects.toThrowError(
+        PinoutStructuredError,
+      );
+
+      try {
+        await runtime.invoke('lamp-prereq-test', 'lamp.on', {});
+        expect.unreachable('Should have thrown PREREQUISITE_MISSING');
+      } catch (error) {
+        expect((error as PinoutStructuredError).code).toBe('PREREQUISITE_MISSING');
+      }
+
+      // 2. Read status to establish a fresh observation of pin 13
+      transport.state.levels.set(13, false);
+      await runtime.invoke('lamp-prereq-test', 'lamp.status', {});
+
+      // 3. Immediately invoke lamp.on while observation is fresh (< 50ms) -> succeeds!
+      const onRes = await runtime.invoke('lamp-prereq-test', 'lamp.on', {});
+      expect(onRes).toEqual({ on: true });
+
+      // 4. Wait 80ms for observation to become stale (> 50ms)
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      // 5. Next actuation with stale prerequisite throws PREREQUISITE_STALE
+      try {
+        await runtime.invoke('lamp-prereq-test', 'lamp.on', {});
+        expect.unreachable('Should have thrown PREREQUISITE_STALE');
+      } catch (error) {
+        expect((error as PinoutStructuredError).code).toBe('PREREQUISITE_STALE');
+      }
     } finally {
       await runtime.close();
     }
@@ -417,6 +509,7 @@ describe('Lamp Module - In-Process Simulated Backend', () => {
       expect(status.observed.on).toBeNull();
       expect(status.provenance).toBe('simulated');
       expect(status.armed).toBe('armed');
+      expect(status.evidence.on).toBeDefined();
 
       backend.injectTrip();
       const trippedStatus = await backend.invoke('lamp.status', {});

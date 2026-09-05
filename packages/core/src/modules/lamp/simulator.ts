@@ -1,12 +1,17 @@
 import { DeviceError } from '../../errors.js';
 import { createLogger } from '../../logger.js';
+import {
+  computeFreshness,
+  recordAcknowledged,
+  recordCommanded,
+  recordObserved,
+  unknownEvidence,
+  type EvidenceState,
+} from '../../spec/evidence.js';
 import type { BackendInvocationContext, DeviceBackend } from '../../runtime/types.js';
 import {
   validateLampConfig,
   type LampArmedState,
-  type LampCommandedState,
-  type LampAcknowledgedState,
-  type LampObservedState,
   type LampStatus,
   type ValidatedLampConfig,
 } from './types.js';
@@ -15,10 +20,8 @@ export class SimulatedLampBackend implements DeviceBackend {
   readonly kind = 'simulated' as const;
   private readonly config: ValidatedLampConfig;
   private armedState: LampArmedState = 'disarmed';
-  private commanded: LampCommandedState = { on: null, at: null };
-  private acknowledged: LampAcknowledgedState = { on: null, at: null };
-  private lastObserved: LampObservedState = { on: null, at: null, source: 'none' };
-  private lastObservedTimestamp: number | null = null;
+  private onEvidence: EvidenceState<boolean>;
+  private armedEvidence: EvidenceState<LampArmedState>;
   private simulatedReadbackLevel: boolean | undefined = undefined;
   private maxOnTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly listeners = new Set<(event: string, payload: Record<string, unknown>) => void>();
@@ -26,13 +29,28 @@ export class SimulatedLampBackend implements DeviceBackend {
 
   constructor(options: Record<string, unknown> = {}) {
     this.config = validateLampConfig(options);
+    this.onEvidence = unknownEvidence<boolean>(this.config.provenance);
+    this.armedEvidence = unknownEvidence<LampArmedState>(this.config.provenance);
+
     if (this.config.autoArm) {
       createLogger('warn', { module: 'pinout:lamp' }).warn(
         'autoArm is enabled on simulated lamp backend; this is for demo/testing only and bypasses explicit arming safety.',
       );
       this.armedState = 'armed';
+      this.armedEvidence = recordAcknowledged(
+        this.armedEvidence,
+        'armed',
+        null,
+        this.config.provenance,
+      );
     } else {
       this.armedState = 'disarmed';
+      this.armedEvidence = recordAcknowledged(
+        this.armedEvidence,
+        'disarmed',
+        null,
+        this.config.provenance,
+      );
     }
   }
 
@@ -51,20 +69,51 @@ export class SimulatedLampBackend implements DeviceBackend {
     return this.buildStatus();
   }
 
+  getOperationalStateEvidence(): Record<string, EvidenceState<unknown>> {
+    const now = Date.now();
+    const freshOn = computeFreshness(this.onEvidence, now, this.config.observationMaxAgeMs);
+    const freshArmed = computeFreshness(this.armedEvidence, now);
+    return {
+      on: freshOn as EvidenceState<unknown>,
+      armed: freshArmed as EvidenceState<unknown>,
+    };
+  }
+
   async arm(options: { timeoutMs?: number } = {}): Promise<Record<string, unknown>> {
     const timeoutMs =
       typeof options.timeoutMs === 'number'
         ? options.timeoutMs
         : (this.config.watchdogTimeoutMs ?? 1000);
     this.armedState = 'armed';
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'armed',
+      null,
+      this.config.provenance,
+    );
     return { armed: 'armed', timeoutMs };
   }
 
   async disarm(): Promise<Record<string, unknown>> {
     this.clearMaxOnTimer();
     this.armedState = 'disarmed';
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'disarmed',
+      null,
+      this.config.provenance,
+    );
     if (this.config.readbackPin !== undefined) {
       this.simulatedReadbackLevel = this.config.polarity === 'active-low' ? true : false;
+      const observedOn = false;
+      this.onEvidence = recordObserved(
+        this.onEvidence,
+        observedOn,
+        'simulated',
+        null,
+        this.config.provenance,
+        this.config.observationMaxAgeMs,
+      );
     }
     this.emit('safe_state.applied', { pin: this.config.pin, safeLevel: this.config.safeLevel });
     return { armed: 'disarmed' };
@@ -73,6 +122,12 @@ export class SimulatedLampBackend implements DeviceBackend {
   async safeState(): Promise<Record<string, unknown>> {
     this.clearMaxOnTimer();
     this.armedState = 'disarmed';
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'disarmed',
+      null,
+      this.config.provenance,
+    );
     this.emit('safe_state.applied', { pin: this.config.pin, safeLevel: this.config.safeLevel });
     return { applied: true, pin: this.config.pin, safeLevel: this.config.safeLevel };
   }
@@ -80,11 +135,26 @@ export class SimulatedLampBackend implements DeviceBackend {
   injectTrip(reason = 'WATCHDOG_EXPIRED'): void {
     this.clearMaxOnTimer();
     this.armedState = 'tripped';
+    this.armedEvidence = recordAcknowledged(
+      this.armedEvidence,
+      'tripped',
+      null,
+      this.config.provenance,
+    );
     this.emit('device.tripped', { reason, stoppedPins: [this.config.pin] });
   }
 
   setSimulatedReadbackLevel(level: boolean): void {
     this.simulatedReadbackLevel = level;
+    const observedOn = this.config.readbackPolarity === 'active-low' ? !level : level;
+    this.onEvidence = recordObserved(
+      this.onEvidence,
+      observedOn,
+      'simulated',
+      null,
+      this.config.provenance,
+      this.config.observationMaxAgeMs,
+    );
   }
 
   async invoke(
@@ -135,13 +205,23 @@ export class SimulatedLampBackend implements DeviceBackend {
         );
       }
 
-      const nowIso = new Date().toISOString();
-      this.commanded = { on: targetOn, at: nowIso };
-      this.acknowledged = { on: targetOn, at: nowIso };
+      const now = new Date();
+      this.onEvidence = recordCommanded(this.onEvidence, targetOn, now, this.config.provenance);
+      this.onEvidence = recordAcknowledged(this.onEvidence, targetOn, now, this.config.provenance);
 
       if (this.config.readbackPin !== undefined) {
         const physicalHigh = this.config.polarity === 'active-low' ? !targetOn : targetOn;
         this.simulatedReadbackLevel = physicalHigh;
+        const observedOn =
+          this.config.readbackPolarity === 'active-low' ? !physicalHigh : physicalHigh;
+        this.onEvidence = recordObserved(
+          this.onEvidence,
+          observedOn,
+          'simulated',
+          now,
+          this.config.provenance,
+          this.config.observationMaxAgeMs,
+        );
       }
 
       if (targetOn && this.config.maxOnMs) {
@@ -158,41 +238,56 @@ export class SimulatedLampBackend implements DeviceBackend {
   }
 
   private buildStatus(): LampStatus {
-    if (this.config.readbackPin !== undefined) {
-      const defaultPhysical =
-        this.config.polarity === 'active-low'
-          ? !this.acknowledged.on
-          : Boolean(this.acknowledged.on);
-      const rawLevel = this.simulatedReadbackLevel ?? defaultPhysical;
-      const observedOn = this.config.readbackPolarity === 'active-low' ? !rawLevel : rawLevel;
-      const atIso = new Date().toISOString();
-      this.lastObserved = { on: observedOn, at: atIso, source: 'simulated' };
-      this.lastObservedTimestamp = Date.now();
-    } else {
-      this.lastObserved = { on: null, at: null, source: 'none' };
-      this.lastObservedTimestamp = null;
-    }
-
-    const freshnessMs = this.lastObservedTimestamp !== null ? 0 : null;
+    const now = Date.now();
+    const freshOn = computeFreshness(this.onEvidence, now, this.config.observationMaxAgeMs);
+    const freshArmed = computeFreshness(this.armedEvidence, now);
 
     return {
-      commanded: { ...this.commanded },
-      acknowledged: { ...this.acknowledged },
-      observed: { ...this.lastObserved },
-      freshnessMs,
-      provenance: 'simulated',
+      commanded: {
+        value: freshOn.commanded.value,
+        on: freshOn.commanded.value,
+        at: freshOn.commanded.at,
+        source: freshOn.commanded.source,
+      },
+      acknowledged: {
+        value: freshOn.acknowledged.value,
+        on: freshOn.acknowledged.value,
+        at: freshOn.acknowledged.at,
+        source: freshOn.acknowledged.source,
+      },
+      observed: {
+        value: freshOn.observed.value,
+        on: freshOn.observed.value,
+        at: freshOn.observed.at,
+        source: freshOn.observed.source,
+      },
+      freshnessMs: freshOn.freshnessMs,
+      stale: freshOn.stale,
+      provenance: freshOn.provenance,
       armed: this.armedState,
+      evidence: {
+        on: freshOn,
+        armed: freshArmed,
+      },
     };
   }
 
   private startMaxOnTimer(maxOnMs: number): void {
     this.clearMaxOnTimer();
     this.maxOnTimer = setTimeout(() => {
-      const nowIso = new Date().toISOString();
-      this.commanded = { on: false, at: nowIso };
-      this.acknowledged = { on: false, at: nowIso };
+      const now = new Date();
+      this.onEvidence = recordCommanded(this.onEvidence, false, now, this.config.provenance);
+      this.onEvidence = recordAcknowledged(this.onEvidence, false, now, this.config.provenance);
       if (this.config.readbackPin !== undefined) {
         this.simulatedReadbackLevel = this.config.polarity === 'active-low' ? true : false;
+        this.onEvidence = recordObserved(
+          this.onEvidence,
+          false,
+          'simulated',
+          now,
+          this.config.provenance,
+          this.config.observationMaxAgeMs,
+        );
       }
       this.emit('lamp.changed', { on: false, reason: 'max_on_exceeded' });
     }, maxOnMs);
