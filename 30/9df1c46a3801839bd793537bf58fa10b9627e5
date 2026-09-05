@@ -1,0 +1,28 @@
+packages/mcp/tests/stdioSubprocess.test.ts
+  s_f13a1cb68d167b::t_90acd1f5dbb280 13,46-55,59
+  s_f13a1cb68d167b::t_b1f76300de9ae9 1-12,14-45,56-58,60-232
+packages/mcp/src/createDaemonServer.ts
+  s_f13a1cb68d167b::t_846dc5ce7d3270 53-56,58-83
+  s_f13a1cb68d167b::t_776b238cfd3cf9 184-202
+  s_f13a1cb68d167b::t_ab136e6504f45f 35-45
+packages/mcp/src/createRuntimeServer.ts
+  s_f13a1cb68d167b::t_9627ed4b779b21 354-368
+packages/mcp/src/runStdio.ts
+  s_f13a1cb68d167b::t_677d2f0b533d70 1,20,24-36,43,52-55,58-133,137-141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "309df1c46a3801839bd793537bf58fa10b9627e5",
+  "prompts": {},
+  "sessions": {
+    "s_f13a1cb68d167b": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "68b2773c-0c28-4129-b3ea-06b6f457129a",
+        "model": "gemini-3.7-flash-high"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
