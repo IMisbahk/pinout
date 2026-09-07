@@ -462,7 +462,9 @@ instead of inventing an answer.
 
 # MCP
 
-Pinout exposes registered hardware capabilities dynamically through MCP.
+The default daemon-backed MCP catalog is static: `pinout__list_devices`, `pinout__describe_device`, and `pinout__invoke({deviceId, capability, args})` plus governance tools. Board changes require no MCP configuration changes. See the [Uno / ESP32 / C3 LED demo](docs/three-board-demo.md).
+
+The optional compatibility catalog exposes registered hardware capabilities dynamically through MCP.
 
 ```text
 Claude / Agent
@@ -542,6 +544,8 @@ print(op.result())
 ```
 
 ## Real hardware path
+
+For automatic detection and the static MCP LED demo on Uno R3, ESP32 classic, and ESP32-C3 SuperMini, follow [the three-board guide](docs/three-board-demo.md). All three firmware targets compile; physical validation remains pending.
 
 The first hardware target is a classic ESP32 DevKit (WROOM / 30-pin) running [`firmware/esp32-bridge`](firmware/esp32-bridge). A board-agnostic [`firmware/micropython-bridge`](firmware/micropython-bridge) extends coverage to MicroPython/CircuitPython boards (experimental).
 

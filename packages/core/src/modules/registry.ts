@@ -2,7 +2,7 @@ import { chamberModule } from '../modules/chamberModule.js';
 import { dcMotorModule } from '../modules/dcMotorModule.js';
 import { distanceModule } from '../modules/distanceModule.js';
 import { encoderModule } from '../modules/encoderModule.js';
-import { esp32Module } from '../modules/esp32Module.js';
+import { esp32Module, boardModule } from '../modules/esp32Module.js';
 import { forceModule } from '../modules/forceModule.js';
 import { imuModule } from '../modules/imuModule.js';
 import { limitSwitchModule } from '../modules/limitSwitchModule.js';
@@ -20,6 +20,7 @@ import { resolvePinoutHome } from '../home/paths.js';
 
 const builtinModules = new Map<string, PinoutModuleDefinition>([
   [esp32Module.id, esp32Module],
+  [boardModule.id, boardModule],
   [robotArmModule.id, robotArmModule],
   [chamberModule.id, chamberModule],
   [dcMotorModule.id, dcMotorModule],

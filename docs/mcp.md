@@ -1,5 +1,9 @@
 # MCP quickstart
 
+The default tool catalog is now static. Use `pinout__invoke({deviceId, capability, args})` after listing/describing devices; no per-board MCP configuration is needed. Follow the [three-board demo](three-board-demo.md) for Uno, ESP32, and C3 setup. The default local connection automatically reads the daemon token file; custom URLs require `PINOUT_TOKEN`.
+
+The per-device tool examples below document compatibility mode (`PINOUT_MCP_DYNAMIC_TOOLS=1`).
+
 `pinout-mcp` connects to the local `pinoutd` authority at
 `PINOUT_DAEMON_URL` (default `http://127.0.0.1:8787`) and uses
 `PINOUT_TOKEN`. Set `PINOUT_OWNER` to a stable agent principal. Embedded mode

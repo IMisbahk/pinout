@@ -448,3 +448,6 @@ export type {
 export type { PolicyRule, PolicyContext } from './policy/types.js';
 export type { LogContext, LogLevel, Logger } from './logger.js';
 export type { PinoutEnvConfig } from './config.js';
+
+export { builtinBoards, boardForInfo } from './boards/builtin.js';
+export type { SerialPortInfo } from './serial.js';
