@@ -1,0 +1,63 @@
+packages/core/src/index.ts
+  s_37927908462691::t_1dcf66c2484107 238
+packages/mcp/src/createDaemonServer.ts
+  s_37927908462691::t_b1bab4a740c92c 351-352
+  s_37927908462691::t_87c85386efca54 33
+  s_37927908462691::t_54d023b0e21eef 5,12-13,23,27-28,32,34-36,63-64,70,87,97,130-131,135,137-138,161,167,175-178,184-247,253-287,312,314-329,331-350,353-389,409-423
+  s_37927908462691::t_f102d4afa2efe9 248-252
+  s_37927908462691::t_06deef5143f4cb 310
+  s_37927908462691::t_0ae0db57f7a28d 424
+packages/mcp/tests/mcp.test.ts
+  s_37927908462691::t_34ad3cac087c04 68
+  s_37927908462691::t_0f510d05a0a2a4 372-419
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 242-245
+  s_37927908462691::t_f99db5c867ddb8 579-581
+  s_37927908462691::t_8d9a298bb4c197 21-52
+  s_37927908462691::t_9f29a469af1b23 507,509,513
+  s_37927908462691::t_9a4fe9277bfde1 233-241,246-371,420-506,508,510-512,514-519,857-859,861-862
+  s_37927908462691::t_55fd82ab318404 823-856
+  s_37927908462691::t_148bd336a55df5 639
+  s_8116bbaf67c023::t_e658081e839f15 860
+docs/mcp.md
+  s_37927908462691::t_3216e890fc97ba 27-32
+packages/mcp/src/createRuntimeServer.ts
+  s_37927908462691::t_c4ab23d8ce4ff3 111-113
+  s_37927908462691::t_61adbe65abb119 389,398-423
+  s_37927908462691::t_b2334cae13e02f 49-61,63
+  s_37927908462691::t_0cd1a6f29e7f61 171-189
+  s_37927908462691::t_f90e9833caba51 507-513
+  s_37927908462691::t_7609643725f05c 133-146,156
+  s_37927908462691::t_ad9fdc47865326 488
+  s_37927908462691::t_afbbad6c091fed 4-9,15,22-33
+  s_37927908462691::t_98b25e755ea61b 34
+  s_37927908462691::t_6668fe18a63286 170
+  s_37927908462691::t_fd6c77ef1e5f54 424
+packages/mcp/src/createServer.ts
+  s_37927908462691::t_1e4b3eda61bd7f 65
+packages/mcp/tests/stdioSubprocess.test.ts
+  s_37927908462691::t_cf3b00147097bb 98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "dbe8a0eb0971b2801748b2cd7a3119fb1db6a12d",
+  "prompts": {},
+  "sessions": {
+    "s_37927908462691": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "3f2512a4-8b76-4f70-b580-332bb4cad99d",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_8116bbaf67c023": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "86cf0afd-e3f5-4557-ae6f-c12c11249727",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
