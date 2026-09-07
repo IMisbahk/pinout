@@ -1,0 +1,59 @@
+packages/core/src/session.ts
+  s_3798f051baed82::t_7f271697cb713c 125
+  s_3798f051baed82::t_b1238bbe16a640 15-16
+  s_3798f051baed82::t_85b6ea9ff1f4f7 102-105
+  s_3798f051baed82::t_935ef75279c4b2 33
+packages/core/tests/webSocketTransport.test.ts
+  s_3798f051baed82::t_5aef9cb15eee21 42-45
+packages/cli/src/daemonCommands.ts
+  s_3798f051baed82::t_896e162502ba48 97
+  s_3798f051baed82::t_760593f6a47506 19-25,30,50-78,80
+packages/daemon/src/httpServer.ts
+  s_3798f051baed82::t_02bf4dde4c3fff 406-444,448
+  s_3798f051baed82::t_98d4d5f326edde 39
+  s_3798f051baed82::t_8b6aded9e01efc 891-911
+  s_3798f051baed82::t_da45cd16f67219 445-447
+packages/daemon/tests/latencyApi.test.ts
+  s_3798f051baed82::t_4108fcf7123351 1-114,118-119
+  s_3798f051baed82::t_84117740a9e440 115-117
+packages/core/src/transports/webSocketTransport.ts
+  s_3798f051baed82::t_8dcf31a9bd26d4 41
+packages/cli/src/doctor/runner.ts
+  s_3798f051baed82::t_b945e31a368c86 6
+  s_8116bbaf67c023::t_28dee2f9a9f2c4 18,28
+  s_3798f051baed82::t_fce10f0f8a47ef 19-27,29-30,35-57
+packages/core/tests/logger.test.ts
+  s_3798f051baed82::t_84c9b541bec37b 23-26
+docs/daemon.md
+  s_3798f051baed82::t_13fd4b910d9129 48-50
+packages/core/src/logger.ts
+  s_3798f051baed82::t_b2d92ab671aac2 24
+  s_3798f051baed82::t_deb7fe625224d3 57-60,62
+packages/core/src/lineReader.ts
+  s_3798f051baed82::t_6327c2ed4701e7 51
+  s_3798f051baed82::t_88dd796b6e772c 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "1d0523bd55438ff27a4773260455a99e3112543f",
+  "prompts": {},
+  "sessions": {
+    "s_3798f051baed82": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1a1484cd-c28e-4166-9449-7edcf0238bd5",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_8116bbaf67c023": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "86cf0afd-e3f5-4557-ae6f-c12c11249727",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
