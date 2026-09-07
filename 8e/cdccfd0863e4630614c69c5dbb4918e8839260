@@ -1,0 +1,105 @@
+packages/protocols-grbl/tests/grblBackend.test.ts
+  s_22ec8bcc09d145::t_7c3f320be396c7 1-9,14-67
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 10-13
+packages/protocols-mqtt/src/mqttBackend.ts
+  s_22ec8bcc09d145::t_d94404af6bab1e 105
+  s_22ec8bcc09d145::t_005f0a6c3f571f 49,58,71,75-77,79-87,93,110-115
+  s_22ec8bcc09d145::t_88e58dbc3faa2e 204-211,213
+  s_22ec8bcc09d145::t_eda1b878549459 1-48,50-57,59-63,66-70,72-74,78,88-92,95-104,106-109,116-139,144-203,212,214-219,226-292
+  s_22ec8bcc09d145::t_ee24d55bb586b3 94
+  s_22ec8bcc09d145::t_d1b88485e164b9 220-225
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 64-65,140-143
+packages/protocols-grbl/src/grblBackend.ts
+  s_22ec8bcc09d145::t_e47489b3084822 1-48,51-79,81-94,96-179,186-200,207-247,255-313
+  s_22ec8bcc09d145::t_8e45cee40cfe03 80
+  s_22ec8bcc09d145::t_1438ec75098c5e 95
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 49-50,180-185,201-206,248-254
+packages/protocols-scpi/src/powerSupplyModule.ts
+  s_22ec8bcc09d145::t_b4bb615648aa24 1-163
+packages/protocols-modbus/src/index.ts
+  s_22ec8bcc09d145::t_757d11889b8092 40-44
+docs/hardware-support.md
+  s_22ec8bcc09d145::t_df80f4a0a7aadc 30-31
+packages/protocols-mqtt/src/index.ts
+  s_22ec8bcc09d145::t_eee1884f48bfff 16-22
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 23
+packages/core/src/runtime/composite.ts
+  s_22ec8bcc09d145::t_4837215c29d75d 4
+  s_22ec8bcc09d145::t_cceb5cfd223388 92-140,142-169
+  s_22ec8bcc09d145::t_2c26c0c5f2e1e0 252-254
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 141
+packages/protocols-scpi/src/simulator.ts
+  s_22ec8bcc09d145::t_5014c87cc89277 92
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 115
+  s_22ec8bcc09d145::t_57a790650d4378 1-91,93-114,116-148
+packages/protocols-mqtt/src/brokerSimulator.ts
+  s_22ec8bcc09d145::t_210187c31c2327 1-140
+hardware/catalog.json
+  s_22ec8bcc09d145::t_8c6398d521727d 92-93
+  s_22ec8bcc09d145::t_57e1bd7ddc61ab 164-165
+  s_22ec8bcc09d145::t_59aa888e6621db 99-101
+packages/protocols-modbus/tests/registerMapBackend.test.ts
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 33-36,58-60,63-65
+  s_22ec8bcc09d145::t_d2bafa109fc93a 1-32,37-57,61-62,66-67
+packages/protocols-mqtt/tests/brokerSimulator.ts
+  s_22ec8bcc09d145::t_d09e77599fd24d 1
+packages/protocols-mqtt/src/mqttModule.ts
+  s_22ec8bcc09d145::t_4d0744ec37d70f 1,3,5-32,36-61,65-74,77-82
+  s_22ec8bcc09d145::t_0d9f8b57123e6f 75
+  s_22ec8bcc09d145::t_8edfb3488c81dc 63-64,76
+  s_22ec8bcc09d145::t_919988af8bc0b5 62
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 33-35
+  s_22ec8bcc09d145::t_e550d83e865c59 2,4
+packages/protocols-scpi/src/index.ts
+  s_22ec8bcc09d145::t_c4e215e736c97b 38-45
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 37
+packages/protocols-scpi/tests/powerSupplyBackend.test.ts
+  s_22ec8bcc09d145::t_38495b74ceead3 1-2,4-10,15-16,21-68
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 3,11-14,17-20
+packages/protocols-modbus/src/registerMapBackend.ts
+  s_22ec8bcc09d145::t_fb28ba7160e6a5 1-63,66-80,82-224,226-233,235-256
+  s_22ec8bcc09d145::t_8fa64467b1d722 81
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 64-65,225,234
+packages/protocols-scpi/src/powerSupplyBackend.ts
+  s_22ec8bcc09d145::t_607023e78085eb 1-13,15-47,53-54,57-76,80-91,93-275,278-325
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 55-56,77-79
+  s_22ec8bcc09d145::t_f7b6ae8e6fac78 14
+  s_22ec8bcc09d145::t_42ae2ea97afa95 48-52
+  s_22ec8bcc09d145::t_2691c8ea2cefc8 276-277
+  s_22ec8bcc09d145::t_7e9a2a3439f9e1 92
+packages/core/tests/compositeSemantic.test.ts
+  s_22ec8bcc09d145::t_56f904cfad6563 12
+  s_22ec8bcc09d145::t_9234a752899495 84-107,109-120,135-208
+  s_22ec8bcc09d145::t_7251164c412653 108,121-134
+packages/protocols-grbl/src/grblModule.ts
+  s_22ec8bcc09d145::t_0bb3d830260075 1-111
+packages/protocols-mqtt/tests/mqttBackend.test.ts
+  s_8116bbaf67c023::t_a43d6b2dd73ca6 3,18-21
+  s_22ec8bcc09d145::t_113cc4a07ab262 1-2,4-17,22-59
+packages/protocols-grbl/src/index.ts
+  s_22ec8bcc09d145::t_22f3091c9224e4 5-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "8ecdccfd0863e4630614c69c5dbb4918e8839260",
+  "prompts": {},
+  "sessions": {
+    "s_22ec8bcc09d145": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "f7a67ed8-7f4a-4803-9840-91d07a5b90f1",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    },
+    "s_8116bbaf67c023": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "86cf0afd-e3f5-4557-ae6f-c12c11249727",
+        "model": "grok-4.6"
+      },
+      "human_author": "Misbah Khursheed <m.misbahkhursheed@gmail.com>"
+    }
+  }
+}
